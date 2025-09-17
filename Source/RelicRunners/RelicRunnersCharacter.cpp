@@ -1,0 +1,1182 @@
+/************************************************************************************
+ * Author:   Tristan Anglin
+ * Year:     2025
+ *
+ * Notice:
+ *   This source code is the intellectual property of Tristan Anglin.
+ *   It is provided solely for use within:
+ *     - The Relic Runners personal project
+ *     - The Almost A Dozen project
+ *
+ *   Any use, distribution, or modification outside of these projects
+ *   is strictly prohibited without explicit written permission.
+ *
+ *   © 2025 Tristan Anglin. All rights reserved.
+ ************************************************************************************/
+
+#include "RelicRunnersCharacter.h"
+#include "Engine/LocalPlayer.h"
+#include "Net/UnrealNetwork.h"
+#include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/TileView.h"
+#include "Components/TextBlock.h"
+#include "Components/WidgetComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/Controller.h"
+#include "PlayerController/RelicRunnersPlayerController.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputActionValue.h"
+#include "EngineUtils.h"
+#include "Inventory/Inventory.h"
+#include "Inventory/InventoryToolTip.h"
+#include "Inventory/InventoryItemOptions.h"
+#include "Inventory/InventorySortingOptions.h"
+#include "Item/ItemStats.h"
+#include "Item/ItemActor.h"
+#include "Interact/InteractInterface.h"
+#include "PlayerHUD/PlayerHUD.h"
+#include "PlayerHUD/PlayerHUDWorld.h"
+#include "PlayerPreview/PlayerPreview.h"
+#include "PlayerState/RelicRunnersPlayerState.h"
+#include "Kismet/GameplayStatics.h"
+#include "Item/ItemData.h"
+#include "Inventory/InventoryComponent.h"
+#include "Engine/ActorChannel.h"
+#include "Enemy/EnemyCharacterAI.h"
+#include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
+
+DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+
+//////////////////////////////////////////////////////////////////////////
+// ARelicRunnersCharacter
+
+ARelicRunnersCharacter::ARelicRunnersCharacter()
+{
+	// Set size for collision capsule
+	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+		
+	// Don't rotate when the controller rotates. Let that just affect the camera.
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+
+	// Configure character movement
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
+
+	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
+	// instead of recompiling to adjust them
+	GetCharacterMovement()->JumpZVelocity = 700.f;
+	GetCharacterMovement()->AirControl = 0.35f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
+
+	// Create a camera boom (pulls in towards the player if there is a collision)
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
+	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+
+	// Create a follow camera
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	// Equipment Meshes
+	ChestplateMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChestplateMesh"));
+	ChestplateMesh->SetupAttachment(GetMesh());
+	ChestplateMesh->SetLeaderPoseComponent(GetMesh());
+	ChestplateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ChestplateMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	ChestplateMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	BootsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BootsMesh"));
+	BootsMesh->SetupAttachment(GetMesh());
+	BootsMesh->SetLeaderPoseComponent(GetMesh());
+	BootsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BootsMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	BootsMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	LeggingsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LeggingsMesh"));
+	LeggingsMesh->SetupAttachment(GetMesh());
+	LeggingsMesh->SetLeaderPoseComponent(GetMesh());
+	LeggingsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeggingsMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	LeggingsMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	ShouldersMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShouldersMesh"));
+	ShouldersMesh->SetupAttachment(GetMesh());
+	ShouldersMesh->SetLeaderPoseComponent(GetMesh());
+	ShouldersMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ShouldersMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	ShouldersMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	HelmetMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetMesh"));
+	HelmetMesh->SetupAttachment(GetMesh());
+	HelmetMesh->SetLeaderPoseComponent(GetMesh());
+	HelmetMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HelmetMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	HelmetMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	WaistMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WaistMesh"));
+	WaistMesh->SetupAttachment(GetMesh());
+	WaistMesh->SetLeaderPoseComponent(GetMesh());
+	WaistMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WaistMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	WaistMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	BackpackMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BackpackMesh"));
+	BackpackMesh->SetupAttachment(GetMesh());
+	BackpackMesh->SetLeaderPoseComponent(GetMesh());
+	BackpackMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BackpackMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	BackpackMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	WristMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WristMesh"));
+	WristMesh->SetupAttachment(GetMesh());
+	WristMesh->SetLeaderPoseComponent(GetMesh());
+	WristMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WristMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	WristMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlovesMesh"));
+	GlovesMesh->SetupAttachment(GetMesh());
+	GlovesMesh->SetLeaderPoseComponent(GetMesh());
+	GlovesMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GlovesMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	GlovesMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	NecklaceMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NecklaceMesh"));
+	NecklaceMesh->SetupAttachment(GetMesh());
+	NecklaceMesh->SetLeaderPoseComponent(GetMesh());
+	NecklaceMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	NecklaceMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	NecklaceMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	MainhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainhandItemMesh"));
+	MainhandItemMesh->SetupAttachment(GetMesh());
+	MainhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MainhandItemMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	MainhandItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	OffhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OffhandItemMesh"));
+	OffhandItemMesh->SetupAttachment(GetMesh());
+	OffhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	OffhandItemMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	OffhandItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	//UI
+	PlayerHUDWorld = CreateDefaultSubobject<UWidgetComponent>(TEXT("TooltipWidgetComponent"));
+	PlayerHUDWorld->SetupAttachment(GetMesh());
+	PlayerHUDWorld->SetWorldScale3D(FVector(0.1, 0.1, 0.1));
+	PlayerHUDWorld->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
+	PlayerHUDWorld->SetWidgetSpace(EWidgetSpace::World);
+	PlayerHUDWorld->SetDrawAtDesiredSize(true);
+	PlayerHUDWorld->SetVisibility(true);
+	PlayerHUDWorld->CastShadow = false;
+
+	//Inventory
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	InventoryComponent->SetIsReplicated(true);
+
+	//Starting Stats
+	PlayerStartingMaxHealth = 100;
+	PlayerMaxHealth = PlayerStartingMaxHealth;
+	PlayerHealth = PlayerMaxHealth;
+	PlayerStartingMaxResource = 100;
+	PlayerMaxResource = PlayerStartingMaxResource;
+	PlayerResource = PlayerMaxResource;
+	PlayerLevel = 1;
+	PlayerXP = 0;
+	PlayerXPToLevel = 100;
+	PlayerStartingArmor = 0;
+	PlayerStartingDexterity = 0;
+	PlayerStartingStrength = 0;
+	PlayerStartingIntelligence = 0;
+	PlayerStartingLuck = 0;
+	PlayerArmor = 0;
+	PlayerDexterity = 0;
+	PlayerStrength = 0;
+	PlayerIntelligence = 0;
+	PlayerLuck = 0;
+	PlayerNumInventorySlots = 20;
+
+	bAlwaysRelevant = true;
+	SetReplicates(true);
+	SetReplicateMovement(true);
+}
+
+void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	//stats
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerHealth);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerMaxHealth);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerResource);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerMaxResource);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerLevel);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
+
+	//equipped items
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedChestplateMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedBootsMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedLeggingsMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedShouldersMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedHelmetMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedWaistMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedBackpackMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedGlovesMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedWristMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedNecklaceMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedMainhandMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedOffhandMesh);
+
+}
+
+EInventorySorting ARelicRunnersCharacter::GetCurrentSortingMethod() const
+{
+	if (InventoryComponent)
+	{
+		return InventoryComponent->CurrentSortingMethod;
+	}
+
+	return EInventorySorting::SortByRarity; // Fallback
+}
+
+void ARelicRunnersCharacter::Server_EquipItemByID_Implementation(FGuid ID)
+{
+	if (!InventoryComponent) return;
+
+	UItemObject** ItemPtr = InventoryComponent->InventoryItems.FindByPredicate([&](UItemObject* Obj)
+		{
+			return Obj && Obj->ItemData.UniqueID == ID;
+		});
+
+	if (ItemPtr && *ItemPtr)
+	{
+		UItemObject* Item = *ItemPtr;
+		InventoryComponent->EquipItem(Item);
+		UpdateItemVisuals(Item);
+		InventoryComponent->UpdateTotalEquippedStats(this);
+	}
+}
+
+void ARelicRunnersCharacter::Server_UnequipItemByID_Implementation(FGuid ID)
+{
+	if (!InventoryComponent) return;
+
+	UItemObject* EquippedItem = nullptr;
+	FString ItemType;
+
+	for (FEquippedItemEntry& Entry : InventoryComponent->EquippedItems)
+	{
+		if (Entry.Item && Entry.Item->ItemData.UniqueID == ID)
+		{
+			EquippedItem = Entry.Item;
+			ItemType = Entry.ItemType;
+			break;
+		}
+	}
+
+	if (EquippedItem)
+	{
+		InventoryComponent->UnequipItem(EquippedItem);
+		UpdateItemVisuals(nullptr, ItemType);
+		InventoryComponent->UpdateTotalEquippedStats(this);
+	}
+}
+
+void ARelicRunnersCharacter::Server_SetReplicatedMeshByItemType_Implementation(UObject* MeshAsset, const FString& ItemType)
+{
+	SetReplicatedMeshByItemType(MeshAsset, ItemType);
+}
+
+void ARelicRunnersCharacter::OnRep_ChestplateMesh()
+{
+	if (ChestplateMesh) ChestplateMesh->SetSkeletalMesh(ReplicatedChestplateMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_BootsMesh()
+{
+	if (BootsMesh) BootsMesh->SetSkeletalMesh(ReplicatedBootsMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_LeggingsMesh()
+{
+	if (LeggingsMesh) LeggingsMesh->SetSkeletalMesh(ReplicatedLeggingsMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_ShouldersMesh()
+{
+	if (ShouldersMesh) ShouldersMesh->SetSkeletalMesh(ReplicatedShouldersMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_HelmetMesh()
+{
+	if (HelmetMesh) HelmetMesh->SetSkeletalMesh(ReplicatedHelmetMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_WaistMesh()
+{
+	if (WaistMesh) WaistMesh->SetSkeletalMesh(ReplicatedWaistMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_BackpackMesh()
+{
+	if (BackpackMesh) BackpackMesh->SetSkeletalMesh(ReplicatedBackpackMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_GlovesMesh()
+{
+	if (GlovesMesh) GlovesMesh->SetSkeletalMesh(ReplicatedGlovesMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_WristMesh()
+{
+	if (WristMesh) WristMesh->SetSkeletalMesh(ReplicatedWristMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_NecklaceMesh()
+{
+	if (NecklaceMesh) NecklaceMesh->SetSkeletalMesh(ReplicatedNecklaceMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_MainhandMesh()
+{
+	if (MainhandItemMesh) MainhandItemMesh->SetStaticMesh(ReplicatedMainhandMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_OffhandMesh()
+{
+	if (OffhandItemMesh) OffhandItemMesh->SetStaticMesh(ReplicatedOffhandMesh);
+}
+
+void ARelicRunnersCharacter::OnRep_HUD()
+{
+	UpdateHUD();
+}
+
+void ARelicRunnersCharacter::AddExperience(int Amount)
+{
+	PlayerXP += Amount;
+	if (PlayerXP >= PlayerXPToLevel)
+	{
+		OnLevelUp();
+	}
+}
+
+void ARelicRunnersCharacter::OnLevelUp()
+{
+	PlayerXP -= PlayerXPToLevel;
+	PlayerLevel++;
+	PlayerXPToLevel = PlayerLevel * 100;
+
+	//starting stats / base stats
+	PlayerStartingMaxHealth++;
+	PlayerStartingMaxResource++;
+	PlayerStartingArmor++;
+	PlayerStartingDexterity++;
+	PlayerStartingStrength++;
+	PlayerStartingIntelligence++;
+	PlayerStartingLuck++;
+
+	//current health / max health
+	PlayerMaxHealth++;
+	PlayerHealth++;
+
+	//current resource / max resource
+	PlayerMaxResource++;
+	PlayerResource++;
+
+	//current stats
+	PlayerArmor++;
+	PlayerDexterity++;
+	PlayerStrength++;
+	PlayerIntelligence++;
+	PlayerLuck++;
+	PlayerNumInventorySlots++;
+
+	InventoryComponent->UpdateTotalEquippedStats(this);
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	if (LevelUpHUDClass)
+	{
+		ULevelUpHUD* NewLevelUpHUD = CreateWidget<ULevelUpHUD>(PC, LevelUpHUDClass);
+		if (NewLevelUpHUD)
+		{
+			NewLevelUpHUD->AddToViewport();
+		}
+	}
+}
+
+bool ARelicRunnersCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	if (InventoryComponent)
+	{
+		WroteSomething |= Channel->ReplicateSubobject(InventoryComponent, *Bunch, *RepFlags);
+	}
+
+	return WroteSomething;
+}
+
+void ARelicRunnersCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	InitLocalUI();
+	UpdateHUD();
+}
+
+
+void ARelicRunnersCharacter::OnRep_MeshUpdate(UObject* MeshAsset, const FString& ItemType)
+{
+	SetReplicatedMeshByItemType(MeshAsset, ItemType);
+}
+
+void ARelicRunnersCharacter::TryBindInventoryDelegates()
+{
+	if (!IsLocallyControlled()) return;
+
+	if (Inventory && InventoryComponent)
+	{
+		Inventory->SetInventoryComponent(InventoryComponent);
+		InventoryComponent->UpdateTotalEquippedStats(this);
+		GetWorldTimerManager().ClearTimer(DelegateBindHandle);
+
+		Inventory->RefreshInventoryUI();
+		Inventory->RefreshEquippedUI();
+
+		UE_LOG(LogTemp, Warning, TEXT("[UI] Bound inventory component delegates successfully."));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UI] Waiting for Inventory or InventoryComponent..."));
+	}
+}
+
+void ARelicRunnersCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Always load ItemMeshData locally
+	if (ItemMeshDataClass)
+	{
+		ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
+	}
+
+	// === Server-only logic ===
+	if (HasAuthority())
+	{
+		// Assign a player name on the server
+		if (ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>())
+		{
+			FString AssignedName = GetController() && GetController()->IsLocalController()
+				? TEXT("Player1")
+				: FString::Printf(TEXT("Player%d"), PS->GetPlayerId());
+
+			PS->SetPlayerName(AssignedName);
+		}
+
+		// Setup health regen loop
+		GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
+	}
+
+	// === Local client UI setup ===
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC && PC->IsLocalController())
+	{
+		// Delay UI setup until everything else is ready
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::InitLocalUI);
+	}
+
+	if (HasAuthority())
+	{
+		// Generate initial items only once on server
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
+	}
+
+	// Attach item mesh components
+	MainhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("MainhandSocket"));
+	OffhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("OffhandSocket"));
+
+	if (PlayerHUDWorld)
+	{
+		if (UPlayerHUDWorld* HUDWorldWidget = Cast<UPlayerHUDWorld>(PlayerHUDWorld->GetUserWidgetObject()))
+		{
+			HUDWorldWidget->InitWidgetWithCharacter(this);
+		}
+	}
+}
+
+void ARelicRunnersCharacter::InitLocalUI()
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	// === HUD Widget ===
+	if (!PlayerHUD && PlayerHUDClass)
+	{
+		PlayerHUD = CreateWidget<UPlayerHUD>(PC, PlayerHUDClass);
+		if (PlayerHUD)
+		{
+			PlayerHUD->AddToViewport();
+		}
+	}
+
+	// === Inventory Widget ===
+	if (!Inventory && InventoryClass)
+	{
+		Inventory = CreateWidget<UInventory>(PC, InventoryClass);
+		if (Inventory)
+		{
+			Inventory->AddToViewport();
+			Inventory->SetVisibility(ESlateVisibility::Hidden);
+			Inventory->SetIsEnabled(false);
+		}
+	}
+
+	TryBindInventoryDelegates();
+}
+
+void ARelicRunnersCharacter::SpawnStarterItems()
+{
+	if (ItemMeshData && InventoryComponent)
+	{
+		for (int i = 0; i < 50; ++i)
+		{
+			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateRandomItemData(ItemMeshData), InventoryComponent);
+			InventoryComponent->AddItem(Item);
+		}
+	}
+}
+
+
+void ARelicRunnersCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	TraceForInteractables();
+	UpdatePlayerHUDWorldFacing();
+}
+
+void ARelicRunnersCharacter::TraceForInteractables()
+{
+	if (!IsLocallyControlled()) return;
+
+	const FVector PlayerLocation = FollowCamera->GetComponentLocation();
+	const FVector PlayerForward = FollowCamera->GetForwardVector();
+
+	const float MaxDistance = 1000.f;
+	const float MinFacingDot = 0.f; // 1 = perfectly facing, 0 = 90 degrees off
+
+	for (TActorIterator<AItemActor> It(GetWorld()); It; ++It)
+	{
+		AItemActor* Item = *It;
+		if (!Item || !Item->Implements<UInteractInterface>())
+		{
+			continue;
+		}
+
+		FVector ToItem = Item->GetActorLocation() - PlayerLocation;
+		float Distance = ToItem.Size();
+
+		bool bWithinDistance = Distance <= MaxDistance;
+		bool bFacingItem = FVector::DotProduct(PlayerForward, ToItem.GetSafeNormal()) > MinFacingDot;
+
+		bool bShouldShow = bWithinDistance && bFacingItem;
+		IInteractInterface::Execute_ShowTooltip(Item, bShouldShow);
+	}
+}
+
+void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
+{
+	if (!PlayerHUDWorld || !PlayerHUDWorld->GetWidget()) return;
+
+	APlayerController* LocalController = UGameplayStatics::GetPlayerController(this, 0);
+	if (!LocalController || !LocalController->PlayerCameraManager) return;
+
+	FVector CameraLocation = LocalController->PlayerCameraManager->GetCameraLocation();
+	FVector WidgetLocation = PlayerHUDWorld->GetComponentLocation();
+
+	// This character is locally controlled — make it face *away* from camera
+	if (IsLocallyControlled())
+	{
+		PlayerHUDWorld->SetVisibility(false);
+	}
+	else // Remote player — make it face toward camera
+	{
+		FVector ToCamera = CameraLocation - WidgetLocation;
+		ToCamera.Z = 0.f; // optional: lock pitch
+
+		if (!ToCamera.IsNearlyZero())
+		{
+			FRotator LookAtRotation = ToCamera.Rotation();
+			PlayerHUDWorld->SetWorldRotation(LookAtRotation);
+		}
+	}
+}
+
+void ARelicRunnersCharacter::PassiveHealthRegen()
+{
+	if (PlayerHealth < PlayerMaxHealth)
+	{
+		PlayerHealth += (int)(PlayerMaxHealth * 0.05f);
+	}
+	if (PlayerHealth > PlayerMaxHealth)
+	{
+		PlayerHealth = PlayerMaxHealth;
+	}
+	UpdateHUD();
+}
+
+void ARelicRunnersCharacter::Client_UpdateEquippedStats_Implementation(const FEquippedStatsSummary& NewStats)
+{
+	if (InventoryComponent)
+	{
+		InventoryComponent->CachedEquippedStats = NewStats;
+		InventoryComponent->OnStatsChanged.Broadcast(NewStats);
+	}
+}
+
+void ARelicRunnersCharacter::PerformSwingTrace()
+{
+	FVector Start = GetMesh()->GetSocketLocation("MainhandSocket");
+	FVector End = GetMesh()->GetSocketLocation("TipSocket");
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	TArray<FHitResult> Hits;
+	GetWorld()->SweepMultiByChannel(
+		Hits,
+		Start,
+		End,
+		FQuat::Identity,
+		ECC_Pawn,
+		FCollisionShape::MakeSphere(10.0f), // Adjust the thickness of your sword
+		Params
+	);
+
+	AlreadyHitActors.Empty();
+
+	for (const FHitResult& Hit : Hits)
+	{
+		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10.f, 12, FColor::Red, false, 1.0f);
+		if (AActor* HitActor = Hit.GetActor())
+		{
+			if (!AlreadyHitActors.Contains(HitActor))
+			{
+				// Check if it's an enemy before applying damage
+				if (AEnemyCharacterAI* Enemy = Cast<AEnemyCharacterAI>(HitActor))
+				{
+					Server_HitEnemy(Enemy);
+				}
+
+				AlreadyHitActors.Add(HitActor);
+			}
+		}
+	}
+
+	DrawDebugLine(GetWorld(), Start, End, FColor::Cyan, false, 0.1f, 0, 2.0f);
+
+}
+
+void ARelicRunnersCharacter::Server_HitEnemy_Implementation(AActor* HitActor)
+{
+	if (HitActor)
+	{
+		// Optionally validate here (e.g. distance checks to prevent cheating)
+		UGameplayStatics::ApplyDamage(HitActor, 5.f, GetController(), this, nullptr);
+	}
+}
+
+void ARelicRunnersCharacter::BasicAttack()
+{
+	if (!Inventory)
+	{
+		return;
+	}
+	if (InventoryComponent->GetEquippedItemByType("Sword") && InventoryComponent)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (!AnimInstance) return;
+
+		TArray<UAnimSequence*> SwordAttacks;
+		if (SwordBasicAttack0) SwordAttacks.Add(SwordBasicAttack0);
+		if (SwordBasicAttack1) SwordAttacks.Add(SwordBasicAttack1);
+		if (SwordBasicAttack2) SwordAttacks.Add(SwordBasicAttack2);
+		if (SwordBasicAttack3) SwordAttacks.Add(SwordBasicAttack3);
+
+		if (SwordAttacks.Num() > 0)
+		{
+			int32 Index = FMath::RandRange(0, SwordAttacks.Num() - 1);
+			UAnimSequence* SelectedSequence = SwordAttacks[Index];
+
+			// Play as dynamic montage
+			AnimInstance->PlaySlotAnimationAsDynamicMontage(SelectedSequence, FName("DefaultSlot"));
+		}
+	}
+}
+
+void ARelicRunnersCharacter::Walk(const FInputActionValue& Value)
+{
+	// input is a Vector2D
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		// find out which way is forward
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get forward vector
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		// get right vector 
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		// add movement 
+		AddMovementInput(ForwardDirection, MovementVector.Y / 1.75);
+		AddMovementInput(RightDirection, MovementVector.X / 1.75);
+	}
+}
+
+void ARelicRunnersCharacter::Run(const FInputActionValue& Value)
+{
+	// input is a Vector2D
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		// find out which way is forward
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get forward vector
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		// get right vector 
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		// add movement 
+		AddMovementInput(ForwardDirection, MovementVector.Y);
+		AddMovementInput(RightDirection, MovementVector.X);
+	}
+}
+
+void ARelicRunnersCharacter::Look(const FInputActionValue& Value)
+{
+	// input is a Vector2D
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		// add yaw and pitch input to controller
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void ARelicRunnersCharacter::Interact()
+{
+	FVector Start = FollowCamera->GetComponentLocation();
+	FVector End = Start + (FollowCamera->GetForwardVector() * 500.f); // Match TraceForInteractables
+
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	DrawDebugSphere(GetWorld(), End, 40.f, 12, FColor::Orange, false, 0.1f);
+	if (GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(40.f), Params))
+	{
+		AActor* HitActor = Hit.GetActor();
+		if (HitActor && HitActor->Implements<UInteractInterface>())
+		{
+			// Call Interact on the hit actor
+			if (AItemActor* Item = Cast<AItemActor>(HitActor))
+			{
+				if (APlayerController* PC = Cast<APlayerController>(GetController()))
+				{
+					ARelicRunnersPlayerController* MyPC = Cast<ARelicRunnersPlayerController>(PC);
+					if (MyPC)
+					{
+						MyPC->Server_RequestPickup(Item);
+					}
+				}
+			}
+			else
+			{
+				IInteractInterface::Execute_Interact(HitActor, this);
+			}
+		}
+	}
+}
+
+void ARelicRunnersCharacter::InventoryUI()
+{
+	if (!IsLocallyControlled()) return;
+
+	if (!Inventory) return;
+
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	if (!PlayerController) return;
+
+	if (Inventory->IsVisible())
+	{
+		Inventory->SetVisibility(ESlateVisibility::Hidden);
+		Inventory->SetIsEnabled(false);
+		PlayerController->SetInputMode(FInputModeGameOnly());
+		PlayerController->SetShowMouseCursor(false);
+		UInventoryItemOptions::CloseAnyOpenPopup();
+	}
+	else
+	{
+		Inventory->SetVisibility(ESlateVisibility::Visible);
+		Inventory->SetIsEnabled(true);
+		PlayerController->SetInputMode(FInputModeGameAndUI());
+		PlayerController->SetShowMouseCursor(true);
+	}
+}
+
+void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
+{
+	PlayerMaxHealth = health;
+	UpdateHUD();
+}
+
+void ARelicRunnersCharacter::Server_DropItem_Implementation(const FItemData& Data)
+{
+	if (!HasAuthority() || !InventoryComponent) return;
+
+	bool bFoundAndRemoved = false;
+
+	// Remove from Inventory
+	for (int32 i = 0; i < InventoryComponent->InventoryItems.Num(); ++i)
+	{
+		if (InventoryComponent->InventoryItems[i]->GetUniqueID() == Data.UniqueID)
+		{
+			InventoryComponent->InventoryItems.RemoveAt(i);
+			bFoundAndRemoved = true;
+			break;
+		}
+	}
+
+	// Remove from Equipped
+	if (!bFoundAndRemoved)
+	{
+		for (int32 i = 0; i < InventoryComponent->EquippedItems.Num(); ++i)
+		{
+			if (InventoryComponent->EquippedItems[i].Item &&
+				InventoryComponent->EquippedItems[i].Item->GetUniqueID() == Data.UniqueID)
+			{
+				InventoryComponent->EquippedItems.RemoveAt(i);
+				bFoundAndRemoved = true;
+				break;
+			}
+		}
+	}
+
+	if (!bFoundAndRemoved)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not find item to drop: %s"), *Data.Name);
+		return;
+	}
+
+	// Desired drop location
+	FVector SpawnLoc = GetActorLocation() + GetActorForwardVector() * 100.f;
+	const float MinDistance = 50.f;
+
+	// Get all items in the world
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AItemActor::StaticClass(), FoundActors);
+
+	// Handle overlap resolution for existing nearby items
+	for (AActor* Actor : FoundActors)
+	{
+		AItemActor* OtherItem = Cast<AItemActor>(Actor);
+		if (!IsValid(Actor)) continue;
+
+		FVector OtherLoc = OtherItem->GetActorLocation();
+		if (FVector::Dist(OtherLoc, SpawnLoc) < MinDistance)
+		{
+			bool bMoved = false;
+
+			// Try circular spreading from original location
+			for (int32 Radius = 50; Radius <= 300; Radius += 50)
+			{
+				for (int32 Angle = 0; Angle < 360; Angle += 45)
+				{
+					const float Radians = FMath::DegreesToRadians(Angle);
+					FVector Offset = FVector(FMath::Cos(Radians), FMath::Sin(Radians), 0.f) * Radius;
+					FVector NewLoc = OtherLoc + Offset;
+
+					// Check if new position is too close to any other item
+					bool bTooClose = false;
+					for (AActor* CheckActor : FoundActors)
+					{
+						if (CheckActor != OtherItem && FVector::Dist(NewLoc, CheckActor->GetActorLocation()) < MinDistance)
+						{
+							bTooClose = true;
+							break;
+						}
+					}
+
+					if (!bTooClose)
+					{
+						OtherItem->SetActorLocation(NewLoc);
+						bMoved = true;
+						break;
+					}
+				}
+				if (bMoved) break;
+			}
+
+			if (!bMoved)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Could not reposition item: %s"), *OtherItem->GetName());
+			}
+		}
+	}
+
+	// Spawn new dropped item
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.Instigator = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	AItemActor* Dropped = GetWorld()->SpawnActor<AItemActor>(ItemActorClass, SpawnLoc, FRotator::ZeroRotator, Params);
+	if (Dropped)
+	{
+		Dropped->Initialize(Data);
+		Dropped->SetReplicates(true);
+		Dropped->SetReplicateMovement(true);
+	}
+
+	InventoryComponent->UpdateTotalEquippedStats(this);
+}
+
+void ARelicRunnersCharacter::Server_PickupItem_Implementation(AItemActor* TargetItem)
+{
+	if (TargetItem)
+	{
+		TargetItem->Server_HandlePickup(this);
+	}
+}
+
+
+void ARelicRunnersCharacter::UpdateItemVisuals(UObject* MeshAsset, const FString& ItemType)
+{
+	if (ItemType == "Sword" || ItemType == "Shield")
+	{
+		if (UStaticMeshComponent* TargetMesh = GetStaticMeshComponentByItemType(ItemType))
+		{
+			TargetMesh->SetStaticMesh(Cast<UStaticMesh>(MeshAsset));
+			OnRep_MeshUpdate(MeshAsset, ItemType);
+		}
+	}
+	else
+	{
+		if (USkeletalMeshComponent* TargetMesh = GetSkeletalMeshComponentByItemType(ItemType))
+		{
+			TargetMesh->SetSkeletalMesh(Cast<USkeletalMesh>(MeshAsset));
+			OnRep_MeshUpdate(MeshAsset, ItemType);
+		}
+	}
+}
+
+void ARelicRunnersCharacter::UpdateItemVisuals(UItemObject* Item)
+{
+	if (!Item) return;
+
+	const FString& ItemType = Item->ItemData.ItemType;
+	const FString MeshPath = GetMeshPathByItemType(ItemType);
+
+	if (ItemType == "Sword" || ItemType == "Shield")
+	{
+		if (UStaticMesh* LoadedMesh = LoadObject<UStaticMesh>(nullptr, *MeshPath))
+		{
+			if (UStaticMeshComponent* TargetMesh = GetStaticMeshComponentByItemType(ItemType))
+			{
+				TargetMesh->SetStaticMesh(LoadedMesh);
+				OnRep_MeshUpdate(LoadedMesh, ItemType);
+			}
+		}
+	}
+	else
+	{
+		if (USkeletalMesh* LoadedMesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath))
+		{
+			if (USkeletalMeshComponent* TargetMesh = GetSkeletalMeshComponentByItemType(ItemType))
+			{
+				TargetMesh->SetSkeletalMesh(LoadedMesh);
+				OnRep_MeshUpdate(LoadedMesh, ItemType);
+			}
+		}
+	}
+}
+
+void ARelicRunnersCharacter::UpdateHUD()
+{
+	if (PlayerHUD)
+	{
+		PlayerHUD->UpdateHUD(
+			PlayerHealth,
+			PlayerMaxHealth,
+			PlayerResource,
+			PlayerMaxResource,
+			PlayerLevel,
+			PlayerXP,
+			PlayerXPToLevel
+		);
+	}
+}
+
+void ARelicRunnersCharacter::Multicast_UpdateHUD_Implementation()
+{
+	UpdateHUD();
+}
+
+FString ARelicRunnersCharacter::GetMeshPathByItemType(const FString& ItemType)
+{
+	return FString::Printf(TEXT("/Game/ThirdPerson/Meshes/Items/%s/%s.%s"),
+		*ItemType, *ItemType, *ItemType);
+}
+
+USkeletalMeshComponent* ARelicRunnersCharacter::GetSkeletalMeshComponentByItemType(const FString& ItemType)
+{
+	if (ItemType == "Chestplate") return ChestplateMesh;
+	if (ItemType == "Leggings") return LeggingsMesh;
+	if (ItemType == "Boots") return BootsMesh;
+	if (ItemType == "Shoulders") return ShouldersMesh;
+	if (ItemType == "Helmet") return HelmetMesh;
+	if (ItemType == "Waist") return WaistMesh;
+	if (ItemType == "Backpack") return BackpackMesh;
+	if (ItemType == "Gloves") return GlovesMesh;
+	if (ItemType == "Wrist") return WristMesh;
+	if (ItemType == "Necklace") return NecklaceMesh;
+	return nullptr;
+}
+
+UStaticMeshComponent* ARelicRunnersCharacter::GetStaticMeshComponentByItemType(const FString& ItemType)
+{
+	if (ItemType == "Sword") return MainhandItemMesh;
+	if (ItemType == "Shield") return OffhandItemMesh;
+	return nullptr;
+}
+
+void ARelicRunnersCharacter::SetReplicatedMeshByItemType(UObject* MeshAsset, const FString& ItemType)
+{
+
+	if (!HasAuthority())
+	{
+		Server_SetReplicatedMeshByItemType(MeshAsset, ItemType);
+		return;
+	}
+
+	if (ItemType == "Chestplate")
+	{
+		ReplicatedChestplateMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_ChestplateMesh();
+	}
+	else if (ItemType == "Boots")
+	{
+		ReplicatedBootsMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_BootsMesh();
+	}
+	else if (ItemType == "Leggings")
+	{
+		ReplicatedLeggingsMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_LeggingsMesh();
+	}
+	else if (ItemType == "Shoulders")
+	{
+		ReplicatedShouldersMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_ShouldersMesh();
+	}
+	else if (ItemType == "Helmet")
+	{
+		ReplicatedHelmetMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_HelmetMesh();
+	}
+	else if (ItemType == "Waist")
+	{
+		ReplicatedWaistMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_WaistMesh();
+	}
+	else if (ItemType == "Backpack")
+	{
+		ReplicatedBackpackMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_BackpackMesh();
+	}
+	else if (ItemType == "Gloves")
+	{
+		ReplicatedGlovesMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_GlovesMesh();
+	}
+	else if (ItemType == "Wrist")
+	{
+		ReplicatedWristMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_WristMesh();
+	}
+	else if (ItemType == "Necklace")
+	{
+		ReplicatedNecklaceMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_NecklaceMesh();
+	}
+	else if (ItemType == "Sword" || ItemType == "Mainhand")
+	{
+		ReplicatedMainhandMesh = Cast<UStaticMesh>(MeshAsset);
+		OnRep_MainhandMesh();
+	}
+	else if (ItemType == "Shield" || ItemType == "Offhand")
+	{
+		ReplicatedOffhandMesh = Cast<UStaticMesh>(MeshAsset);
+		OnRep_OffhandMesh();
+	}
+}
+
+int ARelicRunnersCharacter::GetPlayerStartingMaxHealth() const
+{
+	return PlayerStartingMaxHealth;
+}
+
+int ARelicRunnersCharacter::GetPlayerNumInventorySlots() const
+{
+	return PlayerNumInventorySlots;
+}
+
+int ARelicRunnersCharacter::GetPlayerStartingArmor() const
+{
+	return PlayerStartingArmor;
+}
+
+int ARelicRunnersCharacter::GetPlayerStartingDexterity() const
+{
+	return PlayerStartingDexterity;
+}
+
+int ARelicRunnersCharacter::GetPlayerStartingStrength() const
+{
+	return PlayerStartingStrength;
+}
+
+int ARelicRunnersCharacter::GetPlayerStartingIntelligence() const
+{
+	return PlayerStartingIntelligence;
+}
+
+int ARelicRunnersCharacter::GetPlayerStartingLuck() const
+{
+	return PlayerStartingLuck;
+}
