@@ -1,9 +1,4 @@
-Drag the downloaded MetaHumans folder directly into the Content folder.
-This is a work around. The MetaHumans file size is too large to commit everything to github.
-Link to MetaHumans Resources: 
-https://www.dropbox.com/scl/fo/zwwc8fo1345bg5fiejqj1/AIDEqbfIAt2ZYtVDtAwH5e4?rlkey=q1962b8wkm2r5edb5irsjeusp&st=jc17eb16&dl=0
+Game files were too massive and were not being properly committed to github
 
-Drag the downloaded Characters folder directly into the Content folder.
-This is a work around. The Characters file size is too large to commit everything to github.
-Link to Characters Resources:
-https://www.dropbox.com/scl/fo/h16x9yx87o1d6lv5ilg1a/AKO2ASHXB5cygF0jc4hUNxg?rlkey=roxriwy99id97x7nlflp6wsff&st=vqsvi02j&dl=0
+Link to dropbox:
+https://www.dropbox.com/scl/fo/nrcioe9bm1f2xw223k54m/ANL74qTcHDNWccEJnPJY5UM?rlkey=z87xpael3b4ui0fgtaconu6xo&st=3jwdirkf&dl=0
