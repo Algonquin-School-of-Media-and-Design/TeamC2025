@@ -10,20 +10,33 @@
 #include "SessionListItemWidget.generated.h"
 
 
-/**
- * 
- */
 UCLASS()
-class RELICRUNNERS_API USessionListItemWidget : public UUserWidget, public IUserObjectListEntry
+class RELICRUNNERS_API USessionListItemWidget
+    : public UUserWidget, public IUserObjectListEntry
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	virtual void NativeConstruct() override;
+    DECLARE_DELEGATE_OneParam(FOnSessionClicked, USessionListItemData*);
+    FOnSessionClicked OnSessionClicked;
 
-	virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
+    virtual void NativeConstruct() override;
+    virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
 
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* SessionNameText;
-	void SetItemSelected(bool IsSelected);
+    UPROPERTY(meta = (BindWidget))
+    class UButton* SessionButton;
+
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* SessionNameText;
+
+    // Assign session data
+    void Setup(class USessionListItemData* InData);
+
+    void SetSelected(bool bInSelected);
+
+private:
+    UFUNCTION()
+    void OnSessionButtonClicked();
+
+    USessionListItemData* StoredSessionData;
 };

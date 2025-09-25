@@ -6,7 +6,7 @@
 #include "SocketSubsystem.h"
 #include "RelicRunners/Game/RelicRunnersGameInstance.h"
 #include "Components/Button.h"
-#include "Components/ListView.h"
+#include "Components/TileView.h"
 #include "SessionListItemWidget.h"
 #include "SessionListItemData.h"
 #include "Components/TextBlock.h"
@@ -16,6 +16,7 @@
 void UJoinUserWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+
 	if (BackButton)
 	{
 		BackButton->OnClicked.AddDynamic(this, &UJoinUserWidget::BackButtonClicked);
@@ -26,17 +27,26 @@ void UJoinUserWidget::NativeConstruct()
 		FindGames->OnClicked.AddDynamic(this, &UJoinUserWidget::FindGamesButtonClicked);
 	}
 
-	if (SessionListView)
-	{
-		SessionListView->OnItemClicked().AddUObject(this, &UJoinUserWidget::OnItemClicked);
-	}
-
 	if (JoinButton)
 	{
 		JoinButton->OnClicked.AddDynamic(this, &UJoinUserWidget::JoinGameButtonClicked);
 	}
 
+	if (SessionTileView)
+	{
+		SessionTileView->OnEntryWidgetGenerated().AddUObject(this, &UJoinUserWidget::HandleEntryGenerated);
+	}
+
 }
+
+void UJoinUserWidget::HandleEntryGenerated(UUserWidget& EntryWidget)
+{
+	if (USessionListItemWidget* SessionWidget = Cast<USessionListItemWidget>(&EntryWidget))
+	{
+		SessionWidget->OnSessionClicked.BindUObject(this, &UJoinUserWidget::HandleSessionClicked);
+	}
+}
+
 
 void UJoinUserWidget::SetParentMenu(UMainMenuWidget* InParentMenu)
 {
@@ -64,9 +74,9 @@ void UJoinUserWidget::FindGamesButtonClicked()
 
 void UJoinUserWidget::JoinGameButtonClicked()
 {
-	if (LastSelectedItem && SessionListView)
+	if (LastSelectedItem && SessionTileView)
 	{
-		int32 ItemIndex = SessionListView->GetIndexForItem(LastSelectedItem);
+		int32 ItemIndex = SessionTileView->GetIndexForItem(LastSelectedItem);
 		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
 		if (GameInstance)
 		{
@@ -75,16 +85,36 @@ void UJoinUserWidget::JoinGameButtonClicked()
 	}
 }
 
+void UJoinUserWidget::HandleSessionClicked(USessionListItemData* ClickedSession)
+{
+	LastSelectedItem = ClickedSession;
+	ShowJoinButton(true);
+
+	// Reset all items to white
+	if (SessionTileView)
+	{
+		for (UObject* Item : SessionTileView->GetListItems())
+		{
+			if (USessionListItemWidget* Entry = Cast<USessionListItemWidget>(SessionTileView->GetEntryWidgetFromItem(Item)))
+			{
+				Entry->SetSelected(Item == LastSelectedItem);
+			}
+		}
+	}
+}
+
+
+
 void UJoinUserWidget::SearchForLanGames()
 {
 	URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
 	if (GameInstance)
 	{
-		if (FindGames && SessionListView)
+		if (FindGames && SessionTileView)
 		{
 			FindGames->SetIsEnabled(false);
-			SessionListView->ClearListItems();
-			SessionListView->RequestRefresh();
+			SessionTileView->ClearListItems();
+			SessionTileView->RequestRefresh();
 			GameInstance->FindGames(this);
 			if (SearchProgress)
 			{
@@ -92,28 +122,6 @@ void UJoinUserWidget::SearchForLanGames()
 			}
 			ShowJoinButton(false);
 		}
-	}
-}
-
-void UJoinUserWidget::OnItemClicked(UObject* ClickedItem)
-{
-	if (SessionListView == nullptr || ClickedItem == nullptr)
-	{
-		return;
-	}
-
-	if (LastSelectedItem)
-	{
-		if (USessionListItemWidget* LastWidget = Cast<USessionListItemWidget>(SessionListView->GetEntryWidgetFromItem(LastSelectedItem)))
-		{
-			LastWidget->SetItemSelected(false);
-		}
-	}
-	if (USessionListItemWidget* SelectedWidget = Cast<USessionListItemWidget>(SessionListView->GetEntryWidgetFromItem(ClickedItem)))
-	{
-		SelectedWidget->SetItemSelected(true);
-		LastSelectedItem = ClickedItem;
-		ShowJoinButton(true);
 	}
 }
 
@@ -142,13 +150,20 @@ void UJoinUserWidget::OnFindSessionsComplete(FString Str)
 		NewSessionItem->SessionName = Str;
 	}
 
-	if (SessionListView)
+	if (SessionTileView)
 	{
-		SessionListView->AddItem(NewSessionItem);
+		SessionTileView->AddItem(NewSessionItem);
+
+		// After adding, try to get its entry widget
+		if (USessionListItemWidget* Entry = Cast<USessionListItemWidget>(SessionTileView->GetEntryWidgetFromItem(NewSessionItem)))
+		{
+			Entry->OnSessionClicked.BindUObject(this, &UJoinUserWidget::HandleSessionClicked);
+		}
 	}
 
 	EnableRefresh();
 }
+
 
 void UJoinUserWidget::EnableRefresh()
 {

@@ -17,6 +17,7 @@ class RELICRUNNERS_API UJoinUserWidget : public UUserWidget
 	GENERATED_BODY()
 public:
 	void NativeConstruct() override;
+	void HandleEntryGenerated(UUserWidget& EntryWidget);
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* BackButton = nullptr;
@@ -39,14 +40,14 @@ protected:
 	UFUNCTION()
 	void JoinGameButtonClicked();
 
-	void SearchForLanGames();
-
 	UFUNCTION()
-	void OnItemClicked(UObject* ClickedItem);
+	void HandleSessionClicked(class USessionListItemData* ClickedSession);
+
+	void SearchForLanGames();
 
 	UPROPERTY(meta = (BindWidget))
 
-	class UListView* SessionListView;
+	class UTileView* SessionTileView;
 
 	UObject* LastSelectedItem = nullptr;
 	void ShowJoinButton(bool IsEnabled);
