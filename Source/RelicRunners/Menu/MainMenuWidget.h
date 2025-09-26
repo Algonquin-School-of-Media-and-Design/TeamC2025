@@ -15,7 +15,13 @@ protected:
     virtual void NativeConstruct() override;
     class UModeSelectionWidget* ModeSelectionWidget;
     class UJoinUserWidget* JoinGameWidget;
+    class USettingsWidget* SettingsWidget;
+    class UUpgradesWidget* UpgradesWidget;
+    class UCreditsWidget* CreditsWidget;
 
+    //need to be fixed later 
+    class UJoinUserWidget* TutorialWidget;
+    class UJoinUserWidget* PlayWidget;
 
 public:
     UPROPERTY(meta = (BindWidget))
@@ -25,12 +31,36 @@ public:
     void ShowModeSelectionWidget();
 
     UFUNCTION(BlueprintCallable)
-    void ShowJoinGameWidget();
+    void ShowSessionsWidget();
+
+    UFUNCTION(BlueprintCallable)
+    void ShowUpgradesWidget();
+
+    UFUNCTION(BlueprintCallable)
+    void ShowSettingsWidget();
+
+    UFUNCTION(BlueprintCallable)
+    void ShowTutorialWidget();
+
+    UFUNCTION(BlueprintCallable)
+    void ShowCreditsWidget();
+
+    UFUNCTION(BlueprintCallable)
+    void ShowPlayWidget();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> ModeSelectionUserWidgetClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> JoinGameUserWidgetClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UUserWidget> CreditsWidgetClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UUserWidget> UpgradesWidgetClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UUserWidget> SettingsWidgetClass;
 
 };

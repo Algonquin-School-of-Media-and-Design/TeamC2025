@@ -3,6 +3,9 @@
 #include "Components/WidgetSwitcher.h"
 #include "JoinUserWidget.h"
 #include "ModeSelectionWidget.h"
+#include "UpgradesWidget.h"
+#include "SettingsWidget.h"
+#include "CreditsWidget.h"
 
 void UMainMenuWidget::NativeConstruct()
 {
@@ -12,14 +15,24 @@ void UMainMenuWidget::NativeConstruct()
     {
         ModeSelectionWidget = CreateWidget<UModeSelectionWidget>(GetWorld(), ModeSelectionUserWidgetClass);
         JoinGameWidget = CreateWidget<UJoinUserWidget>(GetWorld(), JoinGameUserWidgetClass);
+        CreditsWidget = CreateWidget<UCreditsWidget>(GetWorld(), CreditsWidgetClass);
+        UpgradesWidget = CreateWidget<UUpgradesWidget>(GetWorld(), UpgradesWidgetClass);
+        SettingsWidget = CreateWidget<USettingsWidget>(GetWorld(), SettingsWidgetClass);
 
         if (ModeSelectionWidget && JoinGameWidget)
         {
             WidgetSwitcher->AddChild(ModeSelectionWidget);
             WidgetSwitcher->AddChild(JoinGameWidget);
+            WidgetSwitcher->AddChild(CreditsWidget);
+            WidgetSwitcher->AddChild(UpgradesWidget);
+            WidgetSwitcher->AddChild(SettingsWidget);
 
             ModeSelectionWidget->SetParentMenu(this);
             JoinGameWidget->SetParentMenu(this);
+            CreditsWidget->SetParentMenu(this);
+            UpgradesWidget->SetParentMenu(this);
+            SettingsWidget->SetParentMenu(this);
+
             // Start by showing ModeSelectionWidget
             ShowModeSelectionWidget();
         }
@@ -34,11 +47,51 @@ void UMainMenuWidget::ShowModeSelectionWidget()
     }
 }
 
-void UMainMenuWidget::ShowJoinGameWidget()
+void UMainMenuWidget::ShowSessionsWidget()
 {
     if (WidgetSwitcher && JoinGameWidget)
     {
         WidgetSwitcher->SetActiveWidget(JoinGameWidget);
         JoinGameWidget->RefreshMenu();
+    }
+}
+
+void UMainMenuWidget::ShowUpgradesWidget()
+{
+    if (WidgetSwitcher && UpgradesWidget)
+    {
+        WidgetSwitcher->SetActiveWidget(UpgradesWidget);
+    }
+}
+
+void UMainMenuWidget::ShowSettingsWidget()
+{
+    if (WidgetSwitcher && SettingsWidget)
+    {
+        WidgetSwitcher->SetActiveWidget(SettingsWidget);
+    }
+}
+
+void UMainMenuWidget::ShowTutorialWidget()
+{
+    if (WidgetSwitcher && TutorialWidget)
+    {
+        WidgetSwitcher->SetActiveWidget(TutorialWidget);
+    }
+}
+
+void UMainMenuWidget::ShowCreditsWidget()
+{
+    if (WidgetSwitcher && CreditsWidget)
+    {
+        WidgetSwitcher->SetActiveWidget(CreditsWidget);
+    }
+}
+
+void UMainMenuWidget::ShowPlayWidget()
+{
+    if (WidgetSwitcher && PlayWidget)
+    {
+        WidgetSwitcher->SetActiveWidget(PlayWidget);
     }
 }
