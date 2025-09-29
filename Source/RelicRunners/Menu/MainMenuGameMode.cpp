@@ -2,6 +2,8 @@
 #include "MainMenuWidget.h" 
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
+#include "RelicRunners/Menu/JoinUserWidget.h"
+#include "RelicRunners/Menu/ModeSelectionWidget.h"
 
 AMainMenuGameMode::AMainMenuGameMode()
 {
@@ -32,5 +34,46 @@ AMainMenuGameMode::AMainMenuGameMode()
 
 void AMainMenuGameMode::BeginPlay()
 {
+    UWorld* World = GetWorld();
+    if (World)
+    {
+        APlayerController* PC = World->GetFirstPlayerController();
+
+        TArray<AActor*> FoundActors;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+        AActor* MainMenuCamera = nullptr;
+
+        for (auto actor : FoundActors)
+        {
+            if (actor->ActorHasTag("MainMenuCamera"))
+            {
+                MainMenuCamera = actor;
+            }
+        }
+
+        if (MainMenuCamera)
+        {
+            PC->SetViewTargetWithBlend(MainMenuCamera, 0.0f);
+        }
+
+        if (LobbyWidget)
+        {
+            LobbyWidget->RemoveFromParent();
+        }
+
+        if (!MainMenuWidget && MainMenuWidgetClass)
+        {
+            MainMenuWidget = CreateWidget<UMainMenuWidget>(PC, MainMenuWidgetClass);
+            if (MainMenuWidget)
+            {
+                MainMenuWidget->AddToViewport();
+                MainMenuWidget->SetVisibility(ESlateVisibility::Visible);
+                MainMenuWidget->SetIsEnabled(true);
+                PC->SetInputMode(FInputModeGameAndUI());
+                PC->SetShowMouseCursor(true);
+            }
+        }
+    }
+
     Super::BeginPlay();
 }

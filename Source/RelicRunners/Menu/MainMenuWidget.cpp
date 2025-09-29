@@ -87,11 +87,3 @@ void UMainMenuWidget::ShowCreditsWidget()
         WidgetSwitcher->SetActiveWidget(CreditsWidget);
     }
 }
-
-void UMainMenuWidget::ShowPlayWidget()
-{
-    if (WidgetSwitcher && PlayWidget)
-    {
-        WidgetSwitcher->SetActiveWidget(PlayWidget);
-    }
-}

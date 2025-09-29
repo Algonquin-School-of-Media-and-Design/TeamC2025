@@ -69,6 +69,11 @@ void UModeSelectionWidget::HostButtonClicked()
 
 			GameInstance->HostGame();
 		}
+
+		if (ParentMenu)
+		{
+			ParentMenu->ShowSessionsWidget();
+		}
 	}
 }
 

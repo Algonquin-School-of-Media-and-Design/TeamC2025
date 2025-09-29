@@ -13,6 +13,7 @@
 #include "Components/Border.h"
 #include "MainMenuWidget.h"
 #include "Components/CircularThrobber.h"
+#include <Kismet/GameplayStatics.h>
 
 void UJoinUserWidget::NativeConstruct()
 {
@@ -66,7 +67,30 @@ void UJoinUserWidget::BackButtonClicked()
 	if (World)
 	{
 		// Travel into your gameplay level
-		World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/MainMenu?listen"));
+		TArray<AActor*> FoundActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+
+		AActor* MainMenuCamera = nullptr;
+		for (auto actor : FoundActors)
+		{
+			if (actor->ActorHasTag("MainMenuCamera"))
+			{
+				MainMenuCamera = actor;
+			}
+		}
+
+		if (MainMenuCamera)
+		{
+			World->GetFirstPlayerController()->SetViewTargetWithBlend(MainMenuCamera, 0.0f);
+		}
+
+		if (ParentMenu)
+		{
+			ParentMenu->ShowModeSelectionWidget();
+		}
+
+		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+		GameInstance->LeaveSession();
 	}
 }
 

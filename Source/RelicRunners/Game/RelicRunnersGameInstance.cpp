@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "OnlineSessionSettings.h"
 #include "RelicRunners/Menu/JoinUserWidget.h"
+#include "RelicRunners/Menu/MainMenuWidget.h"
 
 void URelicRunnersGameInstance::Init()
 {
@@ -64,8 +65,24 @@ void URelicRunnersGameInstance::OnCreateSessionComplete(FName SessionName, bool 
         UWorld* World = GetWorld();
         if (World)
         {
-            // Travel into your gameplay level
-            World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/Lobby?listen"));
+            APlayerController* PC = World->GetFirstPlayerController();
+            TArray<AActor*> FoundActors;
+            UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+
+            AActor* LobbyCamera = nullptr;
+            for (auto actor : FoundActors)
+            {
+                if (actor->ActorHasTag("LobbyCamera"))
+                {
+                    LobbyCamera = actor;
+                }
+            }
+
+            if (LobbyCamera)
+            {
+                PC->SetViewTargetWithBlend(LobbyCamera, 0.0f);
+            }
+
         }
     }
     else

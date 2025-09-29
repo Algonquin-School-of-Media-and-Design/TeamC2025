@@ -21,7 +21,6 @@ protected:
 
     //need to be fixed later 
     class UJoinUserWidget* TutorialWidget;
-    class UJoinUserWidget* PlayWidget;
 
 public:
     UPROPERTY(meta = (BindWidget))
@@ -44,9 +43,6 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void ShowCreditsWidget();
-
-    UFUNCTION(BlueprintCallable)
-    void ShowPlayWidget();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> ModeSelectionUserWidgetClass;
