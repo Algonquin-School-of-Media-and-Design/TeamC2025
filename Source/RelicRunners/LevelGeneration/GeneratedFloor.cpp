@@ -6,23 +6,19 @@
 #include "Components/SceneComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/TextRenderComponent.h"
-#include "Components/InstancedStaticMeshComponent.h"
 
 // Sets default values
 AGeneratedFloor::AGeneratedFloor() :
 	Origin(nullptr),
 	GeneratorOwner(nullptr),
 	MainState(EMainFloorState::Blank),
-	FloorNeighbours(EFloorNeighbours::Blank)
+	FloorNeighbours(EFloorNeighbour::Blank)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 	Origin = CreateDefaultSubobject<USceneComponent>("Origin");
 	RootComponent = Origin;
-
-	ISMComp = CreateDefaultSubobject<UInstancedStaticMeshComponent>("Mesh");
-	ISMComp->SetupAttachment(Origin);
 
 	DebugUpArrow = CreateDefaultSubobject<UArrowComponent>("UpArrow");
 	DebugUpArrow->SetupAttachment(Origin);
@@ -73,13 +69,6 @@ AGeneratedFloor::AGeneratedFloor() :
 void AGeneratedFloor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (ISMComp->GetStaticMesh() == nullptr)
-		return;
-
-	FTransform transform = GetActorTransform();
-
-	ISMComp->AddInstance(transform);
 }
 
 void AGeneratedFloor::InitializeFloor(ALevelGenerator* owner, int xIndex, int yIndex)
@@ -162,22 +151,22 @@ void AGeneratedFloor::CheckTopNeighbours(bool checkLeft, bool checkRight, int in
 		AGeneratedFloor* leftNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index - 1);
 		if (leftNeighbourFloor->GetMainState() == EMainFloorState::Full)
 		{
-			FloorNeighbours |= EFloorNeighbours::TopLeft;
+			FloorNeighbours |= EFloorNeighbour::TopLeft;
 		}
 		else if (leftNeighbourFloor->GetMainState() == EMainFloorState::Blank)
 		{
-			FloorNeighbours &= ~EFloorNeighbours::TopLeft;
+			FloorNeighbours &= ~EFloorNeighbour::TopLeft;
 		}
 	}
 
 	AGeneratedFloor* middleNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index);
 	if (middleNeighbourFloor->GetMainState() == EMainFloorState::Full)
 	{
-		FloorNeighbours |= EFloorNeighbours::TopMiddle;
+		FloorNeighbours |= EFloorNeighbour::TopMiddle;
 	}
 	else if (middleNeighbourFloor->GetMainState() == EMainFloorState::Blank)
 	{
-		FloorNeighbours &= ~EFloorNeighbours::TopMiddle;
+		FloorNeighbours &= ~EFloorNeighbour::TopMiddle;
 	}
 
 	if (checkRight)
@@ -185,11 +174,11 @@ void AGeneratedFloor::CheckTopNeighbours(bool checkLeft, bool checkRight, int in
 		AGeneratedFloor* rightNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index + 1);
 		if (rightNeighbourFloor->GetMainState() == EMainFloorState::Full)
 		{
-			FloorNeighbours |= EFloorNeighbours::TopRight;
+			FloorNeighbours |= EFloorNeighbour::TopRight;
 		}
 		else if (rightNeighbourFloor->GetMainState() == EMainFloorState::Blank)
 		{
-			FloorNeighbours &= ~EFloorNeighbours::TopRight;
+			FloorNeighbours &= ~EFloorNeighbour::TopRight;
 		}
 	}
 }
@@ -203,24 +192,24 @@ void AGeneratedFloor::CheckMiddleNeighbours(bool checkLeft, bool checkRight, int
 		AGeneratedFloor* leftNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index - 1);
 		if (leftNeighbourFloor->GetMainState() == EMainFloorState::Full)
 		{
-			FloorNeighbours |= EFloorNeighbours::MiddleLeft;
+			FloorNeighbours |= EFloorNeighbour::MiddleLeft;
 		}
 		else if (leftNeighbourFloor->GetMainState() == EMainFloorState::Blank)
 		{
-			FloorNeighbours &= ~EFloorNeighbours::MiddleLeft;
+			FloorNeighbours &= ~EFloorNeighbour::MiddleLeft;
 		}
 	}
-	
+
 	if (checkRight)
 	{
 		AGeneratedFloor* rightNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index + 1);
 		if (rightNeighbourFloor->GetMainState() == EMainFloorState::Full)
 		{
-			FloorNeighbours |= EFloorNeighbours::MiddleRight;
+			FloorNeighbours |= EFloorNeighbour::MiddleRight;
 		}
 		else if (rightNeighbourFloor->GetMainState() == EMainFloorState::Blank)
 		{
-			FloorNeighbours &= ~EFloorNeighbours::MiddleRight;
+			FloorNeighbours &= ~EFloorNeighbour::MiddleRight;
 		}
 	}
 
@@ -235,22 +224,22 @@ void AGeneratedFloor::CheckDownNeighbours(bool checkLeft, bool checkRight, int i
 		AGeneratedFloor* leftNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index - 1);
 		if (leftNeighbourFloor->GetMainState() == EMainFloorState::Full)
 		{
-			FloorNeighbours |= EFloorNeighbours::BottomLeft;
+			FloorNeighbours |= EFloorNeighbour::BottomLeft;
 		}
 		else if (leftNeighbourFloor->GetMainState() == EMainFloorState::Blank)
 		{
-			FloorNeighbours &= ~EFloorNeighbours::BottomLeft;
+			FloorNeighbours &= ~EFloorNeighbour::BottomLeft;
 		}
 	}
 
 	AGeneratedFloor* middleNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index);
 	if (middleNeighbourFloor->GetMainState() == EMainFloorState::Full)
 	{
-		FloorNeighbours |= EFloorNeighbours::BottomMiddle;
+		FloorNeighbours |= EFloorNeighbour::BottomMiddle;
 	}
 	else if (middleNeighbourFloor->GetMainState() == EMainFloorState::Blank)
 	{
-		FloorNeighbours &= ~EFloorNeighbours::BottomMiddle;
+		FloorNeighbours &= ~EFloorNeighbour::BottomMiddle;
 	}
 
 	if (checkRight)
@@ -258,11 +247,11 @@ void AGeneratedFloor::CheckDownNeighbours(bool checkLeft, bool checkRight, int i
 		AGeneratedFloor* rightNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index + 1);
 		if (rightNeighbourFloor->GetMainState() == EMainFloorState::Full)
 		{
-			FloorNeighbours |= EFloorNeighbours::BottomRight;
+			FloorNeighbours |= EFloorNeighbour::BottomRight;
 		}
 		else if (rightNeighbourFloor->GetMainState() == EMainFloorState::Blank)
 		{
-			FloorNeighbours &= ~EFloorNeighbours::BottomRight;
+			FloorNeighbours &= ~EFloorNeighbour::BottomRight;
 		}
 	}
 
@@ -325,33 +314,33 @@ void AGeneratedFloor::SetFloorShape()
 
 void AGeneratedFloor::SetTopLeftShape()
 {
-	EFloorNeighbours topLeftCornerCheck = FloorNeighbours & (EFloorNeighbours::TopLeft | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft);
+	EFloorNeighbour topLeftCornerCheck = FloorNeighbours & (EFloorNeighbour::TopLeft | EFloorNeighbour::TopMiddle | EFloorNeighbour::MiddleLeft);
 
 	FString topLeftString = FString("None");
 
 	switch (topLeftCornerCheck)
 	{
-	case EFloorNeighbours::TopLeft:
+	case EFloorNeighbour::TopLeft:
 		if (MainState == EMainFloorState::Full)
 			topLeftString = FString("Full");
 		break;
-	case EFloorNeighbours::TopMiddle:
+	case EFloorNeighbour::TopMiddle:
 		if (MainState == EMainFloorState::Full)
 			topLeftString = FString("Side Top");
 		break;
-	case EFloorNeighbours::MiddleLeft:
+	case EFloorNeighbour::MiddleLeft:
 		if (MainState == EMainFloorState::Full)
 			topLeftString = FString("Side Left");
 		break;
-	case EFloorNeighbours::TopLeft | EFloorNeighbours::TopMiddle:
+	case EFloorNeighbour::TopLeft | EFloorNeighbour::TopMiddle:
 		if (MainState == EMainFloorState::Full)
 			topLeftString = FString("Full Top");
 		break;
-	case EFloorNeighbours::TopLeft | EFloorNeighbours::MiddleLeft:
+	case EFloorNeighbour::TopLeft | EFloorNeighbour::MiddleLeft:
 		if (MainState == EMainFloorState::Full)
 			topLeftString = FString("Full Left");
 		break;
-	case EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft:
+	case EFloorNeighbour::TopMiddle | EFloorNeighbour::MiddleLeft:
 		if (MainState == EMainFloorState::Full)
 		{
 			topLeftString = FString("Full Top & Left");
@@ -361,7 +350,7 @@ void AGeneratedFloor::SetTopLeftShape()
 			topLeftString = FString("Concave Corner");
 		}
 		break;
-	case EFloorNeighbours::TopLeft | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft:
+	case EFloorNeighbour::TopLeft | EFloorNeighbour::TopMiddle | EFloorNeighbour::MiddleLeft:
 		if (MainState == EMainFloorState::Full)
 		{
 			topLeftString = FString("True Full");
@@ -388,33 +377,33 @@ void AGeneratedFloor::SetTopLeftShape()
 
 void AGeneratedFloor::SetTopRightShape()
 {
-	EFloorNeighbours topRightCornerCheck = FloorNeighbours & (EFloorNeighbours::TopRight | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight);
-	
+	EFloorNeighbour topRightCornerCheck = FloorNeighbours & (EFloorNeighbour::TopRight | EFloorNeighbour::TopMiddle | EFloorNeighbour::MiddleRight);
+
 	FString topRightString = FString("None");
 
 	switch (topRightCornerCheck)
 	{
-	case EFloorNeighbours::TopRight:
+	case EFloorNeighbour::TopRight:
 		if (MainState == EMainFloorState::Full)
 			topRightString = FString("Full");
 		break;
-	case EFloorNeighbours::TopMiddle:
+	case EFloorNeighbour::TopMiddle:
 		if (MainState == EMainFloorState::Full)
 			topRightString = FString("Side Top");
 		break;
-	case EFloorNeighbours::MiddleRight:
+	case EFloorNeighbour::MiddleRight:
 		if (MainState == EMainFloorState::Full)
 			topRightString = FString("Side Right");
 		break;
-	case EFloorNeighbours::TopRight | EFloorNeighbours::TopMiddle:
+	case EFloorNeighbour::TopRight | EFloorNeighbour::TopMiddle:
 		if (MainState == EMainFloorState::Full)
 			topRightString = FString("Full Top");
 		break;
-	case EFloorNeighbours::TopRight | EFloorNeighbours::MiddleRight:
+	case EFloorNeighbour::TopRight | EFloorNeighbour::MiddleRight:
 		if (MainState == EMainFloorState::Full)
 			topRightString = FString("Full Right");
 		break;
-	case EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight:
+	case EFloorNeighbour::TopMiddle | EFloorNeighbour::MiddleRight:
 		if (MainState == EMainFloorState::Full)
 		{
 			topRightString = FString("Full Top & Right");
@@ -424,7 +413,7 @@ void AGeneratedFloor::SetTopRightShape()
 			topRightString = FString("Concave Corner");
 		}
 		break;
-	case EFloorNeighbours::TopRight | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight:
+	case EFloorNeighbour::TopRight | EFloorNeighbour::TopMiddle | EFloorNeighbour::MiddleRight:
 		if (MainState == EMainFloorState::Full)
 		{
 			topRightString = FString("True Full");
@@ -451,33 +440,33 @@ void AGeneratedFloor::SetTopRightShape()
 
 void AGeneratedFloor::SetBottomLeftShape()
 {
-	EFloorNeighbours bottomLeftCornerCheck = FloorNeighbours & (EFloorNeighbours::BottomLeft | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft);
+	EFloorNeighbour bottomLeftCornerCheck = FloorNeighbours & (EFloorNeighbour::BottomLeft | EFloorNeighbour::BottomMiddle | EFloorNeighbour::MiddleLeft);
 
 	FString bottomLeftString = FString("None");
 
 	switch (bottomLeftCornerCheck)
 	{
-	case EFloorNeighbours::BottomLeft:
+	case EFloorNeighbour::BottomLeft:
 		if (MainState == EMainFloorState::Full)
 			bottomLeftString = FString("Full");
 		break;
-	case EFloorNeighbours::BottomMiddle:
+	case EFloorNeighbour::BottomMiddle:
 		if (MainState == EMainFloorState::Full)
 			bottomLeftString = FString("Side Top");
 		break;
-	case EFloorNeighbours::MiddleLeft:
+	case EFloorNeighbour::MiddleLeft:
 		if (MainState == EMainFloorState::Full)
 			bottomLeftString = FString("Side Left");
 		break;
-	case EFloorNeighbours::BottomLeft | EFloorNeighbours::BottomMiddle:
+	case EFloorNeighbour::BottomLeft | EFloorNeighbour::BottomMiddle:
 		if (MainState == EMainFloorState::Full)
 			bottomLeftString = FString("Full Bottom");
 		break;
-	case EFloorNeighbours::BottomLeft | EFloorNeighbours::MiddleLeft:
+	case EFloorNeighbour::BottomLeft | EFloorNeighbour::MiddleLeft:
 		if (MainState == EMainFloorState::Full)
 			bottomLeftString = FString("Full Left");
 		break;
-	case EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft:
+	case EFloorNeighbour::BottomMiddle | EFloorNeighbour::MiddleLeft:
 		if (MainState == EMainFloorState::Full)
 		{
 			bottomLeftString = FString("Full Bottom & Left");
@@ -487,7 +476,7 @@ void AGeneratedFloor::SetBottomLeftShape()
 			bottomLeftString = FString("Concave Corner");
 		}
 		break;
-	case EFloorNeighbours::BottomLeft | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft:
+	case EFloorNeighbour::BottomLeft | EFloorNeighbour::BottomMiddle | EFloorNeighbour::MiddleLeft:
 		if (MainState == EMainFloorState::Full)
 		{
 			bottomLeftString = FString("True Full");
@@ -515,33 +504,33 @@ void AGeneratedFloor::SetBottomLeftShape()
 
 void AGeneratedFloor::SetBottomRightShape()
 {
-	EFloorNeighbours bottomRightCornerCheck = FloorNeighbours & (EFloorNeighbours::BottomRight | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight);
+	EFloorNeighbour bottomRightCornerCheck = FloorNeighbours & (EFloorNeighbour::BottomRight | EFloorNeighbour::BottomMiddle | EFloorNeighbour::MiddleRight);
 
 	FString bottomRightString = FString("None");
 
 	switch (bottomRightCornerCheck)
 	{
-	case EFloorNeighbours::BottomRight:
+	case EFloorNeighbour::BottomRight:
 		if (MainState == EMainFloorState::Full)
 			bottomRightString = FString("Full");
 		break;
-	case EFloorNeighbours::BottomMiddle:
+	case EFloorNeighbour::BottomMiddle:
 		if (MainState == EMainFloorState::Full)
 			bottomRightString = FString("Side Bottom");
 		break;
-	case EFloorNeighbours::MiddleRight:
+	case EFloorNeighbour::MiddleRight:
 		if (MainState == EMainFloorState::Full)
 			bottomRightString = FString("Side Right");
 		break;
-	case EFloorNeighbours::BottomRight | EFloorNeighbours::BottomMiddle:
+	case EFloorNeighbour::BottomRight | EFloorNeighbour::BottomMiddle:
 		if (MainState == EMainFloorState::Full)
 			bottomRightString = FString("Full Bottom");
 		break;
-	case EFloorNeighbours::BottomRight | EFloorNeighbours::MiddleRight:
+	case EFloorNeighbour::BottomRight | EFloorNeighbour::MiddleRight:
 		if (MainState == EMainFloorState::Full)
 			bottomRightString = FString("Full Right");
 		break;
-	case EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight:
+	case EFloorNeighbour::BottomMiddle | EFloorNeighbour::MiddleRight:
 		if (MainState == EMainFloorState::Full)
 		{
 			bottomRightString = FString("Full Bottom & Right");
@@ -551,7 +540,7 @@ void AGeneratedFloor::SetBottomRightShape()
 			bottomRightString = FString("Concave Corner");
 		}
 		break;
-	case EFloorNeighbours::BottomRight | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight:
+	case EFloorNeighbour::BottomRight | EFloorNeighbour::BottomMiddle | EFloorNeighbour::MiddleRight:
 		if (MainState == EMainFloorState::Full)
 		{
 			bottomRightString = FString("True Full");

@@ -8,6 +8,29 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFloorCheckNeighbour);
 
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class EFloorNeighbours : uint8
+{
+	Blank = 0,
+	TopLeft = 1 << 0,			/*0000 0001*/
+	TopMiddle = 1 << 1,			/*0000 0010*/
+	TopRight = 1 << 2,			/*0000 0100*/
+	MiddleLeft = 1 << 3,		/*0000 1000*/
+	MiddleRight = 1 << 4,		/*0001 0000*/
+	BottomLeft = 1 << 5,		/*0010 0000*/
+	BottomMiddle = 1 << 6,		/*0100 0000*/
+	BottomRight = 1 << 7,		/*1000 0000*/
+};
+ENUM_CLASS_FLAGS(EFloorNeighbours);
+
+struct FloorValues
+{
+public:
+	bool IsFullTile = false;
+	EFloorNeighbours FloorNeighbours = EFloorNeighbours::Blank;
+};
+
+
 UCLASS()
 class RELICRUNNERS_API ALevelGenerator : public AActor
 {
@@ -64,7 +87,22 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	void GenerateFloor(int x, int y);
+	void GenerateFloor(int x, int y, TArray<FloorValues> &floorValues);
+
+	void InitializeFloor(int x, int y, TArray<FloorValues>& floorValues);
+	void ForceFloorBool(bool forcedFloor, int x, int y, TArray<FloorValues> &floorValues);
+	void CheckFloor(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
+
+	void FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues);
+	void FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues);
+	void FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues);
+
+	void SetFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
+
+	void SetTopLeftFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
+	void SetTopRightFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
+	void SetBottomLeftFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
+	void SetBottomRightFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
 
 	int GetMapWidth() {return SpawnWidth;}
 	int GetMapDepth() {return SpawnDepth;}

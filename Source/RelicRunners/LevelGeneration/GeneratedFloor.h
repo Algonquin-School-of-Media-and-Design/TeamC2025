@@ -14,7 +14,7 @@ enum class EMainFloorState : uint8
 };
 
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
-enum class EFloorNeighbours : uint8
+enum class EFloorNeighbour : uint8
 {
 	Blank = 0,
 	TopLeft				= 1<<0,		/*0000 0001*/
@@ -26,7 +26,7 @@ enum class EFloorNeighbours : uint8
 	BottomMiddle		= 1<<6,		/*0100 0000*/
 	BottomRight			= 1<<7,		/*1000 0000*/
 };
-ENUM_CLASS_FLAGS(EFloorNeighbours);
+ENUM_CLASS_FLAGS(EFloorNeighbour);
 
 UCLASS()
 class RELICRUNNERS_API AGeneratedFloor : public AActor
@@ -39,9 +39,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Default Values")
 	class USceneComponent* Origin;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	class UInstancedStaticMeshComponent* ISMComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UArrowComponent* DebugUpArrow;
@@ -114,7 +111,7 @@ private:
 	class ALevelGenerator* GeneratorOwner;
 
 	EMainFloorState MainState;
-	EFloorNeighbours FloorNeighbours;
+	EFloorNeighbour FloorNeighbours;
 	int XIndex;
 	int YIndex;
 };
