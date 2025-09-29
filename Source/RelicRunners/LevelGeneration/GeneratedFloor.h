@@ -13,23 +13,20 @@ enum class EMainFloorState : uint8
 	Full,
 };
 
-UENUM()
-enum class EHorizontalFloorShape : uint8
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class EFloorNeighbours : uint8
 {
-	Blank,
-	Left,
-	Right,
-	Full,
+	Blank = 0,
+	TopLeft				= 1<<0,		/*0000 0001*/
+	TopMiddle			= 1<<1,		/*0000 0010*/
+	TopRight			= 1<<2,		/*0000 0100*/
+	MiddleLeft			= 1<<3,		/*0000 1000*/
+	MiddleRight			= 1<<4,		/*0001 0000*/
+	BottomLeft			= 1<<5,		/*0010 0000*/
+	BottomMiddle		= 1<<6,		/*0100 0000*/
+	BottomRight			= 1<<7,		/*1000 0000*/
 };
-
-UENUM()
-enum class EVerticalFloorShape : uint8
-{
-	Blank,
-	Up,
-	Down,
-	Full,
-};
+ENUM_CLASS_FLAGS(EFloorNeighbours);
 
 UCLASS()
 class RELICRUNNERS_API AGeneratedFloor : public AActor
@@ -43,6 +40,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Default Values")
 	class USceneComponent* Origin;
 
+	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	class UInstancedStaticMeshComponent* ISMComp;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UArrowComponent* DebugUpArrow;
 
@@ -55,6 +55,31 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UArrowComponent* DebugRightArrow;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UArrowComponent* DebugUpLeftArrow;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UArrowComponent* DebugUpRightArrow;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UArrowComponent* DebugDownLeftArrow;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UArrowComponent* DebugDownRightArrow;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UTextRenderComponent* UpLeftCornerText;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UTextRenderComponent* UpRightCornerText;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UTextRenderComponent* DownLeftCornerText;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UTextRenderComponent* DownRightCornerText;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components", meta = (ClampMin = "0", UIMin = "0"))
 	FVector Dimensions;
 
@@ -66,6 +91,7 @@ public:
 	EMainFloorState GetMainState() { return MainState; }
 
 	void InitializeFloor(class ALevelGenerator* Owner, int xIndex, int yIndex);
+	void ForceFloorState(bool forceState);
 
 	UFUNCTION()
 	void SetMainState();
@@ -73,16 +99,22 @@ public:
 	UFUNCTION()
 	void CheckNeighbours();
 
+	void CheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset);
+	void CheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset);
+	void CheckDownNeighbours(bool checkLeft, bool checkRight, int indexOffset);
+
 	void SetFloorShape();
-	void CheckHorizontalNeighbour();
-	void CheckVerticalNeighbour();
+
+	void SetTopLeftShape();
+	void SetTopRightShape();
+	void SetBottomLeftShape();
+	void SetBottomRightShape();
 
 private:
 	class ALevelGenerator* GeneratorOwner;
 
 	EMainFloorState MainState;
-	EHorizontalFloorShape HorizontalShape;
-	EVerticalFloorShape VerticalShape;
+	EFloorNeighbours FloorNeighbours;
 	int XIndex;
 	int YIndex;
 };

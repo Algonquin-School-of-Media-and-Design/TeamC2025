@@ -26,14 +26,38 @@ public:
 	UPROPERTY(EditAnywhere, Category = "SpawningValues")
 	TSubclassOf<class AGeneratedObstacle> GeneratedObstacleTemplate;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	class UStaticMeshComponent* MeshComponent;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	class UInstancedStaticMeshComponent* ISMComp;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	class UInstancedStaticMeshComponent* FullPiece;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	class UInstancedStaticMeshComponent* SidePiece;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	class UInstancedStaticMeshComponent* ConcaveCornerPiece;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	class UInstancedStaticMeshComponent* ConvexCornerPiece;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "100", UIMax = "100"))
 	int SpawnWidth;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "100", UIMax = "100"))
 	int SpawnDepth;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
 	float FullPercentage;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	int CenterForceFull;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	int BorderForceFull;
 
 protected:
 	// Called when the game starts or when spawned
