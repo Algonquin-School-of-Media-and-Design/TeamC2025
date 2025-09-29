@@ -2,6 +2,7 @@
 #include "SpawnPoint.h"
 #include "RelicRunners/RelicRunnersCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ADirector::ADirector() 
@@ -16,22 +17,28 @@ ADirector::ADirector()
 void ADirector::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//sort enemies by their weights for the weight sums algorithm used when picking who to spawn
-	m_pDefaultSpawningCards.Sort([](const USpawnCard& A, const USpawnCard& B)
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		return A.m_spawnWeight < B.m_spawnWeight;
-	});
+		//sort enemies by their weights for the weight sums algorithm used when picking who to spawn
+		m_pDefaultSpawningCards.Sort([](const USpawnCard& A, const USpawnCard& B)
+			{
+				return A.m_spawnWeight < B.m_spawnWeight;
+			});
 
-	//reseting some varialbes
-	m_spawnTimer = 0;
+		//reseting some varialbes
+		m_spawnTimer = 0;
 
-	//setting the player pointer
-	TArray<AActor*> m_pTempArray;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARelicRunnersCharacter::StaticClass(), m_pTempArray);
-	for (int i = 0; i < m_pTempArray.Num(); i++)
+		//setting the player pointer
+		/*TArray<AActor*> m_pTempArray;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARelicRunnersCharacter::StaticClass(), m_pTempArray);
+		for (int i = 0; i < m_pTempArray.Num(); i++)
+		{
+			m_pPlayers.Add(static_cast<APawn*>(m_pTempArray[i]));
+		}*/
+	}
+	else if (GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		m_pPlayers.Add(static_cast<APawn*>(m_pTempArray[i]));
+		PrimaryActorTick.bCanEverTick = false;
 	}
 }
 
@@ -67,6 +74,14 @@ TArray<APawn*> ADirector::GetPlayers()
 	return m_pPlayers;
 }
 
+void ADirector::AddPlayer_Implementation(APawn* newPlayer)
+{
+	/*if (!m_pPlayers.Contains(newPlayer))
+	{
+		m_pPlayers.Add(newPlayer);
+	}*/
+}
+
 void ADirector::SpawnCheck()
 {
 	//Setting up the array
@@ -94,20 +109,22 @@ void ADirector::SpawnCheck()
 void ADirector::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	//check to see if it is time for a spawn check
-	if (m_spawnTimer <= 0)
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		SpawnCheck();
-		m_spawnTimer = m_spawnWait;
-	}
-	else
-	{
-		m_spawnTimer -= DeltaTime;
-
-		if (m_spawnTimer < 0)
+		//check to see if it is time for a spawn check
+		if (m_spawnTimer <= 0)
 		{
-			m_spawnTimer = 0;
+			SpawnCheck();
+			m_spawnTimer = m_spawnWait;
+		}
+		else
+		{
+			m_spawnTimer -= DeltaTime;
+
+			if (m_spawnTimer < 0)
+			{
+				m_spawnTimer = 0;
+			}
 		}
 	}
 }

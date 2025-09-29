@@ -48,6 +48,8 @@
 #include "Enemy/EnemyCharacterAI.h"
 #include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
 #include "Game/RelicRunnersGameInstance.h"
+#include "Spawning System/Director.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -481,6 +483,10 @@ void ARelicRunnersCharacter::BeginPlay()
 	{
 		// Setup health regen loop
 		GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
+
+		//updating the director player list
+		ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>()));
+		Director->AddPlayer(this);
 	}
 
 	// === Local client UI setup ===

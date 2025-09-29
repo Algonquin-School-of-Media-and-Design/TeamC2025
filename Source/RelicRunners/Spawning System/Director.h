@@ -49,6 +49,8 @@ public:
 	//A Method to get all the players that the director is keeping track of
 	UFUNCTION()
 	TArray<APawn*> GetPlayers();
+	UFUNCTION(Server, Reliable)
+	void AddPlayer(APawn* newPlayer);
 
 protected:
 	// Called when the game starts or when spawned
