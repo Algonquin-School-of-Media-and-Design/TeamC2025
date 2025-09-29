@@ -126,6 +126,23 @@ public:
     UPROPERTY(BlueprintAssignable)
     FOnEquipmentChanged OnEquipmentChanged;
 
+    // Currency 
+    UPROPERTY(ReplicatedUsing = OnRep_Gold, EditAnywhere, BlueprintReadOnly, Category = "Currency")
+    int32 Gold = 100; // start value for testing
+
+    UFUNCTION(BlueprintCallable, Category = "Currency")
+    bool TryChangeGold(int32 Delta);         // + adds, - spends (fails if < 0)
+
+    UFUNCTION(BlueprintPure, Category = "Currency")
+    int32 GetGold() const { return Gold; }
+
+    UFUNCTION()
+    void OnRep_Gold();
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
+    UPROPERTY(BlueprintAssignable)
+    FOnGoldChanged OnGoldChanged;
+
     // Replication
     UPROPERTY(ReplicatedUsing = OnRep_SortingMethod)
     EInventorySorting CurrentSortingMethod;

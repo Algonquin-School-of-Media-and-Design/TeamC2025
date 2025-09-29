@@ -99,6 +99,16 @@ void UInventory::RefreshInventoryUI()
     OnEquippedStatsUpdated(InventoryComponent->CachedEquippedStats);
 }
 
+// Currency 
+void UInventory::RefreshGoldUI(int32 NewGold)
+{
+    if (TB_Gold)
+    {
+        TB_Gold->SetText(FText::AsNumber(NewGold));
+    }
+}
+
+
 void UInventory::RefreshEquippedUI()
 {
     // Step 1: Clear all slot visuals
@@ -220,6 +230,14 @@ void UInventory::SetInventoryComponent(UInventoryComponent* NewComponent)
     InventoryComponent->OnInventoryChanged.AddDynamic(this, &UInventory::RefreshInventoryUI);
     InventoryComponent->OnEquipmentChanged.AddDynamic(this, &UInventory::RefreshEquippedUI);
     InventoryComponent->OnStatsChanged.AddDynamic(this, &UInventory::OnEquippedStatsUpdated);
+
+    // NEW: bind gold updates
+    InventoryComponent->OnGoldChanged.RemoveAll(this);
+    InventoryComponent->OnGoldChanged.AddDynamic(this, &UInventory::RefreshGoldUI);
+
+    // Initialize once immediately
+    RefreshGoldUI(InventoryComponent->GetGold());
+
 
     UE_LOG(LogTemp, Log, TEXT("[UI] InventoryComponent successfully bound to delegates."));
 
