@@ -16,11 +16,6 @@ void UModeSelectionWidget::NativeConstruct()
 		HostButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::HostButtonClicked);
 	}
 
-	if (SessionsButton)
-	{
-		SessionsButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::SessionsButtonClicked);
-	}
-
 	if (UpgradesButton)
 	{
 		UpgradesButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::UpgradesButtonClicked);
@@ -39,11 +34,6 @@ void UModeSelectionWidget::NativeConstruct()
 	if (CreditsButton)
 	{
 		CreditsButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::CreditsButtonClicked);
-	}
-
-	if (PlayButton)
-	{
-		PlayButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::PlayButtonClicked);
 	}
 
 	if (NameTextBox)
@@ -82,19 +72,19 @@ void UModeSelectionWidget::HostButtonClicked()
 	}
 }
 
-void UModeSelectionWidget::SessionsButtonClicked()
-{
-	if (ParentMenu)
-	{
-		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
-
-		if (GameInstance && NameTextBox)
-		{
-			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
-		}
-		ParentMenu->ShowSessionsWidget();
-	}
-}
+//void UModeSelectionWidget::SessionsButtonClicked()
+//{
+//	if (ParentMenu)
+//	{
+//		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+//
+//		if (GameInstance && NameTextBox)
+//		{
+//			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
+//		}
+//		ParentMenu->ShowSessionsWidget();
+//	}
+//}
 
 void UModeSelectionWidget::SettingsButtonClicked()
 {
@@ -149,20 +139,6 @@ void UModeSelectionWidget::UpgradesButtonClicked()
 			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
 		}
 		ParentMenu->ShowUpgradesWidget();
-	}
-}
-
-void UModeSelectionWidget::PlayButtonClicked()
-{
-	if (ParentMenu)
-	{
-		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
-
-		if (GameInstance && NameTextBox)
-		{
-			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
-		}
-		ParentMenu->ShowPlayWidget();
 	}
 }
 

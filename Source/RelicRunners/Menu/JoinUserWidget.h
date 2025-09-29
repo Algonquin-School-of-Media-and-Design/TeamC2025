@@ -28,8 +28,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* JoinButton = nullptr;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* JoinBorder = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* SessionsBorder = nullptr;
+
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* SearchProgress;
+	class UCircularThrobber* RefreshProgress;
 
 protected:
 	UFUNCTION()

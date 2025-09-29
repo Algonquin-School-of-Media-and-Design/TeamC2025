@@ -10,8 +10,9 @@
 #include "SessionListItemWidget.h"
 #include "SessionListItemData.h"
 #include "Components/TextBlock.h"
+#include "Components/Border.h"
 #include "MainMenuWidget.h"
-
+#include "Components/CircularThrobber.h"
 
 void UJoinUserWidget::NativeConstruct()
 {
@@ -61,9 +62,11 @@ void UJoinUserWidget::RefreshMenu()
 
 void UJoinUserWidget::BackButtonClicked()
 {
-	if (ParentMenu)
+	UWorld* World = GetWorld();
+	if (World)
 	{
-		ParentMenu->ShowModeSelectionWidget();
+		// Travel into your gameplay level
+		World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/MainMenu?listen"));
 	}
 }
 
@@ -115,10 +118,11 @@ void UJoinUserWidget::SearchForLanGames()
 			FindGames->SetIsEnabled(false);
 			SessionTileView->ClearListItems();
 			SessionTileView->RequestRefresh();
+			SessionsBorder->SetVisibility(ESlateVisibility::Collapsed);
 			GameInstance->FindGames(this);
-			if (SearchProgress)
+			if (RefreshProgress)
 			{
-				SearchProgress->SetVisibility(ESlateVisibility::Visible);
+				RefreshProgress->SetVisibility(ESlateVisibility::Visible);
 			}
 			ShowJoinButton(false);
 		}
@@ -133,11 +137,13 @@ void UJoinUserWidget::ShowJoinButton(bool IsEnabled)
 		{
 			JoinButton->SetIsEnabled(true);
 			JoinButton->SetVisibility(ESlateVisibility::Visible);
+			JoinBorder->SetVisibility(ESlateVisibility::Visible);
 		}
 		else
 		{
 			JoinButton->SetIsEnabled(false);
 			JoinButton->SetVisibility(ESlateVisibility::Hidden);
+			JoinBorder->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 }
@@ -159,6 +165,14 @@ void UJoinUserWidget::OnFindSessionsComplete(FString Str)
 		{
 			Entry->OnSessionClicked.BindUObject(this, &UJoinUserWidget::HandleSessionClicked);
 		}
+		if (SessionTileView->GetNumItems() == 0)
+		{
+			SessionsBorder->SetVisibility(ESlateVisibility::Collapsed);
+		}
+		else
+		{
+			SessionsBorder->SetVisibility(ESlateVisibility::Visible);
+		}
 	}
 
 	EnableRefresh();
@@ -170,10 +184,11 @@ void UJoinUserWidget::EnableRefresh()
 	if (FindGames)
 	{
 		FindGames->SetIsEnabled(true);
+		RefreshProgress->SetVisibility(ESlateVisibility::Visible);
 	}
 
-	if (SearchProgress)
+	if (RefreshProgress)
 	{
-		SearchProgress->SetVisibility(ESlateVisibility::Hidden);
+		RefreshProgress->SetVisibility(ESlateVisibility::Hidden);
 	}
 }

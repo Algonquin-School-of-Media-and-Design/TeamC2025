@@ -17,9 +17,6 @@ public:
 	class UButton* HostButton = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UButton* SessionsButton = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* UpgradesButton = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -32,9 +29,6 @@ public:
 	class UButton* CreditsButton = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UButton* PlayButton = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UEditableTextBox* NameTextBox = nullptr;
 
 	void SetParentMenu(class UMainMenuWidget* InParentMenu);
@@ -43,8 +37,6 @@ protected:
 	UFUNCTION()
 	void HostButtonClicked();
 	UFUNCTION()
-	void SessionsButtonClicked();
-	UFUNCTION()
 	void SettingsButtonClicked();
 	UFUNCTION()
 	void CreditsButtonClicked();
@@ -52,8 +44,6 @@ protected:
 	void TutorialButtonClicked();
 	UFUNCTION()
 	void UpgradesButtonClicked();
-	UFUNCTION()
-	void PlayButtonClicked();
 
 	UPROPERTY()
 	class UMainMenuWidget* ParentMenu;

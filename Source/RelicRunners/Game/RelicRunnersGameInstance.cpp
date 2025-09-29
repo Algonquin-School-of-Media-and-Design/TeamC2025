@@ -48,8 +48,8 @@ void URelicRunnersGameInstance::HostGame()
     SessionSettings.bUseLobbiesIfAvailable = true;
     SessionSettings.bAllowJoinViaPresence = true;
     SessionSettings.bAllowJoinInProgress = true;
-    SessionSettings.NumPublicConnections = 8;
-    SessionSettings.Set(FName("MAPNAME"), FString("RelicRunners"), EOnlineDataAdvertisementType::ViaOnlineService);
+    SessionSettings.NumPublicConnections = 4;
+    SessionSettings.Set(FName("MAPNAME"), FString("Session"), EOnlineDataAdvertisementType::ViaOnlineService);
 
     SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnCreateSessionComplete);
     SessionInterface->CreateSession(0, NAME_GameSession, SessionSettings);
@@ -65,7 +65,7 @@ void URelicRunnersGameInstance::OnCreateSessionComplete(FName SessionName, bool 
         if (World)
         {
             // Travel into your gameplay level
-            World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap?listen"));
+            World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/Lobby?listen"));
         }
     }
     else
@@ -110,7 +110,7 @@ void URelicRunnersGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
                 int32 CurrentPlayers = MaxPlayers - SearchResult.Session.NumOpenPublicConnections;
 
                 TextRenderWidget->OnFindSessionsComplete(
-                    FString::Printf(TEXT("%s %d out of %d"), *MapName, CurrentPlayers, MaxPlayers)
+                    FString::Printf(TEXT("%s %d | %d"), *MapName, CurrentPlayers, MaxPlayers)
                 );
             }
         }
