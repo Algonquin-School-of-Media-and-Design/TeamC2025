@@ -26,6 +26,8 @@ public:
     UPROPERTY(meta = (BindWidget))
     class UWidgetSwitcher* WidgetSwitcher;
 
+    UModeSelectionWidget* GetModeSelectionWidget() { return ModeSelectionWidget; }
+
     UFUNCTION(BlueprintCallable)
     void ShowModeSelectionWidget();
 

@@ -77,6 +77,15 @@ void UModeSelectionWidget::HostButtonClicked()
 	}
 }
 
+void UModeSelectionWidget::ResetUI()
+{
+	if (HostButton)
+	{
+		HostButton->SetIsEnabled(true);
+	}
+}
+
+
 //void UModeSelectionWidget::SessionsButtonClicked()
 //{
 //	if (ParentMenu)

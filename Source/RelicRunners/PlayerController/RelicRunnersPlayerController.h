@@ -92,9 +92,21 @@ public:
 
 	void UpdatePreviewItemVisual(UObject* MeshAsset, const FString& ItemType);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UJoinUserWidget> LobbyWidgetClass = nullptr;
+
+	UPROPERTY()
+	class UJoinUserWidget* LobbyWidget = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UMainMenuWidget> MainMenuWidgetClass = nullptr;
+
+	UPROPERTY()
+	class UMainMenuWidget* MainMenuWidget = nullptr;
+
 	// Begin Actor interface
 protected:
-
+	ARelicRunnersPlayerController();
 	virtual void BeginPlay() override;
 
 	virtual void SetupInputComponent() override;
@@ -106,7 +118,6 @@ protected:
 	void Jump(const struct FInputActionValue& Value);
 	void StopJumping(const struct FInputActionValue& Value);
 	void InventoryUI();
-
 	void BasicAttack();
 
 	// End Actor interface

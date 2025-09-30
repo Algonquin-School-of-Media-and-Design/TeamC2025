@@ -28,29 +28,13 @@
 ARelicRunnersGameMode::ARelicRunnersGameMode()
 {
 	// Set default pawn class and player controller
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_Player"));
-	static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_RelicRunnersPlayerController"));
 	static ConstructorHelpers::FClassFinder<APlayerPreview> PlayerPreviewBPClass(TEXT("/Game/ThirdPerson/Blueprints/PlayerPreview/BP_PlayerPreview"));
-
-	if (PlayerPawnBPClass.Class)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-		UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerPawnClass from constructor."));
-	}
-
-	if (PlayerControllerBPClass.Class)
-	{
-		PlayerControllerClass = PlayerControllerBPClass.Class;
-		UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerControllerClass from constructor."));
-	}
 
 	if (PlayerPreviewBPClass.Class)
 	{
 		PlayerPreviewClass = PlayerPreviewBPClass.Class;
 		UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerPreviewClass from constructor."));
 	}
-
-	PlayerStateClass = ARelicRunnersPlayerState::StaticClass();
 }
 
 void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)

@@ -80,9 +80,9 @@ void URelicRunnersGameInstance::OnCreateSessionComplete(FName SessionName, bool 
 
             if (LobbyCamera)
             {
-                PC->SetViewTargetWithBlend(LobbyCamera, 0.0f);
+                PC->SetViewTargetWithBlend(LobbyCamera, 0.5f);
             }
-
+            
         }
     }
     else
@@ -167,10 +167,10 @@ void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool
     {
         UE_LOG(LogTemp, Log, TEXT("Session destroyed successfully. Returning to MainMenu."));
 
-        if (APlayerController* PlayerController = GetFirstLocalPlayerController())
-        {
-            PlayerController->ClientTravel("/Game/ThirdPerson/Maps/MainMenu", ETravelType::TRAVEL_Absolute);
-        }
+        //if (APlayerController* PlayerController = GetFirstLocalPlayerController())
+        //{
+        //    PlayerController->ClientTravel("/Game/ThirdPerson/Maps/MainMenu", ETravelType::TRAVEL_Absolute);
+        //}
     }
     else
     {

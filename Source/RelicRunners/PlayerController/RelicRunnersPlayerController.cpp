@@ -30,6 +30,12 @@
 #include <RelicRunners/Item/ItemStats.h>
 #include <Kismet/GameplayStatics.h>
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
+#include "RelicRunners/Menu/MainMenuWidget.h"
+
+ARelicRunnersPlayerController::ARelicRunnersPlayerController()
+{
+
+}
 
 void ARelicRunnersPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -233,6 +239,50 @@ void ARelicRunnersPlayerController::BeginPlay()
 		if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
 		{
 			Server_SetPlayerName(GI->GetCharacterName());
+		}
+
+		FString MapName = GetWorld()->GetMapName();
+		MapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+
+		if (MapName.Contains("MainMenu"))
+		{
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				TArray<AActor*> FoundActors;
+				UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+				AActor* MainMenuCamera = nullptr;
+
+				for (auto actor : FoundActors)
+				{
+					if (actor->ActorHasTag("MainMenuCamera"))
+					{
+						MainMenuCamera = actor;
+					}
+				}
+
+				if (MainMenuCamera)
+				{
+					SetViewTargetWithBlend(MainMenuCamera, 0.5f);
+				}
+			}
+
+			if (MainMenuWidgetClass && !MainMenuWidget)
+			{
+				MainMenuWidget = CreateWidget<UMainMenuWidget>(this, MainMenuWidgetClass);
+				if (MainMenuWidget)
+				{
+					MainMenuWidget->AddToViewport();
+					MainMenuWidget->SetIsEnabled(true);
+					MainMenuWidget->SetVisibility(ESlateVisibility::Visible);
+					SetShowMouseCursor(true);
+					SetInputMode(FInputModeGameAndUI());
+				}
+			}
+		}
+		else if (MapName.Contains("Game"))
+		{
+			
 		}
 	}
 }

@@ -43,16 +43,4 @@ private:
     void OnFindSessionsComplete(bool bWasSuccessful);
     void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
     void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-
-    UPROPERTY(EditAnywhere)
-    TSubclassOf<class UJoinUserWidget> LobbyWidgetClass = nullptr;
-
-    UPROPERTY()
-    class UJoinUserWidget* LobbyWidget = nullptr;
-
-    UPROPERTY(EditAnywhere)
-    TSubclassOf<class UMainMenuWidget> MainMenuWidgetClass = nullptr;
-
-    UPROPERTY()
-    class UMainMenuWidget* MainMenuWidget = nullptr;
 };

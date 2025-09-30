@@ -14,6 +14,7 @@
 #include "MainMenuWidget.h"
 #include "Components/CircularThrobber.h"
 #include <Kismet/GameplayStatics.h>
+#include "ModeSelectionWidget.h"
 
 void UJoinUserWidget::NativeConstruct()
 {
@@ -81,12 +82,13 @@ void UJoinUserWidget::BackButtonClicked()
 
 		if (MainMenuCamera)
 		{
-			World->GetFirstPlayerController()->SetViewTargetWithBlend(MainMenuCamera, 0.0f);
+			World->GetFirstPlayerController()->SetViewTargetWithBlend(MainMenuCamera, 0.5f);
 		}
 
 		if (ParentMenu)
 		{
 			ParentMenu->ShowModeSelectionWidget();
+			ParentMenu->GetModeSelectionWidget()->ResetUI();
 		}
 
 		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
@@ -134,6 +136,8 @@ void UJoinUserWidget::HandleSessionClicked(USessionListItemData* ClickedSession)
 
 void UJoinUserWidget::SearchForLanGames()
 {
+	if (!IsValid(this) || !SessionTileView) return;
+
 	URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
 	if (GameInstance)
 	{
@@ -174,6 +178,8 @@ void UJoinUserWidget::ShowJoinButton(bool IsEnabled)
 
 void UJoinUserWidget::OnFindSessionsComplete(FString Str)
 {
+	if (!IsValid(this) || !SessionTileView) return;
+
 	USessionListItemData* NewSessionItem = NewObject<USessionListItemData>();
 	if (NewSessionItem)
 	{
@@ -205,6 +211,8 @@ void UJoinUserWidget::OnFindSessionsComplete(FString Str)
 
 void UJoinUserWidget::EnableRefresh()
 {
+	if (!IsValid(this) || !SessionTileView) return;
+
 	if (FindGames)
 	{
 		FindGames->SetIsEnabled(true);

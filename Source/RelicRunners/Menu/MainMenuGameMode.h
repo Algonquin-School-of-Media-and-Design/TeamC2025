@@ -19,16 +19,4 @@ public:
 
 protected:
     virtual void BeginPlay() override;
-
-    UPROPERTY(EditAnywhere)
-    TSubclassOf<class UJoinUserWidget> LobbyWidgetClass = nullptr;
-
-    UPROPERTY()
-    class UJoinUserWidget* LobbyWidget = nullptr;
-
-    UPROPERTY(EditAnywhere)
-    TSubclassOf<class UMainMenuWidget> MainMenuWidgetClass = nullptr;
-
-    UPROPERTY()
-    class UMainMenuWidget* MainMenuWidget = nullptr;
 };

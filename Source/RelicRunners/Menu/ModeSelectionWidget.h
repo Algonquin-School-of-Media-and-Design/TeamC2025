@@ -33,9 +33,12 @@ public:
 
 	void SetParentMenu(class UMainMenuWidget* InParentMenu);
 
+	void ResetUI();
+
 protected:
 	UFUNCTION()
 	void HostButtonClicked();
+
 	UFUNCTION()
 	void SettingsButtonClicked();
 	UFUNCTION()
