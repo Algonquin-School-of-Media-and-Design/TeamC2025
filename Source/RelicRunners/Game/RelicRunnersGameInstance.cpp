@@ -62,27 +62,22 @@ void URelicRunnersGameInstance::OnCreateSessionComplete(FName SessionName, bool 
     {
         UE_LOG(LogTemp, Log, TEXT("Session %s created successfully!"), *SessionName.ToString());
 
-        UWorld* World = GetWorld();
-        if (World)
+        if (UWorld* World = GetWorld())
         {
-            APlayerController* PC = World->GetFirstPlayerController();
-            TArray<AActor*> FoundActors;
-            UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
-
-            AActor* LobbyCamera = nullptr;
-            for (auto actor : FoundActors)
+            if (APlayerController* PC = World->GetFirstPlayerController())
             {
-                if (actor->ActorHasTag("LobbyCamera"))
+                FUniqueNetIdRepl UniqueId = PC->PlayerState->GetUniqueId();
+                if (UniqueId.IsValid() && SessionInterface.IsValid())
                 {
-                    LobbyCamera = actor;
+                    const FUniqueNetId& NetId = *UniqueId.GetUniqueNetId();
+                    SessionInterface->RegisterPlayer(SessionName, NetId, true);
+
+                    UE_LOG(LogTemp, Log, TEXT("Registered host %s into session."), *NetId.ToString());
                 }
             }
 
-            if (LobbyCamera)
-            {
-                PC->SetViewTargetWithBlend(LobbyCamera, 0.5f);
-            }
-            
+            //World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/Lobby?listen"));
+            UGameplayStatics::OpenLevel(this, FName("Lobby"), true, "listen");
         }
     }
     else
@@ -189,20 +184,25 @@ void URelicRunnersGameInstance::JoinGame(int32 SessionIndex)
 
 void URelicRunnersGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-    if (!SessionInterface.IsValid()) return;
+    UE_LOG(LogTemp, Log, TEXT("JoinSessionComplete: %s, Result: %d"),
+        *SessionName.ToString(), (int32)Result);
+
+    if (!SessionInterface.IsValid())
+        return;
 
     FString ConnectString;
     if (SessionInterface->GetResolvedConnectString(SessionName, ConnectString))
     {
-        if (APlayerController* PC = GetFirstLocalPlayerController())
+        UE_LOG(LogTemp, Log, TEXT("Resolved connect string: %s"), *ConnectString);
+
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
-            UE_LOG(LogTemp, Log, TEXT("Joining session. Traveling to: %s"), *ConnectString);
-            PC->ClientTravel(ConnectString, ETravelType::TRAVEL_Absolute);
+            PC->ClientTravel(ConnectString, TRAVEL_Absolute);
         }
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("Could not resolve connect string for session %s"), *SessionName.ToString());
+        UE_LOG(LogTemp, Error, TEXT("Failed to get connect string for %s"), *SessionName.ToString());
     }
 }
 

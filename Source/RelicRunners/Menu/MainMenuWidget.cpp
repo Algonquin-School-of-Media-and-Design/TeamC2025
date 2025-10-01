@@ -52,7 +52,6 @@ void UMainMenuWidget::ShowSessionsWidget()
     if (WidgetSwitcher && JoinGameWidget)
     {
         WidgetSwitcher->SetActiveWidget(JoinGameWidget);
-        JoinGameWidget->RefreshMenu();
     }
 }
 

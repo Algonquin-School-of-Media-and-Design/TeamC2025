@@ -31,6 +31,7 @@
 #include <Kismet/GameplayStatics.h>
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
 #include "RelicRunners/Menu/MainMenuWidget.h"
+#include "RelicRunners/Menu/JoinUserWidget.h"
 
 ARelicRunnersPlayerController::ARelicRunnersPlayerController()
 {
@@ -263,7 +264,7 @@ void ARelicRunnersPlayerController::BeginPlay()
 
 				if (MainMenuCamera)
 				{
-					SetViewTargetWithBlend(MainMenuCamera, 0.5f);
+					SetViewTargetWithBlend(MainMenuCamera, 0.0f);
 				}
 			}
 
@@ -280,9 +281,20 @@ void ARelicRunnersPlayerController::BeginPlay()
 				}
 			}
 		}
-		else if (MapName.Contains("Game"))
+		else if (MapName.Contains("Lobby"))
 		{
-			
+			if (LobbyWidgetClass && !LobbyWidget)
+			{
+				LobbyWidget = CreateWidget<UJoinUserWidget>(this, LobbyWidgetClass);
+				if (LobbyWidget)
+				{
+					LobbyWidget->AddToViewport();
+					LobbyWidget->SetIsEnabled(true);
+					LobbyWidget->SetVisibility(ESlateVisibility::Visible);
+					SetShowMouseCursor(true);
+					SetInputMode(FInputModeGameAndUI());
+				}
+			}
 		}
 	}
 }
