@@ -73,6 +73,23 @@ void ARelicRunnersPlayerController::OnRep_Pawn()
 	}
 }
 
+void ARelicRunnersPlayerController::OnRep_LobbyPreview()
+{
+	if (IsLocalController())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("OnRep_LobbyPreviewInstance: Preview instance replicated"));
+
+		if (LobbyPreviewInstance)
+		{
+			
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("OnRep_LobbyPreviewInstance: Still null"));
+		}
+	}
+}
+
 void ARelicRunnersPlayerController::OnRep_PlayerPreview()
 {
 	if (IsLocalController())

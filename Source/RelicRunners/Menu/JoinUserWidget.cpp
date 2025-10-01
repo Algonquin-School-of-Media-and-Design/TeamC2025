@@ -67,32 +67,10 @@ void UJoinUserWidget::BackButtonClicked()
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		// Travel into your gameplay level
-		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
-
-		AActor* MainMenuCamera = nullptr;
-		for (auto actor : FoundActors)
-		{
-			if (actor->ActorHasTag("MainMenuCamera"))
-			{
-				MainMenuCamera = actor;
-			}
-		}
-
-		if (MainMenuCamera)
-		{
-			World->GetFirstPlayerController()->SetViewTargetWithBlend(MainMenuCamera, 0.5f);
-		}
-
-		if (ParentMenu)
-		{
-			ParentMenu->ShowModeSelectionWidget();
-			ParentMenu->GetModeSelectionWidget()->ResetUI();
-		}
-
 		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
 		GameInstance->LeaveSession();
+
+		World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/MainMenu"));
 	}
 }
 

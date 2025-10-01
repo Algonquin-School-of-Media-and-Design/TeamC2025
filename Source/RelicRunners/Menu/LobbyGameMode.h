@@ -16,4 +16,14 @@ class RELICRUNNERS_API ALobbyGameMode : public AGameMode
 public:
 	ALobbyGameMode();
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class ALobbyPreview> LobbyPreviewClass = nullptr;
+
+	TArray<FVector> LobbySpawnPositions
+		= { FVector(-1680.000003,105.000022,60.000000),
+			FVector(-1679.999996,245.000022,60.000000),
+			FVector(-1765.000010,-34.999974,65.000000),
+			FVector(-1764.999990,385.000026,65.000000) };
 };

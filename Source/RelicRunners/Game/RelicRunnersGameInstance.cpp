@@ -64,20 +64,7 @@ void URelicRunnersGameInstance::OnCreateSessionComplete(FName SessionName, bool 
 
         if (UWorld* World = GetWorld())
         {
-            if (APlayerController* PC = World->GetFirstPlayerController())
-            {
-                FUniqueNetIdRepl UniqueId = PC->PlayerState->GetUniqueId();
-                if (UniqueId.IsValid() && SessionInterface.IsValid())
-                {
-                    const FUniqueNetId& NetId = *UniqueId.GetUniqueNetId();
-                    SessionInterface->RegisterPlayer(SessionName, NetId, true);
-
-                    UE_LOG(LogTemp, Log, TEXT("Registered host %s into session."), *NetId.ToString());
-                }
-            }
-
-            //World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/Lobby?listen"));
-            UGameplayStatics::OpenLevel(this, FName("Lobby"), true, "listen");
+            World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/Lobby?listen"));
         }
     }
     else

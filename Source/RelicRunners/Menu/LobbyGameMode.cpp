@@ -4,6 +4,7 @@
 #include "LobbyGameMode.h"
 #include <Kismet/GameplayStatics.h>
 #include "RelicRunners/PlayerController/RelicRunnersPlayerController.h"
+#include "RelicRunners/PlayerPreview/LobbyPreview.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -38,10 +39,36 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
                     }
                 }, 0.1f, false);
         }
+    }
+
+    const FVector SpawnLocation = LobbySpawnPositions[0];
+    const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = NewPlayer;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    if (LobbyPreviewClass)
+    {
+        ALobbyPreview* Preview = GetWorld()->SpawnActor<ALobbyPreview>(LobbyPreviewClass, SpawnLocation, SpawnRotation, SpawnParams);
+        if (Preview)
+        {
+            Preview->SetOwner(NewPlayer);
+
+            if (ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(NewPlayer))
+            {
+                RRPC->LobbyPreviewInstance = Preview;
+                UE_LOG(LogTemp, Warning, TEXT("[GameMode] Spawned preview actor for %s: %s"), *NewPlayer->GetName(), *Preview->GetName());
+            }
+        }
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("No actor with tag 'LobbyCamera' found in LobbyMap!"));
+            UE_LOG(LogTemp, Warning, TEXT("[GameMode] Failed to spawn preview actor for %s"), *NewPlayer->GetName());
         }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerPreviewClass not set!"));
     }
 }
 

@@ -70,6 +70,9 @@ public:
 	void Server_SetPlayerName(const FString& NewName);
 
 	virtual void OnRep_Pawn() override;
+
+
+
 	virtual void OnUnPossess() override;
 
 	UFUNCTION()
@@ -86,6 +89,12 @@ public:
 
 	UFUNCTION()
 	void OnRep_PlayerPreview();
+
+	UPROPERTY(ReplicatedUsing = OnRep_LobbyPreview)
+	class ALobbyPreview* LobbyPreviewInstance;
+
+	UFUNCTION()
+	void OnRep_LobbyPreview();
 
 	UFUNCTION()
 	void UpdatePreviewWithEquippedItems();
