@@ -148,6 +148,7 @@ public:
 	int GetPlayerMaxResource() { return PlayerMaxResource; }
 	int GetPlayerXP() { return PlayerXP; }
 	int GetPlayerXPToLevel() { return PlayerXPToLevel; }
+	int GetPlayerAbilityPoints() { return PlayerAbilityPoints; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
 	int GetPlayerStartingMaxHealth() const;
@@ -251,6 +252,11 @@ protected:
 	class UPlayerHUD* PlayerHUD;
 
 	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UAbilityPointCounter> AbilityPointCounterClass;
+	UPROPERTY()
+	class UAbilityPointCounter* AbilityPointCounter;
+
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ULevelUpHUD> LevelUpHUDClass;
 	UPROPERTY()
 	class ULevelUpHUD* LevelUpHUD;
@@ -317,6 +323,10 @@ protected:
 	int PlayerStartingIntelligence;
 	UPROPERTY()
 	int PlayerStartingLuck;
+	UPROPERTY()
+	int PlayerStartingAbilityPoints;
+	UPROPERTY()
+	int PlayerAbilityPoints;
 
 	//Setup
 	virtual void BeginPlay();

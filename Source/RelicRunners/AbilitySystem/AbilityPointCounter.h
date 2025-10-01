@@ -13,5 +13,12 @@ UCLASS()
 class RELICRUNNERS_API UAbilityPointCounter : public UUserWidget
 {
 	GENERATED_BODY()
-	
+
+public: 
+	void NativeConstruct();
+
+	void UpdateHUD(int AbilityPoints);
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_AbilityPoints;
 };

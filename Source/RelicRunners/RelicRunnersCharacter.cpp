@@ -38,6 +38,7 @@
 #include "Item/ItemActor.h"
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
+#include "AbilitySystem/AbilityPointCounter.h"
 #include "PlayerHUD/PlayerHUDWorld.h"
 #include "PlayerPreview/PlayerPreview.h"
 #include "PlayerState/RelicRunnersPlayerState.h"
@@ -205,6 +206,8 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	PlayerStrength = 0;
 	PlayerIntelligence = 0;
 	PlayerLuck = 0;
+	PlayerStartingAbilityPoints = 1;
+	PlayerAbilityPoints = 1;
 	PlayerNumInventorySlots = 20;
 
 	bAlwaysRelevant = true;
@@ -224,6 +227,8 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerLevel);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerAbilityPoints);
+
 
 	//equipped items
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedChestplateMesh);
@@ -404,6 +409,9 @@ void ARelicRunnersCharacter::OnLevelUp()
 	PlayerLuck++;
 	PlayerNumInventorySlots++;
 
+	//ability points
+	PlayerAbilityPoints++;
+
 	InventoryComponent->UpdateTotalEquippedStats(this);
 
 	APlayerController* PC = Cast<APlayerController>(GetController());
@@ -525,6 +533,15 @@ void ARelicRunnersCharacter::InitLocalUI()
 		}
 	}
 
+	if (!AbilityPointCounter && AbilityPointCounterClass)
+	{
+		AbilityPointCounter = CreateWidget<UAbilityPointCounter>(PC, AbilityPointCounterClass);
+		if (AbilityPointCounter)
+		{
+			AbilityPointCounter->AddToViewport();
+			AbilityPointCounter->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
 	// === Inventory Widget ===
 	if (!Inventory && InventoryClass)
 	{
@@ -1030,6 +1047,12 @@ void ARelicRunnersCharacter::UpdateHUD()
 			PlayerXP,
 			PlayerXPToLevel
 		);
+
+	}
+
+	if (AbilityPointCounter)
+	{
+		AbilityPointCounter->UpdateHUD(PlayerAbilityPoints);
 	}
 }
 
