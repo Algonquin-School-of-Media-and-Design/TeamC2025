@@ -75,11 +75,6 @@ void AGeneratedFloor::InitializeFloor(ALevelGenerator* owner, int xIndex, int yI
 {
 	GeneratorOwner = owner;
 
-	if (GeneratorOwner != nullptr)
-	{
-		GeneratorOwner->FloorCheckNeighbour.AddDynamic(this, &AGeneratedFloor::CheckNeighbours);
-	}
-
 	XIndex = xIndex;
 	YIndex = yIndex;
 
@@ -144,117 +139,14 @@ void AGeneratedFloor::CheckNeighbours()
 
 void AGeneratedFloor::CheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset)
 {
-	int index = (XIndex + (GeneratorOwner->GetMapWidth() * YIndex)) + indexOffset;
-
-	if (checkLeft)
-	{
-		AGeneratedFloor* leftNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index - 1);
-		if (leftNeighbourFloor->GetMainState() == EMainFloorState::Full)
-		{
-			FloorNeighbours |= EFloorNeighbour::TopLeft;
-		}
-		else if (leftNeighbourFloor->GetMainState() == EMainFloorState::Blank)
-		{
-			FloorNeighbours &= ~EFloorNeighbour::TopLeft;
-		}
-	}
-
-	AGeneratedFloor* middleNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index);
-	if (middleNeighbourFloor->GetMainState() == EMainFloorState::Full)
-	{
-		FloorNeighbours |= EFloorNeighbour::TopMiddle;
-	}
-	else if (middleNeighbourFloor->GetMainState() == EMainFloorState::Blank)
-	{
-		FloorNeighbours &= ~EFloorNeighbour::TopMiddle;
-	}
-
-	if (checkRight)
-	{
-		AGeneratedFloor* rightNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index + 1);
-		if (rightNeighbourFloor->GetMainState() == EMainFloorState::Full)
-		{
-			FloorNeighbours |= EFloorNeighbour::TopRight;
-		}
-		else if (rightNeighbourFloor->GetMainState() == EMainFloorState::Blank)
-		{
-			FloorNeighbours &= ~EFloorNeighbour::TopRight;
-		}
-	}
 }
 
 void AGeneratedFloor::CheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset)
 {
-	int index = (XIndex + (GeneratorOwner->GetMapWidth() * YIndex)) + indexOffset;
-
-	if (checkLeft)
-	{
-		AGeneratedFloor* leftNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index - 1);
-		if (leftNeighbourFloor->GetMainState() == EMainFloorState::Full)
-		{
-			FloorNeighbours |= EFloorNeighbour::MiddleLeft;
-		}
-		else if (leftNeighbourFloor->GetMainState() == EMainFloorState::Blank)
-		{
-			FloorNeighbours &= ~EFloorNeighbour::MiddleLeft;
-		}
-	}
-
-	if (checkRight)
-	{
-		AGeneratedFloor* rightNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index + 1);
-		if (rightNeighbourFloor->GetMainState() == EMainFloorState::Full)
-		{
-			FloorNeighbours |= EFloorNeighbour::MiddleRight;
-		}
-		else if (rightNeighbourFloor->GetMainState() == EMainFloorState::Blank)
-		{
-			FloorNeighbours &= ~EFloorNeighbour::MiddleRight;
-		}
-	}
-
 }
 
 void AGeneratedFloor::CheckDownNeighbours(bool checkLeft, bool checkRight, int indexOffset)
 {
-	int index = (XIndex + (GeneratorOwner->GetMapWidth() * YIndex)) + indexOffset;
-
-	if (checkLeft)
-	{
-		AGeneratedFloor* leftNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index - 1);
-		if (leftNeighbourFloor->GetMainState() == EMainFloorState::Full)
-		{
-			FloorNeighbours |= EFloorNeighbour::BottomLeft;
-		}
-		else if (leftNeighbourFloor->GetMainState() == EMainFloorState::Blank)
-		{
-			FloorNeighbours &= ~EFloorNeighbour::BottomLeft;
-		}
-	}
-
-	AGeneratedFloor* middleNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index);
-	if (middleNeighbourFloor->GetMainState() == EMainFloorState::Full)
-	{
-		FloorNeighbours |= EFloorNeighbour::BottomMiddle;
-	}
-	else if (middleNeighbourFloor->GetMainState() == EMainFloorState::Blank)
-	{
-		FloorNeighbours &= ~EFloorNeighbour::BottomMiddle;
-	}
-
-	if (checkRight)
-	{
-		AGeneratedFloor* rightNeighbourFloor = GeneratorOwner->GetGeneratedFloorAtIndex(index + 1);
-		if (rightNeighbourFloor->GetMainState() == EMainFloorState::Full)
-		{
-			FloorNeighbours |= EFloorNeighbour::BottomRight;
-		}
-		else if (rightNeighbourFloor->GetMainState() == EMainFloorState::Blank)
-		{
-			FloorNeighbours &= ~EFloorNeighbour::BottomRight;
-		}
-	}
-
 }
 
 void AGeneratedFloor::SetFloorShape()

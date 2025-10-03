@@ -6,8 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "LevelGenerator.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFloorCheckNeighbour);
-
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EFloorNeighbours : uint8
 {
@@ -23,11 +21,21 @@ enum class EFloorNeighbours : uint8
 };
 ENUM_CLASS_FLAGS(EFloorNeighbours);
 
+USTRUCT()
 struct FloorValues
 {
+	GENERATED_BODY()
 public:
+	UPROPERTY()
 	bool IsFullTile = false;
+	UPROPERTY()
 	EFloorNeighbours FloorNeighbours = EFloorNeighbours::Blank;
+	//float offset;
+	//float offsetb;
+	//FTransform TopLeft;
+	//FTransform TopRight;
+	//FTransform BottomLeft;
+	//FTransform BottomRight;
 };
 
 
@@ -40,32 +48,17 @@ public:
 	// Sets default values for this actor's properties
 	ALevelGenerator();
 
-	UPROPERTY(BlueprintAssignable)
-	FFloorCheckNeighbour FloorCheckNeighbour;
+	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	class UStaticMeshComponent* FullPiece;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	TSubclassOf<class AGeneratedFloor> GeneratedFloorTemplate;
+	class UStaticMeshComponent* SidePiece;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	TSubclassOf<class AGeneratedObstacle> GeneratedObstacleTemplate;
+	class UStaticMeshComponent* ConcaveCornerPiece;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	class UStaticMeshComponent* MeshComponent;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	class UInstancedStaticMeshComponent* ISMComp;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	class UInstancedStaticMeshComponent* FullPiece;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	class UInstancedStaticMeshComponent* SidePiece;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	class UInstancedStaticMeshComponent* ConcaveCornerPiece;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
-	class UInstancedStaticMeshComponent* ConvexCornerPiece;
+	class UStaticMeshComponent* ConvexCornerPiece;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "100", UIMax = "100"))
 	int SpawnWidth;
@@ -82,36 +75,86 @@ public:
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
 	int BorderForceFull;
 
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
+	float TileScale = 1.0f;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
-	void GenerateFloor(int x, int y, TArray<FloorValues> &floorValues);
+	UFUNCTION()
+	void GenerateFloor(int x, int y);
 
-	void InitializeFloor(int x, int y, TArray<FloorValues>& floorValues);
-	void ForceFloorBool(bool forcedFloor, int x, int y, TArray<FloorValues> &floorValues);
-	void CheckFloor(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_GenerateFloor(int x, int y);
 
-	void FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues);
-	void FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues);
-	void FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues);
+	void InitializeFloor();
+	void ForceFloorBool(bool forcedFloor, int x, int y);
 
-	void SetFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
+	UFUNCTION()
+	void CheckFloor(int x, int y);
 
-	void SetTopLeftFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
-	void SetTopRightFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
-	void SetBottomLeftFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
-	void SetBottomRightFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray);
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_CheckFloor(int x, int y);
 
-	int GetMapWidth() {return SpawnWidth;}
-	int GetMapDepth() {return SpawnDepth;}
+	void FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y);
+	void FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y);
+	void FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y);
+
+	void SetFloorShape(int x, int y);
+
+	void SetTopLeftFloorShape(int x, int y);
+	void SetTopRightFloorShape(int x, int y);
+	void SetBottomLeftFloorShape(int x, int y);
+	void SetBottomRightFloorShape(int x, int y);
+
+	UFUNCTION()
+	void CreateFloor();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_CreateFloor();
+
+	int GetMapWidth() { return SpawnWidth; }
+	int GetMapDepth() { return SpawnDepth; }
 
 	float GetFullPercentage() { return FullPercentage; }
 
-	class AGeneratedFloor* GetGeneratedFloorAtIndex(int index) { return GeneratedFloorArray[index]; }
+public:
+	UFUNCTION()
+	void OnRep_SetRandomValue();
 
-private:
-	TArray<class AGeneratedFloor*> GeneratedFloorArray;
-	TArray<class AGeneratedObstacle*> GeneratedObstacleArray;
+	UPROPERTY(ReplicatedUsing = OnRep_SetRandomValue)
+	float Random;
+
+	UFUNCTION()
+	void OnRep_SetFloorValue();
+
+	UPROPERTY(ReplicatedUsing = OnRep_SetFloorValue)
+	TArray<FloorValues> FloorValuesArray;
+
+	UFUNCTION()
+	void OnRep_SetFullValue();
+
+	UPROPERTY(ReplicatedUsing = OnRep_SetFullValue)
+	TArray<FTransform> FullFloorPieceTransforms;
+
+	UFUNCTION()
+	void OnRep_SetSideValue();
+
+	UPROPERTY(ReplicatedUsing = OnRep_SetSideValue)
+	TArray<FTransform> SideFloorPieceTransforms;
+
+	UFUNCTION()
+	void OnRep_SetConcaveValue();
+
+	UPROPERTY(ReplicatedUsing = OnRep_SetConcaveValue)
+	TArray<FTransform> ConcaveCornerPieceTransforms;
+
+	UFUNCTION()
+	void OnRep_SetConvexValue();
+
+	UPROPERTY(ReplicatedUsing = OnRep_SetConvexValue)
+	TArray<FTransform> ConvexCornerTransforms;
+
 };

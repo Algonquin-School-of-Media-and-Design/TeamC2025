@@ -5,16 +5,14 @@
 #include "GeneratedFloor.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ALevelGenerator::ALevelGenerator() :
-	GeneratedFloorTemplate(nullptr),
-	GeneratedObstacleTemplate(nullptr),
 	FullPiece(nullptr),
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
 	ConvexCornerPiece(nullptr),
-	MeshComponent(nullptr),
 	SpawnWidth(1),
 	SpawnDepth(1),
 	FullPercentage(75.0f)
@@ -23,24 +21,20 @@ ALevelGenerator::ALevelGenerator() :
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	ISMComp = CreateDefaultSubobject<UInstancedStaticMeshComponent>("Mesh");
-	RootComponent = ISMComp;
+	FullPiece = CreateDefaultSubobject<UStaticMeshComponent>("FullPiece");
+	FullPiece->SetupAttachment(RootComponent);
 
-	FullPiece = CreateDefaultSubobject<UInstancedStaticMeshComponent>("FullPiece");
-	FullPiece->SetupAttachment(ISMComp);
+	SidePiece = CreateDefaultSubobject<UStaticMeshComponent>("SidePiece");
+	SidePiece->SetupAttachment(RootComponent);
 
-	SidePiece = CreateDefaultSubobject<UInstancedStaticMeshComponent>("SidePiece");
-	SidePiece->SetupAttachment(ISMComp);
+	ConcaveCornerPiece = CreateDefaultSubobject<UStaticMeshComponent>("ConcaveCornerPiece");
+	ConcaveCornerPiece->SetupAttachment(RootComponent);
 
-	ConcaveCornerPiece = CreateDefaultSubobject<UInstancedStaticMeshComponent>("ConcaveCornerPiece");
-	ConcaveCornerPiece->SetupAttachment(ISMComp);
+	ConvexCornerPiece = CreateDefaultSubobject<UStaticMeshComponent>("ConvexCornerPiece");
+	ConvexCornerPiece->SetupAttachment(RootComponent);
 
-	ConvexCornerPiece = CreateDefaultSubobject<UInstancedStaticMeshComponent>("ConvexCornerPiece");
-	ConvexCornerPiece->SetupAttachment(ISMComp);
-
-	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("RegularMesh");
-	MeshComponent->SetupAttachment(ISMComp);
-
+	SetReplicates(true);
+	bAlwaysRelevant = true;
 }
 
 // Called when the game starts or when spawned
@@ -48,59 +42,95 @@ void ALevelGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TArray<FloorValues> floorArray;
-	TArray<FTransform> fullFloorPieceTransforms;
-	TArray<FTransform> sideFloorPieceTransforms;
-	TArray<FTransform> concaveCornerPieceTransforms;
-	TArray<FTransform> convexCornerTransforms;
-
-	for (int y = 0; y < SpawnDepth; y++)
+	if (HasAuthority())
 	{
-		for (int x = 0; x < SpawnWidth; x++)
+		for (int y = 0; y < SpawnDepth; y++)
 		{
-			GenerateFloor(x, y, floorArray);
+			for (int x = 0; x < SpawnWidth; x++)
+			{
+				MC_GenerateFloor(x, y);
+			}
 		}
+
+		for (int y = 0; y < SpawnDepth; y++)
+		{
+			for (int x = 0; x < SpawnWidth; x++)
+			{
+				MC_CheckFloor(x, y);
+			}
+		}
+		FloorValuesArray = FloorValuesArray;
 	}
 
-	for (int y = 0; y < SpawnDepth; y++)
-	{
-		for (int x = 0; x < SpawnWidth; x++)
-		{
-			CheckFloor(x, y, floorArray, fullFloorPieceTransforms, sideFloorPieceTransforms, concaveCornerPieceTransforms, convexCornerTransforms);
-		}
-	}
-
-	if (FullPiece->GetStaticMesh() != nullptr)
-		FullPiece->AddInstances(fullFloorPieceTransforms, true);
-
-	if (SidePiece->GetStaticMesh() != nullptr)
-		SidePiece->AddInstances(sideFloorPieceTransforms, true);
-
-	if (ConcaveCornerPiece->GetStaticMesh() != nullptr)
-		ConcaveCornerPiece->AddInstances(concaveCornerPieceTransforms, true);
-
-	if (ConvexCornerPiece->GetStaticMesh() != nullptr)
-		ConvexCornerPiece->AddInstances(convexCornerTransforms, true);
+	MC_CreateFloor();
 }
 
-void ALevelGenerator::GenerateFloor(int x, int y, TArray<FloorValues>& floorValues)
+void ALevelGenerator::OnRep_SetRandomValue()
 {
-	if (GeneratedFloorTemplate == nullptr)
-		return;
-
-	if (floorValues.Num() == x + (SpawnWidth * y))
+	if (GEngine)
 	{
-		FloorValues newFloorValues;
-		floorValues.Add(newFloorValues);
+		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Random: %f"), Random));
+	}
+	FloorValues newFloorValues;
+}
 
-		InitializeFloor(x, y, floorValues);
+void ALevelGenerator::OnRep_SetFloorValue()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Floor Value: %f"), FloorValuesArray.Num()));
+	}
+
+}
+
+void ALevelGenerator::OnRep_SetFullValue()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Full: %f"), FullFloorPieceTransforms.Num()));
+	}
+
+}
+
+void ALevelGenerator::OnRep_SetSideValue()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Side: %f"), SideFloorPieceTransforms.Num()));
+	}
+
+}
+
+void ALevelGenerator::OnRep_SetConcaveValue()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Concave: %f"), ConcaveCornerPieceTransforms.Num()));
+	}
+
+}
+
+void ALevelGenerator::OnRep_SetConvexValue()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Convex: %f"), ConvexCornerTransforms.Num()));
+	}
+
+}
+
+void ALevelGenerator::GenerateFloor(int x, int y)
+{
+	if (FloorValuesArray.Num() == x + (SpawnWidth * y))
+	{
+		InitializeFloor();
 
 		if (CenterForceFull > 0)
 		{
 			if (((x - CenterForceFull) >= 0 && (x + CenterForceFull) <= SpawnWidth - 1)
 				&& (y - CenterForceFull) >= 0 && (y + CenterForceFull) <= SpawnDepth - 1)
 			{
-				ForceFloorBool(true, x, y, floorValues);
+				ForceFloorBool(true, x, y);
 			}
 		}
 
@@ -110,28 +140,34 @@ void ALevelGenerator::GenerateFloor(int x, int y, TArray<FloorValues>& floorValu
 				|| (y - BorderForceFull) < 0 || (y + BorderForceFull) > SpawnDepth - 1)
 
 			{
-				ForceFloorBool(true, x, y, floorValues);
+				ForceFloorBool(true, x, y);
 			}
 		}
 	}
 }
 
-void ALevelGenerator::InitializeFloor(int x, int y, TArray<FloorValues>& floorValues)
+void ALevelGenerator::MC_GenerateFloor_Implementation(int x, int y)
 {
-	float random = FMath::RandRange(0.0f, 100.0f);
+	GenerateFloor(x, y);
+}
 
-	if (random > FullPercentage)
+void ALevelGenerator::InitializeFloor()
+{
+	Random = FMath::RandRange(0.0f, 100.0f);
+	FloorValues newFloorValues;
+
+	if (Random > FullPercentage)
 	{
-		floorValues[x + (SpawnWidth * y)].IsFullTile = false;
+		newFloorValues.IsFullTile = false;
 	}
 	else
 	{
-		floorValues[x + (SpawnWidth * y)].IsFullTile = true;
+		newFloorValues.IsFullTile = true;
 	}
-
+	FloorValuesArray.Add(newFloorValues);
 }
 
-void ALevelGenerator::CheckFloor(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray)
+void ALevelGenerator::CheckFloor(int x, int y)
 {
 	bool checkLeft = x > 0.0f;
 	bool checkRight = x < SpawnWidth - 1;
@@ -141,187 +177,182 @@ void ALevelGenerator::CheckFloor(int x, int y, TArray<FloorValues>& floorValues,
 
 	if (checkUp)
 	{
-		FloorCheckTopNeighbours(checkLeft, checkRight, -SpawnWidth, x, y, floorValues);
+		FloorCheckTopNeighbours(checkLeft, checkRight, -SpawnWidth, x, y);
 	}
 
-	FloorCheckMiddleNeighbours(checkLeft, checkRight, 0, x, y,floorValues);
+	FloorCheckMiddleNeighbours(checkLeft, checkRight, 0, x, y);
 
 	if (checkDown)
 	{
-		FloorCheckBottomNeighbours(checkLeft, checkRight, SpawnWidth, x, y, floorValues);
+		FloorCheckBottomNeighbours(checkLeft, checkRight, SpawnWidth, x, y);
 	}
 
-	SetFloorShape(x, y, floorValues, fullFloorPieceArray, sideFloorPieceArray, concaveCornerPieceArray, convexCornerArray);
+	SetFloorShape(x, y);
 
 }
 
-void ALevelGenerator::FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues)
+void ALevelGenerator::MC_CheckFloor_Implementation(int x, int y)
+{
+	CheckFloor(x, y);
+}
+
+void ALevelGenerator::FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y)
 {
 	int indexToCheck = x + (y * SpawnWidth) + indexOffset;
 	int index = x + (y * SpawnWidth);
 
 	if (checkLeft)
 	{
-		if (floorValues[indexToCheck-1].IsFullTile)
+		if (FloorValuesArray[indexToCheck-1].IsFullTile)
 		{
-			floorValues[index].FloorNeighbours |= EFloorNeighbours::TopLeft;
+			FloorValuesArray[index].FloorNeighbours |= EFloorNeighbours::TopLeft;
 		}
 		else
 		{
-			floorValues[index].FloorNeighbours &= ~EFloorNeighbours::TopLeft;
+			FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::TopLeft;
 		}
 	}
 
-	if (floorValues[indexToCheck].IsFullTile)
+	if (FloorValuesArray[indexToCheck].IsFullTile)
 	{
-		floorValues[index].FloorNeighbours |= EFloorNeighbours::TopMiddle;
+		FloorValuesArray[index].FloorNeighbours |= EFloorNeighbours::TopMiddle;
 	}
 	else
 	{
-		floorValues[index].FloorNeighbours &= ~EFloorNeighbours::TopMiddle;
+		FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::TopMiddle;
 	}
 
 	if (checkRight)
 	{
-		if (floorValues[indexToCheck+1].IsFullTile)
+		if (FloorValuesArray[indexToCheck + 1].IsFullTile)
 		{
-			floorValues[index].FloorNeighbours |= EFloorNeighbours::TopRight;
+			FloorValuesArray[index].FloorNeighbours |= EFloorNeighbours::TopRight;
 		}
 		else
 		{
-			floorValues[index].FloorNeighbours &= ~EFloorNeighbours::TopRight;
+			FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::TopRight;
 		}
 	}
 }
 
-void ALevelGenerator::FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues)
+void ALevelGenerator::FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y)
 {
 	int indexToCheck = x + (y * SpawnWidth) + indexOffset;
 	int index = x + (y * SpawnWidth);
 
 	if (checkLeft)
 	{
-		if (floorValues[indexToCheck-1].IsFullTile)
+		if (FloorValuesArray[indexToCheck - 1].IsFullTile)
 		{
-			floorValues[index].FloorNeighbours |= EFloorNeighbours::MiddleLeft;
+			FloorValuesArray[index].FloorNeighbours |= EFloorNeighbours::MiddleLeft;
 		}
 		else
 		{
-			floorValues[index].FloorNeighbours &= ~EFloorNeighbours::MiddleLeft;
+			FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::MiddleLeft;
 		}
 	}
 
 	if (checkRight)
 	{
-		if (floorValues[indexToCheck+1].IsFullTile)
+		if (FloorValuesArray[indexToCheck + 1].IsFullTile)
 		{
-			floorValues[index].FloorNeighbours |= EFloorNeighbours::MiddleRight;
+			FloorValuesArray[index].FloorNeighbours |= EFloorNeighbours::MiddleRight;
 		}
 		else
 		{
-			floorValues[index].FloorNeighbours &= ~EFloorNeighbours::MiddleRight;
+			FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::MiddleRight;
 		}
 	}
 
 }
 
-void ALevelGenerator::FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, TArray<FloorValues>& floorValues)
+void ALevelGenerator::FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y)
 {
 	int indexToCheck = x + (y * SpawnWidth) + indexOffset;
 	int index = x + (y * SpawnWidth);
 
 	if (checkLeft)
 	{
-		if (floorValues[indexToCheck-1].IsFullTile)
+		if (FloorValuesArray[indexToCheck - 1].IsFullTile)
 		{
-			floorValues[index].FloorNeighbours |= EFloorNeighbours::BottomLeft;
+			FloorValuesArray[index].FloorNeighbours |= EFloorNeighbours::BottomLeft;
 		}
 		else
 		{
-			floorValues[index].FloorNeighbours &= ~EFloorNeighbours::BottomLeft;
+			FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::BottomLeft;
 		}
 	}
 
-	if (floorValues[indexToCheck].IsFullTile)
+	if (FloorValuesArray[indexToCheck].IsFullTile)
 	{
-		floorValues[index].FloorNeighbours |= EFloorNeighbours::BottomMiddle;
+		FloorValuesArray[index].FloorNeighbours |= EFloorNeighbours::BottomMiddle;
 	}
 	else
 	{
-		floorValues[index].FloorNeighbours &= ~EFloorNeighbours::BottomMiddle;
+		FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::BottomMiddle;
 	}
 
 	if (checkRight)
 	{
-		if (floorValues[indexToCheck+1].IsFullTile)
+		if (FloorValuesArray[indexToCheck + 1].IsFullTile)
 		{
-			floorValues[index].FloorNeighbours |= EFloorNeighbours::BottomRight;
+			FloorValuesArray[index].FloorNeighbours |= EFloorNeighbours::BottomRight;
 		}
 		else
 		{
-			floorValues[index].FloorNeighbours &= ~EFloorNeighbours::BottomRight;
+			FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::BottomRight;
 		}
 	}
 }
 
-void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y, TArray<FloorValues> &floorValues)
+void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y)
 {
 	int index = x + (y * SpawnWidth);
 
-	floorValues[index].IsFullTile = true;
+	FloorValuesArray[index].IsFullTile = true;
 }
 
-void ALevelGenerator::SetFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray)
+void ALevelGenerator::SetFloorShape(int x, int y)
 {
-	SetTopLeftFloorShape(x, y, floorValues, fullFloorPieceArray, sideFloorPieceArray, concaveCornerPieceArray, convexCornerArray);
-	SetTopRightFloorShape(x, y, floorValues, fullFloorPieceArray, sideFloorPieceArray, concaveCornerPieceArray, convexCornerArray);
-	SetBottomLeftFloorShape(x, y, floorValues, fullFloorPieceArray, sideFloorPieceArray, concaveCornerPieceArray, convexCornerArray);
-	SetBottomRightFloorShape(x, y, floorValues, fullFloorPieceArray, sideFloorPieceArray, concaveCornerPieceArray, convexCornerArray);
+	SetTopLeftFloorShape(x, y);
+	SetTopRightFloorShape(x, y);
+	SetBottomLeftFloorShape(x, y);
+	SetBottomRightFloorShape(x, y);
 }
 
-void ALevelGenerator::SetTopLeftFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray)
+void ALevelGenerator::SetTopLeftFloorShape(int x, int y)
 {
 	int index = x + (y * SpawnWidth);
-	FVector posOffset = FVector((x * 2), (y * 2), 0.0f) * 40.0f;
-	FRotator rotationOffset = FRotator(0.0f, 0.0f, 90.0f);
-	FVector scaleOffset = FVector(20.0f);
+	FVector posOffset = FVector((x * 2), (y * 2), 0.0f) * (TileScale * 2);
+	FRotator rotationOffset = FRotator(0.0f, 0.0f, 0.0f);
 	FTransform newTransform;
 
 	newTransform.SetLocation(posOffset);
 	newTransform.SetRotation(rotationOffset.Quaternion());
-	newTransform.SetScale3D(scaleOffset);
 
-	EFloorNeighbours topLeftCornerCheck = floorValues[index].FloorNeighbours & (EFloorNeighbours::TopLeft | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft);
+	EFloorNeighbours topLeftCornerCheck = FloorValuesArray[index].FloorNeighbours & (EFloorNeighbours::TopLeft | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft);
 
-	if (floorValues[index].IsFullTile)
+	if (FloorValuesArray[index].IsFullTile)
 	{
 		switch (topLeftCornerCheck)
 		{
-		case EFloorNeighbours::TopLeft:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::TopMiddle:
-			sideFloorPieceArray.Add(newTransform);
+			SideFloorPieceTransforms.Add(newTransform);
 			break;
 		case EFloorNeighbours::MiddleLeft:
 			rotationOffset.Yaw = 90.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			sideFloorPieceArray.Add(newTransform);
+			SideFloorPieceTransforms.Add(newTransform);
 			break;
+		case EFloorNeighbours::TopLeft:
 		case EFloorNeighbours::TopLeft | EFloorNeighbours::TopMiddle:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::TopLeft | EFloorNeighbours::MiddleLeft:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::TopLeft | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft:
-			fullFloorPieceArray.Add(newTransform);
+			FullFloorPieceTransforms.Add(newTransform);
 			break;
 		default:
-			convexCornerArray.Add(newTransform);
+			ConvexCornerTransforms.Add(newTransform);
 		}
 	}
 	else
@@ -331,65 +362,50 @@ void ALevelGenerator::SetTopLeftFloorShape(int x, int y, TArray<FloorValues>& fl
 		switch (topLeftCornerCheck)
 		{
 		case EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft:
-			concaveCornerPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::TopLeft | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleLeft:
-			concaveCornerPieceArray.Add(newTransform);
+			ConcaveCornerPieceTransforms.Add(newTransform);
 			break;
 		}
 	}
 }
 
-void ALevelGenerator::SetTopRightFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray)
+void ALevelGenerator::SetTopRightFloorShape(int x, int y)
 {
 	int index = x + (y * SpawnWidth);
-	FVector posOffset = FVector((x * 2) + 1.0f, (y * 2), 0.0f) * 40.0f;
-	FRotator rotationOffset = FRotator(0.0f, 0.0f, 90.0f);
-	FVector scaleOffset = FVector(20.0f);
+	FVector posOffset = FVector((x * 2) + 1.0f, (y * 2), 0.0f) * (TileScale * 2);
+	FRotator rotationOffset = FRotator(0.0f, 0.0f, 0.0f);
 	FTransform newTransform;
 
 	newTransform.SetLocation(posOffset);
 	newTransform.SetRotation(rotationOffset.Quaternion());
-	newTransform.SetScale3D(scaleOffset);
 
-	EFloorNeighbours topRightCornerCheck = floorValues[index].FloorNeighbours & (EFloorNeighbours::TopRight | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight);
+	EFloorNeighbours topRightCornerCheck = FloorValuesArray[index].FloorNeighbours & (EFloorNeighbours::TopRight | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight);
 
-	if (floorValues[index].IsFullTile)
+	if (FloorValuesArray[index].IsFullTile)
 	{
 		switch (topRightCornerCheck)
 		{
-		case EFloorNeighbours::TopRight:
-			fullFloorPieceArray.Add(newTransform);
-
-			break;
 		case EFloorNeighbours::TopMiddle:
 			rotationOffset.Yaw = 180.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			sideFloorPieceArray.Add(newTransform);
+			SideFloorPieceTransforms.Add(newTransform);
 			break;
 		case EFloorNeighbours::MiddleRight:
 			rotationOffset.Yaw = 90.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			sideFloorPieceArray.Add(newTransform);
+			SideFloorPieceTransforms.Add(newTransform);
 			break;
+		case EFloorNeighbours::TopRight:
 		case EFloorNeighbours::TopRight | EFloorNeighbours::TopMiddle:
-			fullFloorPieceArray.Add(newTransform);
-
-			break;
 		case EFloorNeighbours::TopRight | EFloorNeighbours::MiddleRight:
-			fullFloorPieceArray.Add(newTransform);
-
-			break;
 		case EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::TopRight | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight:
-			fullFloorPieceArray.Add(newTransform);
+			FullFloorPieceTransforms.Add(newTransform);
 			break;
 		default:
 			rotationOffset.Yaw = 90.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			convexCornerArray.Add(newTransform);
+			ConvexCornerTransforms.Add(newTransform);
 			break;
 		}
 
@@ -400,61 +416,49 @@ void ALevelGenerator::SetTopRightFloorShape(int x, int y, TArray<FloorValues>& f
 		{
 
 		case EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight:
-			concaveCornerPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::TopRight | EFloorNeighbours::TopMiddle | EFloorNeighbours::MiddleRight:
-			concaveCornerPieceArray.Add(newTransform);
+			ConcaveCornerPieceTransforms.Add(newTransform);
 			break;
 
 		}
 	}
 }
 
-void ALevelGenerator::SetBottomLeftFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray)
+void ALevelGenerator::SetBottomLeftFloorShape(int x, int y)
 {
 	int index = x + (y * SpawnWidth);
-	FVector posOffset = FVector((x * 2), (y * 2) + 1.0f, 0.0f) * 40.0f;
-	FRotator rotationOffset = FRotator(0.0f, 0.0f, 90.0f);
-	FVector scaleOffset = FVector(20.0f);
+	FVector posOffset = FVector((x * 2), (y * 2) + 1.0f, 0.0f) * (TileScale * 2);
+	FRotator rotationOffset = FRotator(0.0f, 0.0f, 0.0f);
 	FTransform newTransform;
 
 	newTransform.SetLocation(posOffset);
 	newTransform.SetRotation(rotationOffset.Quaternion());
-	newTransform.SetScale3D(scaleOffset);
 
-	EFloorNeighbours bottomLeftCornerCheck = floorValues[index].FloorNeighbours & (EFloorNeighbours::BottomLeft | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft);
+	EFloorNeighbours bottomLeftCornerCheck = FloorValuesArray[index].FloorNeighbours & (EFloorNeighbours::BottomLeft | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft);
 
-	if (floorValues[index].IsFullTile)
+	if (FloorValuesArray[index].IsFullTile)
 	{
 		switch (bottomLeftCornerCheck)
 		{
-		case EFloorNeighbours::BottomLeft:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomMiddle:
-			sideFloorPieceArray.Add(newTransform);
+			SideFloorPieceTransforms.Add(newTransform);
 			break;
 		case EFloorNeighbours::MiddleLeft:
 			rotationOffset.Yaw = -90.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			sideFloorPieceArray.Add(newTransform);
+			SideFloorPieceTransforms.Add(newTransform);
 			break;
+		case EFloorNeighbours::BottomLeft:
 		case EFloorNeighbours::BottomLeft | EFloorNeighbours::BottomMiddle:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomLeft | EFloorNeighbours::MiddleLeft:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomLeft | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft:
-			fullFloorPieceArray.Add(newTransform);
+			FullFloorPieceTransforms.Add(newTransform);
 			break;
 		default:
 			rotationOffset.Yaw = -90.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			convexCornerArray.Add(newTransform);
+			ConvexCornerTransforms.Add(newTransform);
 			break;
 		}
 	}
@@ -466,63 +470,51 @@ void ALevelGenerator::SetBottomLeftFloorShape(int x, int y, TArray<FloorValues>&
 		{
 
 		case EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft:
-			concaveCornerPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomLeft | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleLeft:
-			concaveCornerPieceArray.Add(newTransform);
+			ConcaveCornerPieceTransforms.Add(newTransform);
 			break;
 
 		}
 	}
 }
 
-void ALevelGenerator::SetBottomRightFloorShape(int x, int y, TArray<FloorValues>& floorValues, TArray<FTransform>& fullFloorPieceArray, TArray<FTransform>& sideFloorPieceArray, TArray<FTransform>& concaveCornerPieceArray, TArray<FTransform>& convexCornerArray)
+void ALevelGenerator::SetBottomRightFloorShape(int x, int y)
 {
 	int index = x + (y * SpawnWidth);
-	FVector posOffset = FVector((x * 2) + 1.0f, (y * 2) + 1.0f, 0.0f) * 40.0f;
-	FRotator rotationOffset = FRotator(0.0f, 0.0f, 90.0f);
-	FVector scaleOffset = FVector(20.0f);
+	FVector posOffset = FVector((x * 2) + 1.0f, (y * 2) + 1.0f, 0.0f) * (TileScale * 2);
+	FRotator rotationOffset = FRotator(0.0f, 0.0f, 0.0f);
 	FTransform newTransform;
 
 	newTransform.SetLocation(posOffset);
 	newTransform.SetRotation(rotationOffset.Quaternion());
-	newTransform.SetScale3D(scaleOffset);
 
-	EFloorNeighbours bottomRightCornerCheck = floorValues[index].FloorNeighbours & (EFloorNeighbours::BottomRight | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight);
+	EFloorNeighbours bottomRightCornerCheck = FloorValuesArray[index].FloorNeighbours & (EFloorNeighbours::BottomRight | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight);
 
-	if (floorValues[index].IsFullTile)
+	if (FloorValuesArray[index].IsFullTile)
 	{
 		switch (bottomRightCornerCheck)
 		{
-		case EFloorNeighbours::BottomRight:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomMiddle:
 			rotationOffset.Yaw = 180.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			sideFloorPieceArray.Add(newTransform);
+			SideFloorPieceTransforms.Add(newTransform);
 			break;
 		case EFloorNeighbours::MiddleRight:
 			rotationOffset.Yaw = -90.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			sideFloorPieceArray.Add(newTransform);
+			SideFloorPieceTransforms.Add(newTransform);
 			break;
+		case EFloorNeighbours::BottomRight:
 		case EFloorNeighbours::BottomRight | EFloorNeighbours::BottomMiddle:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomRight | EFloorNeighbours::MiddleRight:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight:
-			fullFloorPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomRight | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight:
-			fullFloorPieceArray.Add(newTransform);
+			FullFloorPieceTransforms.Add(newTransform);
 			break;
 		default:
 			rotationOffset.Yaw = 180.0f;
 			newTransform.SetRotation(rotationOffset.Quaternion());
-			convexCornerArray.Add(newTransform);
+			ConvexCornerTransforms.Add(newTransform);
 			break;
 		}
 	}
@@ -533,11 +525,62 @@ void ALevelGenerator::SetBottomRightFloorShape(int x, int y, TArray<FloorValues>
 		switch (bottomRightCornerCheck)
 		{
 		case EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight:
-			concaveCornerPieceArray.Add(newTransform);
-			break;
 		case EFloorNeighbours::BottomRight | EFloorNeighbours::BottomMiddle | EFloorNeighbours::MiddleRight:
-				concaveCornerPieceArray.Add(newTransform);
+			ConcaveCornerPieceTransforms.Add(newTransform);
 			break;
 		}
 	}
+}
+
+void ALevelGenerator::CreateFloor()
+{
+	TArray<TArray<FTransform>> arrayOfTransformArrays;
+	arrayOfTransformArrays.Add(FullFloorPieceTransforms);
+	arrayOfTransformArrays.Add(SideFloorPieceTransforms);
+	arrayOfTransformArrays.Add(ConcaveCornerPieceTransforms);
+	arrayOfTransformArrays.Add(ConvexCornerTransforms);
+
+	TArray<UStaticMeshComponent*> meshArray;
+	meshArray.Add(FullPiece);
+	meshArray.Add(SidePiece);
+	meshArray.Add(ConcaveCornerPiece);
+	meshArray.Add(ConvexCornerPiece);
+
+	for (int i = 0; i < meshArray.Num(); i++)
+	{
+		UInstancedStaticMeshComponent* ISMComp = NewObject<UInstancedStaticMeshComponent>(this);
+		ISMComp->RegisterComponent();
+
+		if (meshArray[i]->GetStaticMesh() != nullptr)
+		{
+			ISMComp->SetStaticMesh(meshArray[i]->GetStaticMesh());
+		}
+		if (meshArray[i]->GetMaterial(0) != nullptr)
+		{
+			ISMComp->SetMaterial(0, meshArray[i]->GetMaterial(0));
+		}
+
+		ISMComp->SetFlags(RF_Transactional);
+		this->AddInstanceComponent(ISMComp);
+
+		ISMComp->AddInstances(arrayOfTransformArrays[i], true);
+	}
+
+}
+
+void ALevelGenerator::MC_CreateFloor_Implementation()
+{
+	CreateFloor();
+}
+
+void ALevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ALevelGenerator, Random);
+	DOREPLIFETIME(ALevelGenerator, FloorValuesArray);
+	DOREPLIFETIME(ALevelGenerator, FullFloorPieceTransforms);
+	DOREPLIFETIME(ALevelGenerator, SideFloorPieceTransforms);
+	DOREPLIFETIME(ALevelGenerator, ConcaveCornerPieceTransforms);
+	DOREPLIFETIME(ALevelGenerator, ConvexCornerTransforms);
 }

@@ -28,6 +28,9 @@ ALevelChangeTrigger::ALevelChangeTrigger():
 
 	LevelTargetTextRender = CreateDefaultSubobject<UTextRenderComponent>("LevelTextRender");
 	LevelTargetTextRender->SetupAttachment(Origin);
+
+	SetReplicates(true);
+	bAlwaysRelevant = true;
 }
 
 void ALevelChangeTrigger::OnConstruction(const FTransform& transform)
