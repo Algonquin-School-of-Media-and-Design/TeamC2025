@@ -14,26 +14,15 @@ ALobbyPreview::ALobbyPreview()
     MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComp"));
     RootComponent = MeshComp;
 
-    static ConstructorHelpers::FClassFinder<UAnimInstance> AnimBP(
-        TEXT("/Game/Characters/Mannequins/Animations/ABP_Quinn.ABP_Quinn_C")
-    );
-
-    if (AnimBP.Succeeded())
-    {
-        MeshComp->SetAnimInstanceClass(AnimBP.Class);
-    }
-
     MeshComp->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+    MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
     MeshComp->SetComponentTickEnabled(true);
     MeshComp->bPauseAnims = false;
     MeshComp->bNoSkeletonUpdate = false;
     MeshComp->bEnableUpdateRateOptimizations = false;
-    MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-    MeshComp->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
-    MeshComp->bOnlyAllowAutonomousTickPose = false;
 
-    MeshComp->SetIsReplicated(false); // Let animation run locally
-
+    // Important: make sure the mesh itself can replicate
+    MeshComp->SetIsReplicated(true);
 }
 
 // Called when the game starts or when spawned
