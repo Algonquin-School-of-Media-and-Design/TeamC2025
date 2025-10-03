@@ -2,73 +2,111 @@
 
 
 #include "LobbyGameMode.h"
-#include <Kismet/GameplayStatics.h>
-#include "RelicRunners/PlayerController/RelicRunnersPlayerController.h"
 #include "RelicRunners/PlayerPreview/LobbyPreview.h"
+#include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
+#include "RelicRunners/PlayerController/RelicRunnersPlayerController.h"
+#include "RelicRunners/Menu/JoinUserWidget.h"
+#include "GameFramework/HUD.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
-    // No pawn should spawn in the menu
-    DefaultPawnClass = nullptr;
+    // Default spawn positions (your pillar coords)
+    LobbySpawnPositions = {
+        FVector(-2320.f, -40.f, 340.f),
+        FVector(-2235.f, 100.f, 330.f),
+        FVector(-2235.f, 240.f, 330.f),
+        FVector(-2320.f, 380.f, 340.f)
+    };
+
+    DefaultPawnClass = nullptr; // No pawn
     PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
+}
+
+void ALobbyGameMode::BeginPlay()
+{
+    Super::BeginPlay();
 }
 
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    if (NewPlayer)
+    if (!NewPlayer || !LobbyPreviewClass) return;
+
+    // Add to our lobby array
+    PlayersInLobby.Add(NewPlayer);
+
+    // Spawn lobby preview for this player
+    int32 Index = PlayersInLobby.Num() - 1;
+    if (LobbySpawnPositions.IsValidIndex(Index))
     {
-        NewPlayer->bAutoManageActiveCameraTarget = false;
+        FActorSpawnParameters Params;
+        Params.Owner = NewPlayer;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        TArray<AActor*> FoundCameras;
-        UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("LobbyCamera"), FoundCameras);
+        ALobbyPreview* SpawnedPreview = GetWorld()->SpawnActor<ALobbyPreview>(
+            LobbyPreviewClass,
+            LobbySpawnPositions[Index],
+            FRotator::ZeroRotator,
+            Params
+        );
 
-        if (FoundCameras.Num() > 0)
+        if (SpawnedPreview)
         {
-            AActor* LobbyCamera = FoundCameras[0];
-
-            // Delay slightly in case PostLogin is too early
-            FTimerHandle TimerHandle;
-            GetWorldTimerManager().SetTimer(TimerHandle, [NewPlayer, LobbyCamera]()
-                {
-                    if (NewPlayer && LobbyCamera)
-                    {
-                        NewPlayer->SetViewTargetWithBlend(LobbyCamera, 0.0f);
-                        UE_LOG(LogTemp, Log, TEXT("View set to LobbyCamera"));
-                    }
-                }, 0.1f, false);
+            LobbyPreviews.Add(NewPlayer, SpawnedPreview);
         }
     }
 
-    const FVector SpawnLocation = LobbySpawnPositions[0];
-    const FRotator SpawnRotation = FRotator::ZeroRotator;
-
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.Owner = NewPlayer;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-    if (LobbyPreviewClass)
+    if (ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(NewPlayer))
     {
-        ALobbyPreview* Preview = GetWorld()->SpawnActor<ALobbyPreview>(LobbyPreviewClass, SpawnLocation, SpawnRotation, SpawnParams);
-        if (Preview)
-        {
-            Preview->SetOwner(NewPlayer);
+        PC->ClientSetupLobby();
+    }
 
-            if (ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(NewPlayer))
-            {
-                RRPC->LobbyPreviewInstance = Preview;
-                UE_LOG(LogTemp, Warning, TEXT("[GameMode] Spawned preview actor for %s: %s"), *NewPlayer->GetName(), *Preview->GetName());
-            }
-        }
-        else
+
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        if (ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(It->Get()))
         {
-            UE_LOG(LogTemp, Warning, TEXT("[GameMode] Failed to spawn preview actor for %s"), *NewPlayer->GetName());
+            PC->Client_UpdateLobbyUI();
         }
     }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerPreviewClass not set!"));
-    }
+
+    // Update all players' UI
+    UpdateAllFindGamesButtons();
 }
 
+void ALobbyGameMode::Logout(AController* Exiting)
+{
+    Super::Logout(Exiting);
+
+    APlayerController* ExitingPC = Cast<APlayerController>(Exiting);
+    if (!ExitingPC) return;
+
+    // Remove from lobby array
+    PlayersInLobby.Remove(ExitingPC);
+
+    // Destroy their preview actor if exists
+    ALobbyPreview* Preview = nullptr;
+    if (LobbyPreviews.RemoveAndCopyValue(ExitingPC, Preview))
+    {
+        if (HasAuthority() && Preview)
+        {
+            Preview->Destroy();
+        }
+    }
+
+    // Update remaining players' UI
+    UpdateAllFindGamesButtons();
+}
+
+void ALobbyGameMode::UpdateAllFindGamesButtons()
+{
+    for (APlayerController* PC : PlayersInLobby)
+    {
+        if (ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(PC))
+        {
+            RRPC->Client_UpdateLobbyUI_Implementation();
+        }
+    }
+}

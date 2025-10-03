@@ -14,16 +14,24 @@ class RELICRUNNERS_API ALobbyGameMode : public AGameMode
 {
 	GENERATED_BODY()
 public:
-	ALobbyGameMode();
-	virtual void PostLogin(APlayerController* NewPlayer) override;
+    ALobbyGameMode();
+    virtual void PostLogin(APlayerController* NewPlayer) override;
+    virtual void Logout(AController* Exiting) override;
+    virtual void BeginPlay() override;
+protected:
+    // Where to put players in lobby (pillars etc.)
+    UPROPERTY(EditDefaultsOnly, Category = "Lobby")
+    TArray<FVector> LobbySpawnPositions;
 
+    UPROPERTY(EditDefaultsOnly, Category = "Lobby")
+    TSubclassOf<class ALobbyPreview> LobbyPreviewClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class ALobbyPreview> LobbyPreviewClass = nullptr;
+private:
+    // Track controllers in the lobby
+    TArray<APlayerController*> PlayersInLobby;
 
-	TArray<FVector> LobbySpawnPositions
-		= { FVector(-1680.000003,105.000022,60.000000),
-			FVector(-1679.999996,245.000022,60.000000),
-			FVector(-1765.000010,-34.999974,65.000000),
-			FVector(-1764.999990,385.000026,65.000000) };
+    UPROPERTY()
+    TMap<APlayerController*, ALobbyPreview*> LobbyPreviews;
+
+    void UpdateAllFindGamesButtons();
 };

@@ -9,7 +9,7 @@
 #include "RelicRunnersGameInstance.generated.h"
 
 UCLASS()
-class RELICRUNNERS_API URelicRunnersGameInstance : public UAdvancedFriendsGameInstance
+class RELICRUNNERS_API URelicRunnersGameInstance : public UGameInstance
 {
     GENERATED_BODY()
 
@@ -17,30 +17,51 @@ public:
     virtual void Init() override;
     virtual void Shutdown() override;
 
-    void HostGame();
-    void FindGames(class UJoinUserWidget* UserWidget);
-    void JoinGame(int32 SessionIndex);
-    void LeaveSession();
+    /** UI / travel */
+    UFUNCTION(BlueprintCallable)
+    void BackToMainMenu();
+    void TravelToMainMenu();
 
+    /** Host */
+    UFUNCTION(BlueprintCallable)
+    void HostGame();
+    void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+    /** Find */
+    void FindGames(class UJoinUserWidget* UserWidget);
+    void OnFindSessionsComplete(bool bWasSuccessful);
+
+    /** Join */
+    UFUNCTION(BlueprintCallable)
+    void JoinGame(int32 SessionIndex);
+    void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+    void OnSessionDestroyedThenJoin(FName SessionName, bool bWasSuccessful);
+
+    /** Leave / Destroy */
+    UFUNCTION(BlueprintCallable)
+    void LeaveSession(bool bQueueHost = false);
+    void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
+    /** helpers */
     void SetCharacterName(const FString& NewName);
-    FString GetCharacterName();
+    FString GetCharacterName() const;
+    bool IsInSession() const;
 
 private:
-    /** Pointer to the session interface */
-    IOnlineSessionPtr SessionInterface;
+    /** backing data */
+    TWeakPtr<class IOnlineSession, ESPMode::ThreadSafe> SessionInterface;
+    TSharedPtr<class FOnlineSessionSearch> SessionSearch;
 
-    /** Active search handle */
-    TSharedPtr<FOnlineSessionSearch> SessionSearch;
+    /** UI kit (weak) */
+    TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
 
-    /** Widget that will display session search results */
-    class UJoinUserWidget* TextRenderWidget;
+    /** queued actions */
+    int32 PendingHostAfterLeave = 0;
+    int32 PendingJoinIndex = -1;
 
-    /** Cached player name */
+    /** player name */
     FString PlayerName;
 
-    /** Delegate handlers */
-    void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
-    void OnFindSessionsComplete(bool bWasSuccessful);
-    void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
-    void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+    /** internal helper */
+    void CreateNewSession();
 };

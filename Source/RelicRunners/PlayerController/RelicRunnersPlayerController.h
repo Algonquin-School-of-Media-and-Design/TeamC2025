@@ -81,6 +81,8 @@ public:
 	UFUNCTION()
 	void TrySetupPreviewRenderTarget();
 
+	void SetupLobbyView();
+
 	UFUNCTION(Server, Reliable)
 	void Server_RequestPickup(class AItemActor* Item);
 
@@ -113,10 +115,24 @@ public:
 	UPROPERTY()
 	class UMainMenuWidget* MainMenuWidget = nullptr;
 
+	UFUNCTION(Client, Reliable)
+	void ClientSetupLobby();
+
+	void ShowMainMenuUI();
+	void ShowLobbyUI();
+
+	UFUNCTION(Client, Reliable)
+	void Client_UpdateLobbyUI();
+
 	// Begin Actor interface
 protected:
 	ARelicRunnersPlayerController();
 	virtual void BeginPlay() override;
+
+	void InitializePawnDependentSystems();
+
+
+
 
 	virtual void SetupInputComponent() override;
 

@@ -13,10 +13,9 @@ UCLASS()
 class RELICRUNNERS_API AMainMenuGameMode : public AGameModeBase
 {
     GENERATED_BODY()
-
 public:
     AMainMenuGameMode();
-
+    
 protected:
     virtual void BeginPlay() override;
 };

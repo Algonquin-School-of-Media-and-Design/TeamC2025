@@ -15,6 +15,7 @@
 #include "Components/CircularThrobber.h"
 #include <Kismet/GameplayStatics.h>
 #include "ModeSelectionWidget.h"
+#include "GameFramework/GameStateBase.h"
 
 void UJoinUserWidget::NativeConstruct()
 {
@@ -39,7 +40,7 @@ void UJoinUserWidget::NativeConstruct()
 	{
 		SessionTileView->OnEntryWidgetGenerated().AddUObject(this, &UJoinUserWidget::HandleEntryGenerated);
 	}
-
+	UpdateFindGamesButtonVisibility();
 }
 
 void UJoinUserWidget::HandleEntryGenerated(UUserWidget& EntryWidget)
@@ -64,19 +65,56 @@ void UJoinUserWidget::RefreshMenu()
 
 void UJoinUserWidget::BackButtonClicked()
 {
-	UWorld* World = GetWorld();
-	if (World)
+	URelicRunnersGameInstance* GameInstance = GetGameInstance<URelicRunnersGameInstance>();
+	if (GameInstance)
 	{
-		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
-		GameInstance->LeaveSession();
-
-		World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/MainMenu"));
+		GameInstance->BackToMainMenu();
 	}
 }
 
 void UJoinUserWidget::FindGamesButtonClicked()
 {
+	URelicRunnersGameInstance* GameInstance = GetGameInstance<URelicRunnersGameInstance>();
+	if (!GameInstance) return;
+
 	SearchForLanGames();
+}
+
+void UJoinUserWidget::UpdateFindGamesButtonVisibility()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	AGameStateBase* GS = World->GetGameState();
+	if (!GS) return;
+
+	int32 NumPlayers = GS->PlayerArray.Num();
+
+	// Update FindGames button visibility
+	if (FindGames)
+	{
+		if (NumPlayers <= 1)
+		{
+			FindGames->SetVisibility(ESlateVisibility::Visible);
+			FindGames->SetIsEnabled(true);
+		}
+		else
+		{
+			FindGames->SetVisibility(ESlateVisibility::Collapsed);
+			FindGames->SetIsEnabled(false);
+		}
+	}
+
+	// Hide session search results and join UI if more than 1 player
+	if (NumPlayers > 1)
+	{
+		if (SessionTileView)
+			SessionTileView->ClearListItems();
+		if (SessionsBorder)
+			SessionsBorder->SetVisibility(ESlateVisibility::Collapsed);
+		if (JoinBorder)
+			JoinBorder->SetVisibility(ESlateVisibility::Collapsed);
+	}
 }
 
 void UJoinUserWidget::JoinGameButtonClicked()
@@ -84,7 +122,7 @@ void UJoinUserWidget::JoinGameButtonClicked()
 	if (LastSelectedItem && SessionTileView)
 	{
 		int32 ItemIndex = SessionTileView->GetIndexForItem(LastSelectedItem);
-		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+		URelicRunnersGameInstance* GameInstance = GetGameInstance<URelicRunnersGameInstance>();
 		if (GameInstance)
 		{
 			GameInstance->JoinGame(ItemIndex);
@@ -109,8 +147,6 @@ void UJoinUserWidget::HandleSessionClicked(USessionListItemData* ClickedSession)
 		}
 	}
 }
-
-
 
 void UJoinUserWidget::SearchForLanGames()
 {

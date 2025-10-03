@@ -37,6 +37,8 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UCircularThrobber* RefreshProgress;
 
+	UFUNCTION()
+	void UpdateFindGamesButtonVisibility();
 protected:
 	UFUNCTION()
 	void BackButtonClicked();
