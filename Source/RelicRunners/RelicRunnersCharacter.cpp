@@ -492,7 +492,12 @@ void ARelicRunnersCharacter::BeginPlay()
 		// Delay UI setup until everything else is ready
 		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::InitLocalUI);
 	}
+	/*AActor* Director1 = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>());
 
+	AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(),
+		ADirector::StaticClass());
+
+	int test1 = 0;*/
 	if (HasAuthority())
 	{
 		// Generate initial items only once on server
@@ -503,14 +508,15 @@ void ARelicRunnersCharacter::BeginPlay()
 		UWorld* World = GetWorld();
 		APawn* player = static_cast<APawn*>(this);
 
-		AActor* Director = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>());
-		Director->GetWorld();
+		/*AActor* Director = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>());
+		int test = 0;*/
+		//Director->GetWorld();
 		//Director->AddPlayer(player);
 
-		/*GetWorld()->GetTimerManager().SetTimerForNextTick( [World, player] {
-			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, TSubclassOf<ADirector>()));
+		GetWorld()->GetTimerManager().SetTimerForNextTick( [World, player] {
+			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
 			Director->AddPlayer(player);
-			});*/
+			});
 		/*GetWorld()->GetTimerManager().SetTimer(tempHandle, [World, player] {
 		ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, TSubclassOf<ADirector>()));
 		Director->AddPlayer(player);

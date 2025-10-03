@@ -92,7 +92,7 @@ void ASpawnPoint::SpawnEnemies()
 			}
 
 			//m_pPickableCards copies m_pSpawningCards or m_pDefaultSpawningCards that way we can remove cards from the pool we have to pick from without losing them on the next call
-			if (m_pPickableCards.Num() > 0)
+			if (m_pSpawningCards.Num() > 0)
 			{
 				m_pPickableCards = m_pSpawningCards;
 			}

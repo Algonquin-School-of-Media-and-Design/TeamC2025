@@ -24,6 +24,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Timer", meta = (AllowPrivateAccess = "true"))
 	float m_spawnTimer;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player List", meta = (AllowPrivateAccess = "true"))
 	//The man, The myth, the legend, the PLAYER 1!!!! and I guess all the side character if it multiplayer 
 	TArray<APawn*> m_pPlayers;
 	//If a spawn point does not have it spawn cards set it will use this
