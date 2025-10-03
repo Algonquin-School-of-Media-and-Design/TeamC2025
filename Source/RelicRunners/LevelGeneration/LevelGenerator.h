@@ -30,12 +30,6 @@ public:
 	bool IsFullTile = false;
 	UPROPERTY()
 	EFloorNeighbours FloorNeighbours = EFloorNeighbours::Blank;
-	//float offset;
-	//float offsetb;
-	//FTransform TopLeft;
-	//FTransform TopRight;
-	//FTransform BottomLeft;
-	//FTransform BottomRight;
 };
 
 
@@ -121,40 +115,16 @@ public:
 	float GetFullPercentage() { return FullPercentage; }
 
 public:
-	UFUNCTION()
-	void OnRep_SetRandomValue();
 
-	UPROPERTY(ReplicatedUsing = OnRep_SetRandomValue)
+	UPROPERTY(Replicated)
 	float Random;
 
-	UFUNCTION()
-	void OnRep_SetFloorValue();
-
-	UPROPERTY(ReplicatedUsing = OnRep_SetFloorValue)
+	UPROPERTY(Replicated)
 	TArray<FloorValues> FloorValuesArray;
 
-	UFUNCTION()
-	void OnRep_SetFullValue();
 
-	UPROPERTY(ReplicatedUsing = OnRep_SetFullValue)
 	TArray<FTransform> FullFloorPieceTransforms;
-
-	UFUNCTION()
-	void OnRep_SetSideValue();
-
-	UPROPERTY(ReplicatedUsing = OnRep_SetSideValue)
 	TArray<FTransform> SideFloorPieceTransforms;
-
-	UFUNCTION()
-	void OnRep_SetConcaveValue();
-
-	UPROPERTY(ReplicatedUsing = OnRep_SetConcaveValue)
 	TArray<FTransform> ConcaveCornerPieceTransforms;
-
-	UFUNCTION()
-	void OnRep_SetConvexValue();
-
-	UPROPERTY(ReplicatedUsing = OnRep_SetConvexValue)
 	TArray<FTransform> ConvexCornerTransforms;
-
 };

@@ -42,8 +42,6 @@ void ALevelGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HasAuthority())
-	{
 		for (int y = 0; y < SpawnDepth; y++)
 		{
 			for (int x = 0; x < SpawnWidth; x++)
@@ -60,63 +58,8 @@ void ALevelGenerator::BeginPlay()
 			}
 		}
 		FloorValuesArray = FloorValuesArray;
-	}
 
-	MC_CreateFloor();
-}
-
-void ALevelGenerator::OnRep_SetRandomValue()
-{
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Random: %f"), Random));
-	}
-	FloorValues newFloorValues;
-}
-
-void ALevelGenerator::OnRep_SetFloorValue()
-{
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Floor Value: %f"), FloorValuesArray.Num()));
-	}
-
-}
-
-void ALevelGenerator::OnRep_SetFullValue()
-{
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Full: %f"), FullFloorPieceTransforms.Num()));
-	}
-
-}
-
-void ALevelGenerator::OnRep_SetSideValue()
-{
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Side: %f"), SideFloorPieceTransforms.Num()));
-	}
-
-}
-
-void ALevelGenerator::OnRep_SetConcaveValue()
-{
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Concave: %f"), ConcaveCornerPieceTransforms.Num()));
-	}
-
-}
-
-void ALevelGenerator::OnRep_SetConvexValue()
-{
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Convex: %f"), ConvexCornerTransforms.Num()));
-	}
-
+		MC_CreateFloor();
 }
 
 void ALevelGenerator::GenerateFloor(int x, int y)
@@ -153,18 +96,26 @@ void ALevelGenerator::MC_GenerateFloor_Implementation(int x, int y)
 
 void ALevelGenerator::InitializeFloor()
 {
-	Random = FMath::RandRange(0.0f, 100.0f);
-	FloorValues newFloorValues;
+	GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Red, FString::Printf(TEXT("Random: %f"), Random));
+	if (HasAuthority())
+	{
+		FloorValues newFloorValues;
+		Random = FMath::RandRange(0.1f, 100.0f);
 
-	if (Random > FullPercentage)
-	{
-		newFloorValues.IsFullTile = false;
+		if (Random > FullPercentage)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Blue, FString::Printf(TEXT("FloorTile = False")));
+			newFloorValues.IsFullTile = false;
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Blue, FString::Printf(TEXT("FloorTile = True")));
+			newFloorValues.IsFullTile = true;
+		}
+		FloorValuesArray.Add(newFloorValues);
 	}
-	else
-	{
-		newFloorValues.IsFullTile = true;
-	}
-	FloorValuesArray.Add(newFloorValues);
+	GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Random: %f"), Random));
+
 }
 
 void ALevelGenerator::CheckFloor(int x, int y)
@@ -579,8 +530,4 @@ void ALevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 	DOREPLIFETIME(ALevelGenerator, Random);
 	DOREPLIFETIME(ALevelGenerator, FloorValuesArray);
-	DOREPLIFETIME(ALevelGenerator, FullFloorPieceTransforms);
-	DOREPLIFETIME(ALevelGenerator, SideFloorPieceTransforms);
-	DOREPLIFETIME(ALevelGenerator, ConcaveCornerPieceTransforms);
-	DOREPLIFETIME(ALevelGenerator, ConvexCornerTransforms);
 }
