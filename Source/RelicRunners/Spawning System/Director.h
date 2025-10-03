@@ -49,7 +49,7 @@ public:
 	//A Method to get all the players that the director is keeping track of
 	UFUNCTION()
 	TArray<APawn*> GetPlayers();
-	UFUNCTION(Server, Reliable)
+	UFUNCTION()
 	void AddPlayer(APawn* newPlayer);
 
 protected:

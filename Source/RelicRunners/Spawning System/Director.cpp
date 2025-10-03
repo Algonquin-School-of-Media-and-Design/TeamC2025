@@ -11,6 +11,7 @@ ADirector::ADirector()
 	m_spawnWait = 20;
 	PrimaryActorTick.bCanEverTick = true;
 	Tags.Add("Director");
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
@@ -74,12 +75,12 @@ TArray<APawn*> ADirector::GetPlayers()
 	return m_pPlayers;
 }
 
-void ADirector::AddPlayer_Implementation(APawn* newPlayer)
+void ADirector::AddPlayer(APawn* newPlayer)
 {
-	/*if (!m_pPlayers.Contains(newPlayer))
+	if (!m_pPlayers.Contains(newPlayer))
 	{
 		m_pPlayers.Add(newPlayer);
-	}*/
+	}
 }
 
 void ADirector::SpawnCheck()

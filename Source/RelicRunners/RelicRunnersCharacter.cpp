@@ -483,10 +483,6 @@ void ARelicRunnersCharacter::BeginPlay()
 	{
 		// Setup health regen loop
 		GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
-
-		//updating the director player list
-		ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>()));
-		Director->AddPlayer(this);
 	}
 
 	// === Local client UI setup ===
@@ -501,6 +497,24 @@ void ARelicRunnersCharacter::BeginPlay()
 	{
 		// Generate initial items only once on server
 		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
+		//updating the director player list
+		
+		FTimerHandle tempHandle;
+		UWorld* World = GetWorld();
+		APawn* player = static_cast<APawn*>(this);
+
+		AActor* Director = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>());
+		Director->GetWorld();
+		//Director->AddPlayer(player);
+
+		/*GetWorld()->GetTimerManager().SetTimerForNextTick( [World, player] {
+			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, TSubclassOf<ADirector>()));
+			Director->AddPlayer(player);
+			});*/
+		/*GetWorld()->GetTimerManager().SetTimer(tempHandle, [World, player] {
+		ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, TSubclassOf<ADirector>()));
+		Director->AddPlayer(player);
+	}, 20, false);*/
 	}
 
 	// Attach item mesh components
