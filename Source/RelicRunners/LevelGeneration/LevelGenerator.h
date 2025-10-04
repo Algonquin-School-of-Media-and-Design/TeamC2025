@@ -115,11 +115,13 @@ public:
 	float GetFullPercentage() { return FullPercentage; }
 
 public:
+	UFUNCTION()
+	void OnRep_CheckReplication();
 
 	UPROPERTY(Replicated)
 	float Random;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_CheckReplication)
 	TArray<FloorValues> FloorValuesArray;
 
 

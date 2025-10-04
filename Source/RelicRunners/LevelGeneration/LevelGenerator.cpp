@@ -42,6 +42,8 @@ void ALevelGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (HasAuthority())
+	{
 		for (int y = 0; y < SpawnDepth; y++)
 		{
 			for (int x = 0; x < SpawnWidth; x++)
@@ -57,9 +59,8 @@ void ALevelGenerator::BeginPlay()
 				MC_CheckFloor(x, y);
 			}
 		}
-		FloorValuesArray = FloorValuesArray;
-
 		MC_CreateFloor();
+	}
 }
 
 void ALevelGenerator::GenerateFloor(int x, int y)
@@ -96,26 +97,18 @@ void ALevelGenerator::MC_GenerateFloor_Implementation(int x, int y)
 
 void ALevelGenerator::InitializeFloor()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Red, FString::Printf(TEXT("Random: %f"), Random));
-	if (HasAuthority())
+	FloorValues newFloorValues;
+	Random = FMath::RandRange(0.1f, 100.0f);
+
+	if (Random > FullPercentage)
 	{
-		FloorValues newFloorValues;
-		Random = FMath::RandRange(0.1f, 100.0f);
-
-		if (Random > FullPercentage)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Blue, FString::Printf(TEXT("FloorTile = False")));
-			newFloorValues.IsFullTile = false;
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Blue, FString::Printf(TEXT("FloorTile = True")));
-			newFloorValues.IsFullTile = true;
-		}
-		FloorValuesArray.Add(newFloorValues);
+		newFloorValues.IsFullTile = false;
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Green, FString::Printf(TEXT("Random: %f"), Random));
-
+	else
+	{
+		newFloorValues.IsFullTile = true;
+	}
+	FloorValuesArray.Add(newFloorValues);
 }
 
 void ALevelGenerator::CheckFloor(int x, int y)
@@ -517,6 +510,18 @@ void ALevelGenerator::CreateFloor()
 		ISMComp->AddInstances(arrayOfTransformArrays[i], true);
 	}
 
+}
+
+void ALevelGenerator::OnRep_CheckReplication()
+{
+	for (int y = 0; y < SpawnDepth; y++)
+	{
+		for (int x = 0; x < SpawnWidth; x++)
+		{
+			CheckFloor(x, y);
+		}
+	}
+	CreateFloor();
 }
 
 void ALevelGenerator::MC_CreateFloor_Implementation()
