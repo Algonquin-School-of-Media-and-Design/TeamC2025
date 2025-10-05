@@ -82,36 +82,54 @@ void UJoinUserWidget::FindGamesButtonClicked()
 
 void UJoinUserWidget::UpdateFindGamesButtonVisibility()
 {
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	AGameStateBase* GS = World->GetGameState();
-	if (!GS) return;
-
-	int32 NumPlayers = GS->PlayerArray.Num();
-
-	// Update FindGames button visibility
-	if (FindGames)
+	if (!FindGames && !SessionTileView && !SessionsBorder && !JoinBorder)
 	{
-		if (NumPlayers <= 1)
-		{
-			FindGames->SetVisibility(ESlateVisibility::Visible);
-			FindGames->SetIsEnabled(true);
-		}
-		else
-		{
-			FindGames->SetVisibility(ESlateVisibility::Collapsed);
-			FindGames->SetIsEnabled(false);
-		}
+		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] UI references not ready yet."));
+		return;
 	}
 
-	// Hide session search results and join UI if more than 1 player
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] World not valid."));
+		return;
+	}
+
+	AGameStateBase* GS = World->GetGameState();
+	if (!GS || GS->PlayerArray.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] GameState or PlayerArray not ready, retrying..."));
+
+		FTimerHandle RetryHandle;
+		World->GetTimerManager().SetTimer(
+			RetryHandle,
+			[this]() { UpdateFindGamesButtonVisibility(); },
+			0.1f,
+			false
+		);
+		return;
+	}
+
+	const int32 NumPlayers = GS->PlayerArray.Num();
+	UE_LOG(LogTemp, Log, TEXT("[UpdateFindGamesButtonVisibility] NumPlayers: %d"), NumPlayers);
+
+	// Show "Find Games" button if alone in the lobby
+	if (FindGames)
+	{
+		const bool bAlone = (NumPlayers <= 1);
+		FindGames->SetVisibility(bAlone ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+		FindGames->SetIsEnabled(bAlone);
+	}
+
+	// If there are multiple players, hide join UI panels
 	if (NumPlayers > 1)
 	{
 		if (SessionTileView)
 			SessionTileView->ClearListItems();
+
 		if (SessionsBorder)
 			SessionsBorder->SetVisibility(ESlateVisibility::Collapsed);
+
 		if (JoinBorder)
 			JoinBorder->SetVisibility(ESlateVisibility::Collapsed);
 	}

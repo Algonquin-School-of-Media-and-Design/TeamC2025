@@ -13,13 +13,12 @@ ALobbyGameMode::ALobbyGameMode()
 {
     // Default spawn positions (your pillar coords)
     LobbySpawnPositions = {
-        FVector(-2320.f, -40.f, 340.f),
-        FVector(-2235.f, 100.f, 330.f),
-        FVector(-2235.f, 240.f, 330.f),
-        FVector(-2320.f, 380.f, 340.f)
+        FVector(-2235,110,330),
+        FVector(-2235,230,330),
+        FVector(-2319,340,340),
+        FVector(-2320,0,340)
     };
 
-    DefaultPawnClass = nullptr; // No pawn
     PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
 }
 
@@ -58,20 +57,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         }
     }
 
-    ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(NewPlayer);
-    if (PC)
-    {
-        PC->ClientSetupLobby();
-    }
-
-
-    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-    {
-        PC->Client_UpdateLobbyUI();
-    }
-
-    // Update all players' UI
-    UpdateAllFindGamesButtons();
+    UpdateSetup();
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)
@@ -94,25 +80,17 @@ void ALobbyGameMode::Logout(AController* Exiting)
         }
     }
 
-    // Update remaining players' UI
-    UpdateAllFindGamesButtons();
-
-    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-    {
-        if (ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(It->Get()))
-        {
-            PC->Client_UpdateLobbyUI();
-        }
-    }
+    UpdateSetup();
 }
 
-void ALobbyGameMode::UpdateAllFindGamesButtons()
+void ALobbyGameMode::UpdateSetup()
 {
     for (APlayerController* PC : PlayersInLobby)
     {
         if (ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(PC))
         {
             RRPC->Client_UpdateLobbyUI();
+            RRPC->Client_SetupLobby();
         }
     }
 }

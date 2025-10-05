@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameStateBase.h"
+#include "GameFramework/GameState.h"
 #include "RelicRunnersLobbyGameState.generated.h"
 
 UCLASS()
-class ARelicRunnersLobbyGameState : public AGameStateBase
+class ARelicRunnersLobbyGameState : public AGameState
 {
     GENERATED_BODY()
 

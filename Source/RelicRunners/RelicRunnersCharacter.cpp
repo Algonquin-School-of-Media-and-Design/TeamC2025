@@ -485,7 +485,7 @@ void ARelicRunnersCharacter::BeginPlay()
 	}
 	else if (MapName.Contains("Lobby"))
 	{
-		FollowCamera->Deactivate();
+
 	}
 	else if (MapName.Contains("ThirdPersonMap"))
 	{

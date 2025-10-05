@@ -64,6 +64,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnPossess(APawn* aPawn) override;
 
+	virtual void ClientRestart_Implementation(APawn* NewPawn) override;
+
 	class ARelicRunnersCharacter* GetPossessedPawn() { return PossessedPawn; }
 
 	UFUNCTION(Server, Reliable)
@@ -81,6 +83,7 @@ public:
 	UFUNCTION()
 	void TrySetupPreviewRenderTarget();
 
+	UFUNCTION()
 	void SetupLobbyView();
 
 	void SetupMainMenuView();
@@ -118,7 +121,7 @@ public:
 	class UMainMenuWidget* MainMenuWidget = nullptr;
 
 	UFUNCTION(Client, Reliable)
-	void ClientSetupLobby();
+	void Client_SetupLobby();
 
 	UFUNCTION(Client, Reliable)
 	void Client_UpdateLobbyUI();
@@ -129,9 +132,6 @@ protected:
 	virtual void BeginPlay() override;
 
 	void InitializePawnDependentSystems();
-
-
-
 
 	virtual void SetupInputComponent() override;
 

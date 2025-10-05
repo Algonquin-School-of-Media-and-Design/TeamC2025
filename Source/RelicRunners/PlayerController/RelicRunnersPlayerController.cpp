@@ -63,6 +63,19 @@ void ARelicRunnersPlayerController::OnPossess(APawn* aPawn)
 	PossessedPawn = Cast<ARelicRunnersCharacter>(aPawn);
 }
 
+void ARelicRunnersPlayerController::ClientRestart_Implementation(APawn* NewPawn)
+{
+	Super::ClientRestart_Implementation(NewPawn);
+
+	FString MapName = GetWorld()->GetMapName();
+	MapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+
+	if (MapName.Contains("Lobby"))
+	{
+		SetupLobbyView();
+	}
+}
+
 void ARelicRunnersPlayerController::Server_SetPlayerName_Implementation(const FString& NewName)
 {
 	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
@@ -253,25 +266,33 @@ void ARelicRunnersPlayerController::SetupLobbyView()
 
 	TArray<AActor*> Cameras;
 	UGameplayStatics::GetAllActorsWithTag(World, FName("LobbyCamera"), Cameras);
-	if (Cameras.Num() > 0 && Cameras[0])
+
+	if (Cameras.Num() == 0)
 	{
-		SetViewTargetWithBlend(Cameras[0], 0.0f);
+		// Retry until the camera exists
+		UE_LOG(LogTemp, Warning, TEXT("LobbyCamera not found, retrying..."));
+		FTimerHandle RetryHandle;
+		GetWorldTimerManager().SetTimer(RetryHandle, this, &ARelicRunnersPlayerController::SetupLobbyView, 0.1f, false);
+		return;
 	}
 
-	if (LobbyWidgetClass && !LobbyWidget)
+	SetViewTargetWithBlend(Cameras[0], 0.0f);
+
+	// Only create UI once
+	if (!LobbyWidget && LobbyWidgetClass)
 	{
 		LobbyWidget = CreateWidget<UJoinUserWidget>(this, LobbyWidgetClass);
 		if (LobbyWidget)
 		{
 			LobbyWidget->AddToViewport();
-			LobbyWidget->SetIsEnabled(true);
 			LobbyWidget->SetVisibility(ESlateVisibility::Visible);
 			bShowMouseCursor = true;
 			SetInputMode(FInputModeUIOnly());
-
 			LobbyWidget->UpdateFindGamesButtonVisibility();
 		}
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("Lobby setup complete for %s"), *GetNameSafe(this));
 }
 
 void ARelicRunnersPlayerController::SetupMainMenuView()
@@ -300,10 +321,9 @@ void ARelicRunnersPlayerController::SetupMainMenuView()
 	}
 }
 
-void ARelicRunnersPlayerController::ClientSetupLobby_Implementation()
+void ARelicRunnersPlayerController::Client_SetupLobby_Implementation()
 {
-	FTimerHandle TimerHandle;
-	GetWorldTimerManager().SetTimer(TimerHandle, this, &ARelicRunnersPlayerController::SetupLobbyView, 0.2f, false);
+	SetupLobbyView();
 }
 
 void ARelicRunnersPlayerController::BeginPlay()
@@ -330,7 +350,7 @@ void ARelicRunnersPlayerController::BeginPlay()
 	{
 		SetupLobbyView();
 	}
-	if (World && MapName.Contains(TEXT("MainMenu")))
+	else if (World && MapName.Contains(TEXT("MainMenu")))
 	{
 		SetupMainMenuView();
 	}

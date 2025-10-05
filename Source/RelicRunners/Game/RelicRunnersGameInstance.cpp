@@ -294,18 +294,6 @@ void URelicRunnersGameInstance::OnSessionDestroyedThenJoin(FName SessionName, bo
 /* Join result resolve connect string and travel */
 void URelicRunnersGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-    FString ResultStr = FString::Printf(TEXT("OnJoinSessionComplete: SessionName=%s Result=%d"), *SessionName.ToString(), (int32)Result);
-    UE_LOG(LogTemp, Log, TEXT("%s"), *ResultStr);
-    if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Yellow, ResultStr);
-
-    if (Result != EOnJoinSessionCompleteResult::Success)
-    {
-        FString FailMsg = FString::Printf(TEXT("JoinSession failed with result %d"), (int32)Result);
-        UE_LOG(LogTemp, Warning, TEXT("%s"), *FailMsg);
-        if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FailMsg);
-        return;
-    }
-
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         FString ConnectInfo;
