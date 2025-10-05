@@ -18,18 +18,10 @@ void URelicRunnersGameInstance::Init()
 {
     Super::Init();
 
-    IOnlineSubsystem* OSS = IOnlineSubsystem::Get();
-    if (OSS)
+    IOnlineSessionPtr OnlineSubsystem = Online::GetSessionInterface(GetWorld());
+    if (OnlineSubsystem)
     {
-        SessionInterface = OSS->GetSessionInterface();
-    }
-    if (SessionInterface.IsValid())
-    {
-        UE_LOG(LogTemp, Log, TEXT("Session interface initialized"));
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to get session interface"));
+        SessionInterface = OnlineSubsystem;
     }
 }
 
@@ -112,7 +104,7 @@ void URelicRunnersGameInstance::CreateNewSession()
         SessionSettings.Set(SETTING_MAPNAME, FString(TEXT("Lobby")), EOnlineDataAdvertisementType::ViaOnlineService);
 
         // bind and create
-        Sess->OnCreateSessionCompleteDelegates.RemoveAll(this);
+        //Sess->OnCreateSessionCompleteDelegates.RemoveAll(this);
         Sess->OnCreateSessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnCreateSessionComplete);
         Sess->CreateSession(0, NAME_GameSession, SessionSettings);
 
@@ -138,17 +130,16 @@ void URelicRunnersGameInstance::OnCreateSessionComplete(FName SessionName, bool 
 /* Find sessions */
 void URelicRunnersGameInstance::FindGames(UJoinUserWidget* UserWidget)
 {
-    if (!SessionInterface.IsValid()) return;
-    if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
+    if (TSharedPtr<IOnlineSession> Session = SessionInterface.Pin())
     {
         SessionSearch = MakeShareable(new FOnlineSessionSearch());
         SessionSearch->bIsLanQuery = false;
         SessionSearch->MaxSearchResults = 10;
-        SessionSearch->QuerySettings.Set(FName("PRESENCESEARCH"), true, EOnlineComparisonOp::Equals);
+        SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
-        Sess->OnFindSessionsCompleteDelegates.RemoveAll(this);
-        Sess->OnFindSessionsCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnFindSessionsComplete);
-        Sess->FindSessions(0, SessionSearch.ToSharedRef());
+        Session->OnFindSessionsCompleteDelegates.RemoveAll(this);
+        Session->OnFindSessionsCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnFindSessionsComplete);
+        Session->FindSessions(0, SessionSearch.ToSharedRef());
 
         TextRenderWidget = UserWidget;
     }
@@ -225,17 +216,15 @@ void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool
     if (PendingHostAfterLeave > 0)
     {
         PendingHostAfterLeave = 0;
+
         // attempt host now that session was destroyed
         HostGame();
-        return; // HostGame will create a new session
+        return; 
     }
 
-    // If we had a pending join that specifically used a different callback, it will be handled by OnSessionDestroyedThenJoin
-    // Otherwise just return to menu
     TravelToMainMenu();
 }
 
-/* Join flow: if we are currently in a session, destroy it and queue join */
 void URelicRunnersGameInstance::JoinGame(int32 SessionIndex)
 {
     if (!SessionInterface.IsValid() || !SessionSearch.IsValid() || SessionIndex < 0 || SessionIndex >= SessionSearch->SearchResults.Num())
@@ -263,6 +252,7 @@ void URelicRunnersGameInstance::JoinGame(int32 SessionIndex)
         Sess->OnJoinSessionCompleteDelegates.RemoveAll(this);
         Sess->OnJoinSessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnJoinSessionComplete);
         Sess->JoinSession(0, NAME_GameSession, SessionSearch->SearchResults[SessionIndex]);
+        ClientTravelToSession(0, NAME_GameSession);
     }
 }
 

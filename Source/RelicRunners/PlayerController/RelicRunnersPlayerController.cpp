@@ -43,8 +43,18 @@ void ARelicRunnersPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ARelicRunnersPlayerController, PlayerPreviewInstance);
+	DOREPLIFETIME(ARelicRunnersPlayerController, LobbyPreviewInstance);
 }
 
+void ARelicRunnersPlayerController::AcknowledgePossession(APawn* aPawn)
+{
+	Super::AcknowledgePossession(aPawn);
+
+	if (IsLocalController())
+	{
+		UE_LOG(LogTemp, Log, TEXT("AcknowledgePossession: %s"), *GetNameSafe(aPawn));
+	}
+}
 
 void ARelicRunnersPlayerController::OnPossess(APawn* aPawn)
 {
@@ -262,12 +272,38 @@ void ARelicRunnersPlayerController::SetupLobbyView()
 			LobbyWidget->UpdateFindGamesButtonVisibility();
 		}
 	}
+}
 
+void ARelicRunnersPlayerController::SetupMainMenuView()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	TArray<AActor*> Cameras;
+	UGameplayStatics::GetAllActorsWithTag(World, FName("MainMenuCamera"), Cameras);
+	if (Cameras.Num() > 0 && Cameras[0])
+	{
+		SetViewTargetWithBlend(Cameras[0], 0.0f);
+	}
+
+	if (MainMenuWidgetClass && !MainMenuWidget)
+	{
+		MainMenuWidget = CreateWidget<UMainMenuWidget>(this, MainMenuWidgetClass);
+		if (MainMenuWidget)
+		{
+			MainMenuWidget->AddToViewport();
+			MainMenuWidget->SetIsEnabled(true);
+			MainMenuWidget->SetVisibility(ESlateVisibility::Visible);
+			bShowMouseCursor = true;
+			SetInputMode(FInputModeUIOnly());
+		}
+	}
 }
 
 void ARelicRunnersPlayerController::ClientSetupLobby_Implementation()
 {
-	SetupLobbyView();
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ARelicRunnersPlayerController::SetupLobbyView, 0.2f, false);
 }
 
 void ARelicRunnersPlayerController::BeginPlay()
@@ -290,22 +326,13 @@ void ARelicRunnersPlayerController::BeginPlay()
 	const FString MapName = World->GetMapName();
 	UE_LOG(LogTemp, Log, TEXT("BeginPlay LocalController - MapName: %s"), *MapName);
 
-	// If we're in the Lobby map, setup camera and UI
-	if (MapName.Contains(TEXT("Lobby")))
+	if (World && MapName.Contains(TEXT("Lobby")))
 	{
-		// Delay one frame to make sure networking has initialized
-		FTimerHandle TimerHandle;
-		World->GetTimerManager().SetTimer(TimerHandle, this, &ARelicRunnersPlayerController::SetupLobbyView, 0.1f, false);
+		SetupLobbyView();
 	}
-
-	// If pawn exists, setup systems (for gameplay maps)
-	if (GetPawn())
+	if (World && MapName.Contains(TEXT("MainMenu")))
 	{
-		InitializePawnDependentSystems();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("BeginPlay: Pawn is null - waiting for OnPossess"));
+		SetupMainMenuView();
 	}
 
 	if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
@@ -339,32 +366,6 @@ void ARelicRunnersPlayerController::InitializePawnDependentSystems()
 				}
 			}
 		}, 0.5f, false);
-}
-
-void ARelicRunnersPlayerController::ShowMainMenuUI()
-{
-	if (MainMenuWidgetClass && !MainMenuWidget)
-	{
-		MainMenuWidget = CreateWidget<UMainMenuWidget>(this, MainMenuWidgetClass);
-		MainMenuWidget->AddToViewport();
-		MainMenuWidget->SetIsEnabled(true);
-		MainMenuWidget->SetVisibility(ESlateVisibility::Visible);
-		bShowMouseCursor = true;
-		SetInputMode(FInputModeUIOnly());
-	}
-}
-
-void ARelicRunnersPlayerController::ShowLobbyUI()
-{
-	if (LobbyWidgetClass && !LobbyWidget)
-	{
-		LobbyWidget = CreateWidget<UJoinUserWidget>(this, LobbyWidgetClass);
-		LobbyWidget->AddToViewport();
-		LobbyWidget->SetIsEnabled(true);
-		LobbyWidget->SetVisibility(ESlateVisibility::Visible);
-		bShowMouseCursor = true;
-		SetInputMode(FInputModeUIOnly());
-	}
 }
 
 void ARelicRunnersPlayerController::SetupInputComponent()

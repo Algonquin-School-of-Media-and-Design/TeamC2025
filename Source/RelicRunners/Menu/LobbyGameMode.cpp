@@ -58,7 +58,8 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         }
     }
 
-    if (ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(NewPlayer))
+    ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(NewPlayer);
+    if (PC)
     {
         PC->ClientSetupLobby();
     }
@@ -66,10 +67,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
     for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
-        if (ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(It->Get()))
-        {
-            PC->Client_UpdateLobbyUI();
-        }
+        PC->Client_UpdateLobbyUI();
     }
 
     // Update all players' UI

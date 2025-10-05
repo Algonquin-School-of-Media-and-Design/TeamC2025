@@ -71,7 +71,7 @@ public:
 
 	virtual void OnRep_Pawn() override;
 
-
+	virtual void AcknowledgePossession(APawn* Pawn) override;
 
 	virtual void OnUnPossess() override;
 
@@ -82,6 +82,8 @@ public:
 	void TrySetupPreviewRenderTarget();
 
 	void SetupLobbyView();
+
+	void SetupMainMenuView();
 
 	UFUNCTION(Server, Reliable)
 	void Server_RequestPickup(class AItemActor* Item);
@@ -117,9 +119,6 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ClientSetupLobby();
-
-	void ShowMainMenuUI();
-	void ShowLobbyUI();
 
 	UFUNCTION(Client, Reliable)
 	void Client_UpdateLobbyUI();

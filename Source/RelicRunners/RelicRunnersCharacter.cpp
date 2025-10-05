@@ -435,8 +435,14 @@ void ARelicRunnersCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	InitLocalUI();
-	UpdateHUD();
+	FString MapName = GetWorld()->GetMapName();
+	MapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+	
+	if (MapName.Contains("ThirdPersonMap"))
+	{
+		InitLocalUI();
+		UpdateHUD();
+	}
 }
 
 
@@ -476,6 +482,10 @@ void ARelicRunnersCharacter::BeginPlay()
 	if (MapName.Contains("MainMenu"))
 	{
 
+	}
+	else if (MapName.Contains("Lobby"))
+	{
+		FollowCamera->Deactivate();
 	}
 	else if (MapName.Contains("ThirdPersonMap"))
 	{
