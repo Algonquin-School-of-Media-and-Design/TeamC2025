@@ -39,6 +39,7 @@
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
 #include "AbilitySystem/AbilityPointCounter.h"
+#include "AbilitySystem/AbilitySystem.h"
 #include "PlayerHUD/PlayerHUDWorld.h"
 #include "PlayerPreview/PlayerPreview.h"
 #include "PlayerState/RelicRunnersPlayerState.h"
@@ -852,6 +853,32 @@ void ARelicRunnersCharacter::InventoryUI()
 	{
 		Inventory->SetVisibility(ESlateVisibility::Visible);
 		Inventory->SetIsEnabled(true);
+		PlayerController->SetInputMode(FInputModeGameAndUI());
+		PlayerController->SetShowMouseCursor(true);
+	}
+}
+
+void ARelicRunnersCharacter::AbilitySystemUI()
+{
+	if (!IsLocallyControlled()) return;
+
+	if (!AbilitySystem) return;
+
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	if (!PlayerController) return;
+
+	if (AbilitySystem->IsVisible())
+	{
+		AbilitySystem->SetVisibility(ESlateVisibility::Hidden);
+		AbilitySystem->SetIsEnabled(false);
+		PlayerController->SetInputMode(FInputModeGameOnly());
+		PlayerController->SetShowMouseCursor(false);
+		UInventoryItemOptions::CloseAnyOpenPopup();
+	}
+	else
+	{
+		AbilitySystem->SetVisibility(ESlateVisibility::Visible);
+		AbilitySystem->SetIsEnabled(true);
 		PlayerController->SetInputMode(FInputModeGameAndUI());
 		PlayerController->SetShowMouseCursor(true);
 	}

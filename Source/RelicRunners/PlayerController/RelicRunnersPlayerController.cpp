@@ -261,6 +261,9 @@ void ARelicRunnersPlayerController::SetupInputComponent()
 		// Inventory
 		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::InventoryUI);
 
+		// Ability System 
+		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::AbilitySystemUI);
+
 		// BasicAttack
 		EnhancedInputComponent->BindAction(BasicAttackAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::BasicAttack);
 	}
@@ -307,6 +310,14 @@ void ARelicRunnersPlayerController::InventoryUI()
 	if (PossessedPawn)
 	{
 		PossessedPawn->InventoryUI();
+	}
+}
+
+void ARelicRunnersPlayerController::AbilitySystemUI()
+{
+	if (PossessedPawn)
+	{
+		PossessedPawn->AbilitySystemUI();
 	}
 }
 

@@ -106,6 +106,7 @@ protected:
 	void Jump(const struct FInputActionValue& Value);
 	void StopJumping(const struct FInputActionValue& Value);
 	void InventoryUI();
+	void AbilitySystemUI();
 
 	void BasicAttack();
 

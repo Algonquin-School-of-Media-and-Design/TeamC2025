@@ -135,6 +135,7 @@ public:
 	void Look(const FInputActionValue& Value);
 	void Interact();
 	void InventoryUI();
+	void AbilitySystemUI();
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
@@ -232,6 +233,9 @@ public:
 
 	UPROPERTY()
 	class UInventory* Inventory;
+
+	UPROPERTY()
+	class UAbilitySystem* AbilitySystem;
 
 	void AddExperience(int Amount);
 
