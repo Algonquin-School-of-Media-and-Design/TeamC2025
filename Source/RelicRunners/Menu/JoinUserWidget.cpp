@@ -56,6 +56,13 @@ void UJoinUserWidget::NativeConstruct()
 	SetSelectedClass("Ares");
 }
 
+void UJoinUserWidget::SetButtonColor(UButton* Button, const FLinearColor& Color)
+{
+	if (!Button) return;
+
+	Button->SetBackgroundColor(Color);
+}
+
 void UJoinUserWidget::OnAresClicked() { SetSelectedClass("Ares"); }
 void UJoinUserWidget::OnArtemisClicked() { SetSelectedClass("Artemis"); }
 void UJoinUserWidget::OnAphroditeClicked() { SetSelectedClass("Aphrodite"); }
@@ -63,6 +70,21 @@ void UJoinUserWidget::OnNemesisClicked() { SetSelectedClass("Nemesis"); }
 
 void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 {
+	FLinearColor Gold(0.83f, 0.63f, 0.05f, 1.f);
+	FLinearColor Cyan(0.f, 1.f, 1.f, 1.f);
+
+	// Reset all buttons to cyan
+	SetButtonColor(AresButton, Cyan);
+	SetButtonColor(ArtemisButton, Cyan);
+	SetButtonColor(AphroditeButton, Cyan);
+	SetButtonColor(NemesisButton, Cyan);
+
+	// Highlight the selected one gold
+	if (ClassKey == "Ares") SetButtonColor(AresButton, Gold);
+	else if (ClassKey == "Artemis") SetButtonColor(ArtemisButton, Gold);
+	else if (ClassKey == "Aphrodite") SetButtonColor(AphroditeButton, Gold);
+	else if (ClassKey == "Nemesis") SetButtonColor(NemesisButton, Gold);
+	
 	if (!ClassDataAsset || !ClassDataAsset->Classes.Contains(ClassKey))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Invalid class key: %s"), *ClassKey.ToString());

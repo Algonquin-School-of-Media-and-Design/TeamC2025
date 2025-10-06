@@ -18,6 +18,8 @@ class RELICRUNNERS_API UJoinUserWidget : public UUserWidget
 public:
 	void NativeConstruct() override;
 
+	void SetButtonColor(class UButton* Button, const FLinearColor& Color);
+
 	UFUNCTION()
 	void OnAresClicked();
 	UFUNCTION()
