@@ -6,9 +6,21 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "PackedLevelActor/PackedLevelActor.h"
+
+/*
+TODO:
+	Create more packed level actors to check the randomness
+	Replicate the spawning of the packed level actor
+	Initialize the Obstacle type that each terrain tile will spawn on itself
+	Make sure to check there is exclusively 1 starting tile and 1 ending tile
+	Depending on how the team wants it, limit the amount of Shop tile and enemy tiles.
+*/
 
 // Sets default values
 ALevelGenerator::ALevelGenerator() :
+	LevelStartPackedLevel(nullptr),
+	LevelEndPackedLevel(nullptr),
 	FullPiece(nullptr),
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
@@ -16,10 +28,12 @@ ALevelGenerator::ALevelGenerator() :
 	SpawnWidth(1),
 	SpawnDepth(1),
 	FullPercentage(75.0f)
-
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+
+	Origin = CreateDefaultSubobject<USceneComponent>("Origin");
+	RootComponent = Origin;
 
 	FullPiece = CreateDefaultSubobject<UStaticMeshComponent>("FullPiece");
 	FullPiece->SetupAttachment(RootComponent);
@@ -48,7 +62,7 @@ void ALevelGenerator::BeginPlay()
 		{
 			for (int x = 0; x < SpawnWidth; x++)
 			{
-				MC_GenerateFloor(x, y);
+				GenerateFloor(x, y);
 			}
 		}
 
@@ -56,10 +70,20 @@ void ALevelGenerator::BeginPlay()
 		{
 			for (int x = 0; x < SpawnWidth; x++)
 			{
-				MC_CheckFloor(x, y);
+				CheckFloor(x, y);
 			}
 		}
-		MC_CreateFloor();
+		CreateFloor();
+
+		int num = PackedLevelArray.Num();
+
+		if (num > 0)
+		{
+			if (PackedLevelArray[0] != nullptr)
+			{
+				APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedLevelArray[0], FVector(TileScale), FRotator(0.0f, 0.0f, 0.0f));
+			}
+		}
 	}
 }
 
@@ -90,23 +114,20 @@ void ALevelGenerator::GenerateFloor(int x, int y)
 	}
 }
 
-void ALevelGenerator::MC_GenerateFloor_Implementation(int x, int y)
-{
-	GenerateFloor(x, y);
-}
-
 void ALevelGenerator::InitializeFloor()
 {
 	FloorValues newFloorValues;
-	Random = FMath::RandRange(0.1f, 100.0f);
+	float randomFloor = FMath::RandRange(0.1f, 100.0f);
 
-	if (Random > FullPercentage)
+	if (randomFloor > FullPercentage)
 	{
 		newFloorValues.IsFullTile = false;
 	}
 	else
 	{
 		newFloorValues.IsFullTile = true;
+		float randomObstacle = FMath::RandRange(0.1f, 100.0f);
+
 	}
 	FloorValuesArray.Add(newFloorValues);
 }
@@ -133,11 +154,6 @@ void ALevelGenerator::CheckFloor(int x, int y)
 
 	SetFloorShape(x, y);
 
-}
-
-void ALevelGenerator::MC_CheckFloor_Implementation(int x, int y)
-{
-	CheckFloor(x, y);
 }
 
 void ALevelGenerator::FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y)
@@ -476,6 +492,10 @@ void ALevelGenerator::SetBottomRightFloorShape(int x, int y)
 	}
 }
 
+void ALevelGenerator::SpawnFloorObstacles(int x, int y)
+{
+}
+
 void ALevelGenerator::CreateFloor()
 {
 	TArray<TArray<FTransform>> arrayOfTransformArrays;
@@ -524,15 +544,9 @@ void ALevelGenerator::OnRep_CheckReplication()
 	CreateFloor();
 }
 
-void ALevelGenerator::MC_CreateFloor_Implementation()
-{
-	CreateFloor();
-}
-
 void ALevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ALevelGenerator, Random);
 	DOREPLIFETIME(ALevelGenerator, FloorValuesArray);
 }

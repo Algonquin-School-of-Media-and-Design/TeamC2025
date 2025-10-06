@@ -9,17 +9,28 @@
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EFloorNeighbours : uint8
 {
-	Blank = 0,
-	TopLeft = 1 << 0,			/*0000 0001*/
-	TopMiddle = 1 << 1,			/*0000 0010*/
-	TopRight = 1 << 2,			/*0000 0100*/
-	MiddleLeft = 1 << 3,		/*0000 1000*/
-	MiddleRight = 1 << 4,		/*0001 0000*/
-	BottomLeft = 1 << 5,		/*0010 0000*/
-	BottomMiddle = 1 << 6,		/*0100 0000*/
-	BottomRight = 1 << 7,		/*1000 0000*/
+	Blank				= 0,
+	TopLeft				= 1 << 0,		/*0000 0001*/
+	TopMiddle			= 1 << 1,		/*0000 0010*/
+	TopRight			= 1 << 2,		/*0000 0100*/
+	MiddleLeft			= 1 << 3,		/*0000 1000*/
+	MiddleRight			= 1 << 4,		/*0001 0000*/
+	BottomLeft			= 1 << 5,		/*0010 0000*/
+	BottomMiddle		= 1 << 6,		/*0100 0000*/
+	BottomRight			= 1 << 7,		/*1000 0000*/
 };
 ENUM_CLASS_FLAGS(EFloorNeighbours);
+
+enum class EFloorObstacle : uint8
+{
+	None,
+	Basic,
+	Start,
+	End,
+	EnemyTower,
+	Shop
+};
+
 
 USTRUCT()
 struct FloorValues
@@ -30,6 +41,7 @@ public:
 	bool IsFullTile = false;
 	UPROPERTY()
 	EFloorNeighbours FloorNeighbours = EFloorNeighbours::Blank;
+	EFloorObstacle FloorObstacle = EFloorObstacle::None;
 };
 
 
@@ -41,6 +53,18 @@ class RELICRUNNERS_API ALevelGenerator : public AActor
 public:
 	// Sets default values for this actor's properties
 	ALevelGenerator();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class USceneComponent* Origin;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues");
+	TArray <TSubclassOf<class APackedLevelActor>> PackedLevelArray;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues");
+	TSubclassOf<class APackedLevelActor> LevelStartPackedLevel;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues");
+	TSubclassOf<class APackedLevelActor> LevelEndPackedLevel;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues")
 	class UStaticMeshComponent* FullPiece;
@@ -72,25 +96,26 @@ public:
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
 	float TileScale = 1.0f;
 
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
+	int MaxBasicObstacleAmount = 1;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
+	int MaxEnemyTowerAmount = 1;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
+	int MaxShopAmount = 1;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
-	UFUNCTION()
 	void GenerateFloor(int x, int y);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_GenerateFloor(int x, int y);
 
 	void InitializeFloor();
 	void ForceFloorBool(bool forcedFloor, int x, int y);
 
-	UFUNCTION()
 	void CheckFloor(int x, int y);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_CheckFloor(int x, int y);
 
 	void FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y);
 	void FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y);
@@ -103,11 +128,10 @@ public:
 	void SetBottomLeftFloorShape(int x, int y);
 	void SetBottomRightFloorShape(int x, int y);
 
-	UFUNCTION()
+	void SpawnFloorObstacles(int x, int y);
+
 	void CreateFloor();
 
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_CreateFloor();
 
 	int GetMapWidth() { return SpawnWidth; }
 	int GetMapDepth() { return SpawnDepth; }
@@ -118,9 +142,6 @@ public:
 	UFUNCTION()
 	void OnRep_CheckReplication();
 
-	UPROPERTY(Replicated)
-	float Random;
-
 	UPROPERTY(ReplicatedUsing = OnRep_CheckReplication)
 	TArray<FloorValues> FloorValuesArray;
 
@@ -129,4 +150,10 @@ public:
 	TArray<FTransform> SideFloorPieceTransforms;
 	TArray<FTransform> ConcaveCornerPieceTransforms;
 	TArray<FTransform> ConvexCornerTransforms;
+
+	bool bHasSpawnedStartingPoint;
+	bool bHasSpawnerEndingPoint;
+	int CurrentlySpawnedBasicObstacles;
+	int CurrentlySpawnedEnemyTowers;
+	int CurrentlySpawnedShops;
 };
