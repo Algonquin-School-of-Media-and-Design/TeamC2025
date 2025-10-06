@@ -100,6 +100,27 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class")
 	class UClassInfo* ClassDataAsset = nullptr;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* StartButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Health = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Armor = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Dexterity = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Strength = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Intelligence = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Luck = nullptr;
+
 	UFUNCTION()
 	void UpdateFindGamesButtonVisibility();
 protected:
@@ -110,6 +131,8 @@ protected:
 
 	UFUNCTION()
 	void JoinGameButtonClicked();
+	UFUNCTION()
+	void StartGameButtonClicked();
 
 	UFUNCTION()
 	void HandleSessionClicked(class USessionListItemData* ClickedSession);

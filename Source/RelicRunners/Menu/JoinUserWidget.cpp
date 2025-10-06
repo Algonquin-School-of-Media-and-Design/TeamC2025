@@ -24,6 +24,11 @@ void UJoinUserWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	if (SessionTileView)
+	{
+		SessionTileView->OnEntryWidgetGenerated().AddUObject(this, &UJoinUserWidget::HandleEntryGenerated);
+	}
+
 	if (BackButton)
 	{
 		BackButton->OnClicked.AddDynamic(this, &UJoinUserWidget::BackButtonClicked);
@@ -39,19 +44,31 @@ void UJoinUserWidget::NativeConstruct()
 		JoinButton->OnClicked.AddDynamic(this, &UJoinUserWidget::JoinGameButtonClicked);
 	}
 
-	if (SessionTileView)
+	if (StartButton)
 	{
-		SessionTileView->OnEntryWidgetGenerated().AddUObject(this, &UJoinUserWidget::HandleEntryGenerated);
+		StartButton->OnClicked.AddDynamic(this, &UJoinUserWidget::StartGameButtonClicked);
 	}
 
 	if (AresButton)
+	{
 		AresButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnAresClicked);
+	}
+
 	if (ArtemisButton)
+	{
 		ArtemisButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnArtemisClicked);
+	}
+
 	if (AphroditeButton)
+	{
 		AphroditeButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnAphroditeClicked);
+	}
+
 	if (NemesisButton)
+	{
 		NemesisButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnNemesisClicked);
+	}
+
 	UpdateFindGamesButtonVisibility();
 	SetSelectedClass("Ares");
 }
@@ -70,7 +87,7 @@ void UJoinUserWidget::OnNemesisClicked() { SetSelectedClass("Nemesis"); }
 
 void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 {
-	FLinearColor Gold(0.83f, 0.63f, 0.05f, 1.f);
+	FLinearColor Gold(1, 0.5f, 0, 1.f);
 	FLinearColor Cyan(0.f, 1.f, 1.f, 1.f);
 
 	// Reset all buttons to cyan
@@ -109,12 +126,12 @@ void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 		};
 
 	// Normalized progress bars
-	if (HealthBar)       HealthBar->SetPercent(Normalize(Info.Health, MaxValues.Health));
-	if (ArmorBar)        ArmorBar->SetPercent(Normalize(Info.Armor, MaxValues.Armor));
-	if (DexterityBar)    DexterityBar->SetPercent(Normalize(Info.Dexterity, MaxValues.Dexterity));
-	if (StrengthBar)     StrengthBar->SetPercent(Normalize(Info.Strength, MaxValues.Strength));
-	if (IntelligenceBar) IntelligenceBar->SetPercent(Normalize(Info.Intelligence, MaxValues.Intelligence));
-	if (LuckBar)         LuckBar->SetPercent(Normalize(Info.Luck, MaxValues.Luck));
+	if (HealthBar)       HealthBar->SetPercent(Normalize(Info.Health, MaxValues.Health)); TB_Health->SetText(FText::FromString(FString::FromInt(Info.Health)));
+	if (ArmorBar)        ArmorBar->SetPercent(Normalize(Info.Armor, MaxValues.Armor)); TB_Armor->SetText(FText::FromString(FString::FromInt(Info.Armor)));
+	if (DexterityBar)    DexterityBar->SetPercent(Normalize(Info.Dexterity, MaxValues.Dexterity)); TB_Dexterity->SetText(FText::FromString(FString::FromInt(Info.Dexterity)));
+	if (StrengthBar)     StrengthBar->SetPercent(Normalize(Info.Strength, MaxValues.Strength)); TB_Strength->SetText(FText::FromString(FString::FromInt(Info.Strength)));
+	if (IntelligenceBar) IntelligenceBar->SetPercent(Normalize(Info.Intelligence, MaxValues.Intelligence)); TB_Intelligence->SetText(FText::FromString(FString::FromInt(Info.Intelligence)));
+	if (LuckBar)         LuckBar->SetPercent(Normalize(Info.Luck, MaxValues.Luck)); TB_Luck->SetText(FText::FromString(FString::FromInt(Info.Luck)));
 }
 
 void UJoinUserWidget::HandleEntryGenerated(UUserWidget& EntryWidget)
@@ -220,6 +237,11 @@ void UJoinUserWidget::JoinGameButtonClicked()
 			GameInstance->JoinGame(ItemIndex);
 		}
 	}
+}
+
+void UJoinUserWidget::StartGameButtonClicked()
+{
+
 }
 
 void UJoinUserWidget::HandleSessionClicked(USessionListItemData* ClickedSession)
