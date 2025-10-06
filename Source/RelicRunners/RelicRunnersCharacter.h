@@ -172,6 +172,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stats")
 	int GetPlayerStartingLuck() const;
 
+
+
 	class UInventory* GetInventory() { return Inventory; };
 	class UInventoryComponent* GetInventoryComponent() { return InventoryComponent; };
 
@@ -234,9 +236,6 @@ public:
 	UPROPERTY()
 	class UInventory* Inventory;
 
-	UPROPERTY()
-	class UAbilitySystem* AbilitySystem;
-
 	void AddExperience(int Amount);
 
 	void OnLevelUp();
@@ -257,8 +256,15 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UAbilityPointCounter> AbilityPointCounterClass;
+
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UAbilitySelection> AbilitySelectionClass;
+
+	UPROPERTY()
+	class UAbilitySelection* AbilitySelection;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ULevelUpHUD> LevelUpHUDClass;

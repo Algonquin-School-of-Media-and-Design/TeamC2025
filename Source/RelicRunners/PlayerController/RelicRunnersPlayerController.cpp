@@ -27,6 +27,7 @@
 #include "Kismet/KismetRenderingLibrary.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 #include "RelicRunners/Inventory/InventoryComponent.h"
+#include "RelicRunners/AbilitySystem/AbilitySelection.h"
 #include <RelicRunners/Item/ItemStats.h>
 #include <Kismet/GameplayStatics.h>
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
@@ -262,7 +263,7 @@ void ARelicRunnersPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::InventoryUI);
 
 		// Ability System 
-		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::AbilitySystemUI);
+		EnhancedInputComponent->BindAction(AbilitySelectionAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::AbilitySystemUI);
 
 		// BasicAttack
 		EnhancedInputComponent->BindAction(BasicAttackAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::BasicAttack);

@@ -39,7 +39,7 @@
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
 #include "AbilitySystem/AbilityPointCounter.h"
-#include "AbilitySystem/AbilitySystem.h"
+#include "AbilitySystem/AbilitySelection.h"
 #include "PlayerHUD/PlayerHUDWorld.h"
 #include "PlayerPreview/PlayerPreview.h"
 #include "PlayerState/RelicRunnersPlayerState.h"
@@ -208,7 +208,7 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	PlayerIntelligence = 0;
 	PlayerLuck = 0;
 	PlayerStartingAbilityPoints = 1;
-	PlayerAbilityPoints = 1;
+	PlayerAbilityPoints = 2;
 	PlayerNumInventorySlots = 20;
 
 	bAlwaysRelevant = true;
@@ -555,6 +555,19 @@ void ARelicRunnersCharacter::InitLocalUI()
 		}
 	}
 
+
+	if (!AbilitySelection && AbilitySelectionClass)
+	{
+		{
+			AbilitySelection = CreateWidget<UAbilitySelection>(PC, AbilitySelectionClass);
+			if (AbilitySelection)
+			{
+				AbilitySelection->AddToViewport();
+				AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+				AbilitySelection->SetIsEnabled(false);
+			}
+		}
+	}
 	TryBindInventoryDelegates();
 }
 
@@ -562,7 +575,7 @@ void ARelicRunnersCharacter::SpawnStarterItems()
 {
 	if (ItemMeshData && InventoryComponent)
 	{
-		for (int i = 0; i < 15; ++i)
+		for (int i = 0; i < 300; ++i)
 		{
 			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateRandomItemData(ItemMeshData), InventoryComponent);
 			InventoryComponent->AddItem(Item);
@@ -862,26 +875,30 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 {
 	if (!IsLocallyControlled()) return;
 
-	if (!AbilitySystem) return;
+	if (!AbilitySelection) return;
 
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	if (!PlayerController) return;
 
-	if (AbilitySystem->IsVisible())
+	if (PlayerAbilityPoints >= 1)
 	{
-		AbilitySystem->SetVisibility(ESlateVisibility::Hidden);
-		AbilitySystem->SetIsEnabled(false);
-		PlayerController->SetInputMode(FInputModeGameOnly());
-		PlayerController->SetShowMouseCursor(false);
-		UInventoryItemOptions::CloseAnyOpenPopup();
+		if (AbilitySelection->IsVisible())
+		{
+			AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+			AbilitySelection->SetIsEnabled(false);
+			PlayerController->SetInputMode(FInputModeGameOnly());
+			PlayerController->SetShowMouseCursor(false);
+			UInventoryItemOptions::CloseAnyOpenPopup();
+		}
+		else
+		{
+			AbilitySelection->SetVisibility(ESlateVisibility::Visible);
+			AbilitySelection->SetIsEnabled(true);
+			PlayerController->SetInputMode(FInputModeGameAndUI());
+			PlayerController->SetShowMouseCursor(true);
+		}
 	}
-	else
-	{
-		AbilitySystem->SetVisibility(ESlateVisibility::Visible);
-		AbilitySystem->SetIsEnabled(true);
-		PlayerController->SetInputMode(FInputModeGameAndUI());
-		PlayerController->SetShowMouseCursor(true);
-	}
+
 }
 
 void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
@@ -1221,3 +1238,5 @@ int ARelicRunnersCharacter::GetPlayerStartingLuck() const
 {
 	return PlayerStartingLuck;
 }
+
+
