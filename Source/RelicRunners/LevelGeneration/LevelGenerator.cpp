@@ -2,7 +2,6 @@
 
 
 #include "LevelGenerator.h"
-#include "GeneratedFloor.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -71,19 +70,13 @@ void ALevelGenerator::BeginPlay()
 			for (int x = 0; x < SpawnWidth; x++)
 			{
 				CheckFloor(x, y);
+
+				SpawnFloorObstacles(x, y);
 			}
 		}
 		CreateFloor();
 
 		int num = PackedLevelArray.Num();
-
-		if (num > 0)
-		{
-			if (PackedLevelArray[0] != nullptr)
-			{
-				APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedLevelArray[0], FVector(TileScale), FRotator(0.0f, 0.0f, 0.0f));
-			}
-		}
 	}
 }
 
@@ -126,7 +119,16 @@ void ALevelGenerator::InitializeFloor()
 	else
 	{
 		newFloorValues.IsFullTile = true;
-		float randomObstacle = FMath::RandRange(0.1f, 100.0f);
+
+		float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
+		if (randomObstaclePerc > 75.0f)
+		{
+			int randomObstacle = FMath::RandRange(0, int(EFloorObstacle::MAX)-1);
+			//newFloorValues.FloorObstacle = EFloorObstacle(randomObstacle);
+			newFloorValues.FloorObstacle = EFloorObstacle(1);
+
+			newFloorValues.randomFloorToSpawn = FMath::RandRange(0, PackedLevelArray.Num()-1);
+		}
 
 	}
 	FloorValuesArray.Add(newFloorValues);
@@ -494,6 +496,19 @@ void ALevelGenerator::SetBottomRightFloorShape(int x, int y)
 
 void ALevelGenerator::SpawnFloorObstacles(int x, int y)
 {
+	int index = x + (y * SpawnWidth);
+
+	FVector posOffset = FVector((TileScale * x * 4) + TileScale, (TileScale * y * 4) + TileScale, TileScale);
+
+	switch (FloorValuesArray[index].FloorObstacle)
+	{
+	case EFloorObstacle::Basic:
+		if (PackedLevelArray[FloorValuesArray[index].randomFloorToSpawn] != nullptr)
+		{
+			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedLevelArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, 0.0f, 0.0f));
+		}
+		break;
+	}
 }
 
 void ALevelGenerator::CreateFloor()
@@ -532,13 +547,15 @@ void ALevelGenerator::CreateFloor()
 
 }
 
-void ALevelGenerator::OnRep_CheckReplication()
+void ALevelGenerator::OnRep_FloorValuesArrayChange()
 {
 	for (int y = 0; y < SpawnDepth; y++)
 	{
 		for (int x = 0; x < SpawnWidth; x++)
 		{
 			CheckFloor(x, y);
+
+			SpawnFloorObstacles(x, y);
 		}
 	}
 	CreateFloor();

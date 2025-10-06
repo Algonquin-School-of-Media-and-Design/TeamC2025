@@ -21,6 +21,7 @@ enum class EFloorNeighbours : uint8
 };
 ENUM_CLASS_FLAGS(EFloorNeighbours);
 
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EFloorObstacle : uint8
 {
 	None,
@@ -28,8 +29,10 @@ enum class EFloorObstacle : uint8
 	Start,
 	End,
 	EnemyTower,
-	Shop
+	Shop,
+	MAX
 };
+ENUM_CLASS_FLAGS(EFloorObstacle);
 
 
 USTRUCT()
@@ -39,9 +42,15 @@ struct FloorValues
 public:
 	UPROPERTY()
 	bool IsFullTile = false;
+
 	UPROPERTY()
 	EFloorNeighbours FloorNeighbours = EFloorNeighbours::Blank;
+
+	UPROPERTY()
 	EFloorObstacle FloorObstacle = EFloorObstacle::None;
+
+	UPROPERTY()
+	int randomFloorToSpawn;
 };
 
 
@@ -140,11 +149,10 @@ public:
 
 public:
 	UFUNCTION()
-	void OnRep_CheckReplication();
+	void OnRep_FloorValuesArrayChange();
 
-	UPROPERTY(ReplicatedUsing = OnRep_CheckReplication)
+	UPROPERTY(ReplicatedUsing = OnRep_FloorValuesArrayChange)
 	TArray<FloorValues> FloorValuesArray;
-
 
 	TArray<FTransform> FullFloorPieceTransforms;
 	TArray<FTransform> SideFloorPieceTransforms;
