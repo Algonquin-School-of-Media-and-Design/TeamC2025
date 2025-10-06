@@ -11,11 +11,14 @@
 #include "SessionListItemData.h"
 #include "Components/TextBlock.h"
 #include "Components/Border.h"
+#include "Components/ProgressBar.h"
 #include "MainMenuWidget.h"
 #include "Components/CircularThrobber.h"
 #include <Kismet/GameplayStatics.h>
 #include "ModeSelectionWidget.h"
 #include "GameFramework/GameStateBase.h"
+#include "RelicRunners/Classes/ClassData.h"
+#include "RelicRunners/Classes/ClassInfo.h"
 
 void UJoinUserWidget::NativeConstruct()
 {
@@ -40,7 +43,56 @@ void UJoinUserWidget::NativeConstruct()
 	{
 		SessionTileView->OnEntryWidgetGenerated().AddUObject(this, &UJoinUserWidget::HandleEntryGenerated);
 	}
+
+	if (AresButton)
+		AresButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnAresClicked);
+	if (ArtemisButton)
+		ArtemisButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnArtemisClicked);
+	if (AphroditeButton)
+		AphroditeButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnAphroditeClicked);
+	if (NemesisButton)
+		NemesisButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnNemesisClicked);
 	UpdateFindGamesButtonVisibility();
+	SetSelectedClass("Ares");
+}
+
+void UJoinUserWidget::OnAresClicked() { SetSelectedClass("Ares"); }
+void UJoinUserWidget::OnArtemisClicked() { SetSelectedClass("Artemis"); }
+void UJoinUserWidget::OnAphroditeClicked() { SetSelectedClass("Aphrodite"); }
+void UJoinUserWidget::OnNemesisClicked() { SetSelectedClass("Nemesis"); }
+
+void UJoinUserWidget::SetSelectedClass(FName ClassKey)
+{
+	if (!ClassDataAsset || !ClassDataAsset->Classes.Contains(ClassKey))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Invalid class key: %s"), *ClassKey.ToString());
+		return;
+	}
+
+	const FClassData& Info = ClassDataAsset->Classes[ClassKey];
+	const FClassData MaxValues = ClassDataAsset->GetMaxStats();
+
+	// Text updates
+	if (TB_ClassName) TB_ClassName->SetText(FText::FromName(Info.ClassName));
+	if (TB_ClassRole) TB_ClassRole->SetText(FText::FromString(Info.Role));
+	if (TB_Ability1)  TB_Ability1->SetText(FText::FromString(Info.Ability1));
+	if (TB_Ability2)  TB_Ability2->SetText(FText::FromString(Info.Ability2));
+	if (TB_Ability3)  TB_Ability3->SetText(FText::FromString(Info.Ability3));
+	if (TB_Ability4)  TB_Ability4->SetText(FText::FromString(Info.Ability4));
+
+	// Safe normalization helper lambda
+	auto Normalize = [](float Value, float Max)
+		{
+			return (Max > 0.f) ? (Value / Max) : 0.f;
+		};
+
+	// Normalized progress bars
+	if (HealthBar)       HealthBar->SetPercent(Normalize(Info.Health, MaxValues.Health));
+	if (ArmorBar)        ArmorBar->SetPercent(Normalize(Info.Armor, MaxValues.Armor));
+	if (DexterityBar)    DexterityBar->SetPercent(Normalize(Info.Dexterity, MaxValues.Dexterity));
+	if (StrengthBar)     StrengthBar->SetPercent(Normalize(Info.Strength, MaxValues.Strength));
+	if (IntelligenceBar) IntelligenceBar->SetPercent(Normalize(Info.Intelligence, MaxValues.Intelligence));
+	if (LuckBar)         LuckBar->SetPercent(Normalize(Info.Luck, MaxValues.Luck));
 }
 
 void UJoinUserWidget::HandleEntryGenerated(UUserWidget& EntryWidget)
