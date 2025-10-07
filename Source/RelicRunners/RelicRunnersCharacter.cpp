@@ -888,7 +888,6 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 			AbilitySelection->SetIsEnabled(false);
 			PlayerController->SetInputMode(FInputModeGameOnly());
 			PlayerController->SetShowMouseCursor(false);
-			UInventoryItemOptions::CloseAnyOpenPopup();
 		}
 		else
 		{
@@ -900,6 +899,25 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 	}
 
 }
+
+void ARelicRunnersCharacter::SpendAbilityPoints()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+
+	if (PlayerAbilityPoints >= 1)
+	{
+		PlayerAbilityPoints--;
+
+		if(PlayerAbilityPoints == 0)
+		{
+			AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+			AbilitySelection->SetIsEnabled(false);
+			PlayerController->SetInputMode(FInputModeGameOnly());
+			PlayerController->SetShowMouseCursor(false);
+		}
+	}
+}
+
 
 void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
 {

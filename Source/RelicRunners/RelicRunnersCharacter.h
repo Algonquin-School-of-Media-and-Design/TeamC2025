@@ -136,6 +136,7 @@ public:
 	void Interact();
 	void InventoryUI();
 	void AbilitySystemUI();
+	void SpendAbilityPoints();
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();

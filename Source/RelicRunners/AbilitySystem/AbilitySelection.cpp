@@ -25,35 +25,23 @@ void UAbilitySelection::NativeConstruct()
 
 }
 
-void UAbilitySelection::SpendAbilityPoints()
-{
-    int CurrentAbilityPoints = OwningCharacter->GetPlayerAbilityPoints();
-
-    if (CurrentAbilityPoints >= 1)
-    {
-        CurrentAbilityPoints--;
-        OwningCharacter->UpdateHUD();
-    }
-
-}
-
 void UAbilitySelection::Upgrade1Clicked()
 {
-    SpendAbilityPoints();
+    OwningCharacter->SpendAbilityPoints();
 }
 
 void UAbilitySelection::Upgrade2Clicked()
 {
-    SpendAbilityPoints();
+    OwningCharacter->SpendAbilityPoints();
 }
 
 void UAbilitySelection::Upgrade3Clicked()
 {
-    SpendAbilityPoints();
+    OwningCharacter->SpendAbilityPoints();
 }
 
 void UAbilitySelection::Upgrade4Clicked()
 {
-    SpendAbilityPoints();
+    OwningCharacter->SpendAbilityPoints();
 }
 
