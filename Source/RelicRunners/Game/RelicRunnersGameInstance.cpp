@@ -313,11 +313,11 @@ void URelicRunnersGameInstance::StartSessionGame()
     UWorld* World = GetWorld();
     if (!World) return;
 
-    // Only server/host can start the session
+    //Ensure only the host/server runs this
     APlayerController* PC = World->GetFirstPlayerController();
     if (!PC || !PC->HasAuthority())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Only host can start the game."));
+        UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] Only host can start the game."));
         return;
     }
 
@@ -333,15 +333,41 @@ void URelicRunnersGameInstance::StartSessionGame()
         return;
     }
 
+    //Try to get the current session
     FNamedOnlineSession* NamedSession = SessionInt->GetNamedSession(NAME_GameSession);
+
     if (!NamedSession)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] No existing session found, fallback travel."));
+        static int32 RetryCount = 0;
+        if (RetryCount < 5) // retry up to 5 times (0.5 seconds total)
+        {
+            RetryCount++;
+            UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] Session not ready yet, retry #%d..."), RetryCount);
+
+            // retry after 0.1 seconds
+            FTimerHandle RetryHandle;
+            World->GetTimerManager().SetTimer(
+                RetryHandle,
+                FTimerDelegate::CreateUObject(this, &URelicRunnersGameInstance::StartSessionGame),
+                0.1f,
+                false
+            );
+            return;
+        }
+
+        UE_LOG(LogTemp, Error, TEXT("[StartSessionGame] Session still not ready after retries, aborting fallback travel."));
+        RetryCount = 0;
         World->ServerTravel(TargetMap);
         return;
     }
 
+    // reset retry counter if session is found
+    static int32 RetryCount = 0;
+    RetryCount = 0;
+
+    // If session already started, just travel immediately
     EOnlineSessionState::Type State = SessionInt->GetSessionState(NAME_GameSession);
+
     if (State == EOnlineSessionState::InProgress)
     {
         UE_LOG(LogTemp, Log, TEXT("[StartSessionGame] Session already InProgress -> travel."));
@@ -349,11 +375,11 @@ void URelicRunnersGameInstance::StartSessionGame()
         return;
     }
 
-    // --- Safe async callback binding in GameInstance (persistent across travel)
+    // Bind the async session start callback
     FDelegateHandle Handle = SessionInt->OnStartSessionCompleteDelegates.AddUObject(
         this, &URelicRunnersGameInstance::OnStartSessionComplete, TargetMap);
 
-    UE_LOG(LogTemp, Warning, TEXT("Starting online session before travel..."));
+    UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] Starting online session before travel..."));
     SessionInt->StartSession(NAME_GameSession);
 }
 
@@ -365,11 +391,12 @@ void URelicRunnersGameInstance::OnStartSessionComplete(FName SessionName, bool b
     if (SessionInt.IsValid())
         SessionInt->OnStartSessionCompleteDelegates.RemoveAll(this);
 
-    UE_LOG(LogTemp, Log, TEXT("[OnStartSessionComplete] %s Success=%d"), *SessionName.ToString(), bWasSuccessful ? 1 : 0);
+    UE_LOG(LogTemp, Log, TEXT("[OnStartSessionComplete] %s Success=%d"),
+        *SessionName.ToString(), bWasSuccessful ? 1 : 0);
 
     if (!bWasSuccessful)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Session start failed; aborting travel."));
+        UE_LOG(LogTemp, Warning, TEXT("[OnStartSessionComplete] Session start failed; aborting travel."));
         return;
     }
 
