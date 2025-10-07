@@ -21,18 +21,17 @@ enum class EFloorNeighbours : uint8
 };
 ENUM_CLASS_FLAGS(EFloorNeighbours);
 
-UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+UENUM(BlueprintType)
 enum class EFloorObstacle : uint8
 {
 	None,
 	Basic,
-	Start,
-	End,
 	EnemyTower,
 	Shop,
-	MAX
+	MAX,
+	Start,
+	End,
 };
-ENUM_CLASS_FLAGS(EFloorObstacle);
 
 
 USTRUCT()
@@ -50,7 +49,10 @@ public:
 	EFloorObstacle FloorObstacle = EFloorObstacle::None;
 
 	UPROPERTY()
-	int randomFloorToSpawn;
+	int randomFloorToSpawn = 0;
+
+	UPROPERTY()
+	int obstacleYaw = 0;
 };
 
 
@@ -87,10 +89,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "SpawningValues")
 	class UStaticMeshComponent* ConvexCornerPiece;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "100", UIMax = "100"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
 	int SpawnWidth;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "100", UIMax = "100"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
 	int SpawnDepth;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
@@ -103,16 +105,16 @@ public:
 	int BorderForceFull;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
-	float TileScale = 1.0f;
+	float TileScale;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
-	int MaxBasicObstacleAmount = 1;
+	int MaxBasicObstacleAmount;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
-	int MaxEnemyTowerAmount = 1;
+	int MaxEnemyTowerAmount;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
-	int MaxShopAmount = 1;
+	int MaxShopAmount;
 
 protected:
 	// Called when the game starts or when spawned
@@ -123,6 +125,12 @@ public:
 
 	void InitializeFloor();
 	void ForceFloorBool(bool forcedFloor, int x, int y);
+
+	void InitializeModularObstacle(FloorValues& floorValue);
+
+	void SetStartingAndEndingPoints(int startingX, int startingY, int endingX, int endingY);
+
+	void FindStartToEndPath(int startingX, int startingY, int endingX, int endingY);
 
 	void CheckFloor(int x, int y);
 

@@ -9,11 +9,8 @@
 
 /*
 TODO:
-	Create more packed level actors to check the randomness
-	Replicate the spawning of the packed level actor
 	Initialize the Obstacle type that each terrain tile will spawn on itself
 	Make sure to check there is exclusively 1 starting tile and 1 ending tile
-	Depending on how the team wants it, limit the amount of Shop tile and enemy tiles.
 */
 
 // Sets default values
@@ -26,7 +23,13 @@ ALevelGenerator::ALevelGenerator() :
 	ConvexCornerPiece(nullptr),
 	SpawnWidth(1),
 	SpawnDepth(1),
-	FullPercentage(75.0f)
+	FullPercentage(75.0f),
+	CenterForceFull(0),
+	BorderForceFull(0),
+	TileScale(1.0f),
+	MaxBasicObstacleAmount(1),
+	MaxEnemyTowerAmount(1),
+	MaxShopAmount(1)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -57,12 +60,36 @@ void ALevelGenerator::BeginPlay()
 
 	if (HasAuthority())
 	{
+		int startingX = FMath::RandRange(0, SpawnWidth-1);
+		int startingY = FMath::RandRange(0, SpawnDepth-1);
+		int endingX = FMath::RandRange(0, SpawnWidth-1);
+		int endingY = FMath::RandRange(0, SpawnDepth-1);
+
+		while (startingX == endingX && SpawnDepth * SpawnWidth > 1)
+		{
+			startingX = FMath::RandRange(0, SpawnWidth-1);
+			endingX = FMath::RandRange(0, SpawnWidth-1);
+		}
+
+		while (startingY == endingY && SpawnDepth * SpawnWidth > 1)
+		{
+			startingY = FMath::RandRange(0, SpawnDepth-1);
+			endingY = FMath::RandRange(0, SpawnDepth-1);
+		}
+
 		for (int y = 0; y < SpawnDepth; y++)
 		{
 			for (int x = 0; x < SpawnWidth; x++)
 			{
 				GenerateFloor(x, y);
 			}
+		}
+
+		if (SpawnDepth * SpawnWidth > 1)
+		{
+			SetStartingAndEndingPoints(startingX, startingY, endingX, endingY);
+
+			FindStartToEndPath(startingX, startingY, endingX, endingY);
 		}
 
 		for (int y = 0; y < SpawnDepth; y++)
@@ -120,19 +147,82 @@ void ALevelGenerator::InitializeFloor()
 	{
 		newFloorValues.IsFullTile = true;
 
-		float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
-		if (randomObstaclePerc > 75.0f)
-		{
-			int randomObstacle = FMath::RandRange(0, int(EFloorObstacle::MAX)-1);
-			//newFloorValues.FloorObstacle = EFloorObstacle(randomObstacle);
-			newFloorValues.FloorObstacle = EFloorObstacle(1);
-
-			newFloorValues.randomFloorToSpawn = FMath::RandRange(0, PackedLevelArray.Num()-1);
-		}
-
+		InitializeModularObstacle(newFloorValues);
 	}
 	FloorValuesArray.Add(newFloorValues);
 }
+
+void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y)
+{
+	int index = x + (y * SpawnWidth);
+
+	FloorValuesArray[index].IsFullTile = forcedFloor;
+}
+
+void ALevelGenerator::SetStartingAndEndingPoints(int startingX, int startingY, int endingX, int endingY)
+{
+	int startingIndex = startingX + (startingY * SpawnWidth);
+	int endingIndex = endingX + (endingY * SpawnWidth);
+
+	FloorValuesArray[startingIndex].IsFullTile = true;
+	FloorValuesArray[startingIndex].FloorObstacle = EFloorObstacle::Start;
+	FloorValuesArray[startingIndex].randomFloorToSpawn = 0;
+	FloorValuesArray[startingIndex].obstacleYaw = FMath::RandRange(0, 3) * 90;
+
+
+	FloorValuesArray[endingIndex].IsFullTile = true;
+	FloorValuesArray[endingIndex].FloorObstacle = EFloorObstacle::End;
+	FloorValuesArray[endingIndex].randomFloorToSpawn = 0;
+	FloorValuesArray[endingIndex].obstacleYaw = FMath::RandRange(0, 3) * 90;
+}
+
+void ALevelGenerator::FindStartToEndPath(int startingX, int startingY, int endingX, int endingY)
+{
+	int currentX = startingX;
+	int currentY = startingY;
+
+	while (currentX != endingX && currentX >= 0 && currentX < SpawnWidth)
+	{
+		if (currentX > endingX)
+		{
+			currentX--;
+		}
+		else if (currentX < endingX)
+		{
+			currentX++;
+		}
+		ForceFloorBool(true, currentX, currentY);
+	}
+
+	while (currentY != endingY && currentY >= 0 && currentY < SpawnWidth)
+	{
+		if (currentY > endingY)
+		{
+			currentY--;
+		}
+		else if (currentY < endingY)
+		{
+			currentY++;
+		}
+		ForceFloorBool(true, currentX, currentY);
+	}
+
+}
+
+void ALevelGenerator::InitializeModularObstacle(FloorValues& floorValue)
+{
+	float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
+	if (randomObstaclePerc > 75.0f)
+	{
+		int randomObstacle = FMath::RandRange(0, int(EFloorObstacle::MAX) - 1);
+		floorValue.FloorObstacle = EFloorObstacle(randomObstacle);
+
+		floorValue.randomFloorToSpawn = FMath::RandRange(0, PackedLevelArray.Num() - 1);
+
+		floorValue.obstacleYaw = FMath::RandRange(0, 3) * 90;
+	}
+}
+
 
 void ALevelGenerator::CheckFloor(int x, int y)
 {
@@ -265,13 +355,6 @@ void ALevelGenerator::FloorCheckBottomNeighbours(bool checkLeft, bool checkRight
 			FloorValuesArray[index].FloorNeighbours &= ~EFloorNeighbours::BottomRight;
 		}
 	}
-}
-
-void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y)
-{
-	int index = x + (y * SpawnWidth);
-
-	FloorValuesArray[index].IsFullTile = true;
 }
 
 void ALevelGenerator::SetFloorShape(int x, int y)
@@ -498,6 +581,7 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y)
 {
 	int index = x + (y * SpawnWidth);
 
+	float yaw = FloorValuesArray[index].obstacleYaw;
 	FVector posOffset = FVector((TileScale * x * 4) + TileScale, (TileScale * y * 4) + TileScale, TileScale);
 
 	switch (FloorValuesArray[index].FloorObstacle)
@@ -505,7 +589,23 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y)
 	case EFloorObstacle::Basic:
 		if (PackedLevelArray[FloorValuesArray[index].randomFloorToSpawn] != nullptr)
 		{
-			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedLevelArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, 0.0f, 0.0f));
+			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedLevelArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
+		}
+		break;
+	case EFloorObstacle::EnemyTower:
+		break;
+	case EFloorObstacle::Shop:
+		break;
+	case EFloorObstacle::Start:
+		if (LevelStartPackedLevel != nullptr)
+		{
+			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelStartPackedLevel, posOffset, FRotator(0.0f, yaw, 0.0f));
+		}
+		break;
+	case EFloorObstacle::End:
+		if (LevelEndPackedLevel != nullptr)
+		{
+			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelEndPackedLevel, posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
 		break;
 	}
