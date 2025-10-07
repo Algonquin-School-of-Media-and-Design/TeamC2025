@@ -13,11 +13,13 @@
 #include "GameFramework/GameStateBase.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Engine/Engine.h"
+#include <RelicRunners/Menu/LobbyGameMode.h>
 
 void URelicRunnersGameInstance::Init()
 {
     Super::Init();
 
+    //Setup online systems
     IOnlineSessionPtr OnlineSubsystem = Online::GetSessionInterface(GetWorld());
     if (OnlineSubsystem)
     {
@@ -28,61 +30,49 @@ void URelicRunnersGameInstance::Init()
 void URelicRunnersGameInstance::Shutdown()
 {
     Super::Shutdown();
+
+    //Leave any remaining sessions
     LeaveSession();
 }
 
-/* Travel to main menu */
-void URelicRunnersGameInstance::TravelToMainMenu()
+void URelicRunnersGameInstance::BackToMainMenu()
 {
+    //Destroy session
+    if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
+    {
+        if (Sess->GetNamedSession(NAME_GameSession))
+        {
+            Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
+            Sess->OnDestroySessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnDestroySessionComplete);
+            Sess->DestroySession(NAME_GameSession);
+            return; 
+        }
+    }
+
+    //Travel to main menu
     if (APlayerController* PC = GetFirstLocalPlayerController())
     {
         PC->ClientTravel(TEXT("/Game/ThirdPerson/Maps/MainMenu"), ETravelType::TRAVEL_Absolute);
     }
 }
 
-/* Back button: destroy any session then travel */
-void URelicRunnersGameInstance::BackToMainMenu()
-{
-    if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
-    {
-        if (Sess->GetNamedSession(NAME_GameSession))
-        {
-            // bind once, destroy, wait for callback
-            Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
-            Sess->OnDestroySessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnDestroySessionComplete);
-            Sess->DestroySession(NAME_GameSession);
-            return; // wait for delegate
-        }
-    }
-
-    TravelToMainMenu();
-}
-
-/* Host flow: if existing session exists, destroy it and retry when destroyed */
 void URelicRunnersGameInstance::HostGame()
 {
-    if (!SessionInterface.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot host: SessionInterface invalid"));
-        return;
-    }
+    if (!SessionInterface.IsValid()) return;
 
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
-        // If a named session exists locally, destroy it first and retry in callback
+        //If a named session exists locally, destroy it first and retry in callback
         if (Sess->GetNamedSession(NAME_GameSession))
         {
-            UE_LOG(LogTemp, Warning, TEXT("Session already exists, destroying before creating a new one..."));
-
-            // Queue the host attempt and bind delegate (remove old binds to avoid duplicates)
             PendingHostAfterLeave = 1;
             Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
             Sess->OnDestroySessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnDestroySessionComplete);
             Sess->DestroySession(NAME_GameSession);
-            return; // wait for delegate
+            return; 
         }
 
-        // no existing session create immediately
+        //If no existing session, create immediately
         CreateNewSession();
     }
 }
@@ -90,9 +80,13 @@ void URelicRunnersGameInstance::HostGame()
 void URelicRunnersGameInstance::CreateNewSession()
 {
     if (!SessionInterface.IsValid()) return;
+
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
+        //Setup parameters
+        int LobbySize = 4;
         FOnlineSessionSettings SessionSettings;
+        SessionSettings.NumPublicConnections = LobbySize;
         SessionSettings.bIsLANMatch = false;
         SessionSettings.bShouldAdvertise = true;
         SessionSettings.bUsesPresence = true;
@@ -100,15 +94,11 @@ void URelicRunnersGameInstance::CreateNewSession()
         SessionSettings.bUseLobbiesIfAvailable = true;
         SessionSettings.bAllowJoinViaPresence = true;
         SessionSettings.bAllowJoinInProgress = true;
-        SessionSettings.NumPublicConnections = 4;
         SessionSettings.Set(SETTING_MAPNAME, FString(TEXT("Lobby")), EOnlineDataAdvertisementType::ViaOnlineService);
 
-        // bind and create
-        //Sess->OnCreateSessionCompleteDelegates.RemoveAll(this);
+        Sess->OnCreateSessionCompleteDelegates.RemoveAll(this);
         Sess->OnCreateSessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnCreateSessionComplete);
         Sess->CreateSession(0, NAME_GameSession, SessionSettings);
-
-        UE_LOG(LogTemp, Log, TEXT("CreateNewSession called"));
     }
 }
 
@@ -120,22 +110,23 @@ void URelicRunnersGameInstance::OnCreateSessionComplete(FName SessionName, bool 
         UGameplayStatics::OpenLevel(this, TEXT("Lobby"), true, TEXT("listen"));
     }
 
-    // unbind create delegate
+    //Unbind delegate 
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnCreateSessionCompleteDelegates.RemoveAll(this);
     }
 }
 
-/* Find sessions */
 void URelicRunnersGameInstance::FindGames(UJoinUserWidget* UserWidget)
 {
     if (TSharedPtr<IOnlineSession> Session = SessionInterface.Pin())
     {
+        //Search parameters
+        int NumResults = 10;
         SessionSearch = MakeShareable(new FOnlineSessionSearch());
+        SessionSearch->MaxSearchResults = NumResults;
         SessionSearch->bIsLanQuery = false;
-        SessionSearch->MaxSearchResults = 10;
-        SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+        SessionSearch->QuerySettings.Set(FName("PRESENCESEARCH"), true, EOnlineComparisonOp::Equals);
 
         Session->OnFindSessionsCompleteDelegates.RemoveAll(this);
         Session->OnFindSessionsCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnFindSessionsComplete);
@@ -156,9 +147,11 @@ void URelicRunnersGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
                 FString MapName = R.Session.SessionSettings.Settings.Contains("MAPNAME")
                     ? *R.Session.SessionSettings.Settings.Find("MAPNAME")->Data.ToString()
                     : TEXT("Unknown Map");
+
                 int32 MaxPlayers = R.Session.SessionSettings.NumPublicConnections;
                 int32 CurrentPlayers = MaxPlayers - R.Session.NumOpenPublicConnections;
-                TextRenderWidget->OnFindSessionsComplete(MapName + " " + FString::FromInt(CurrentPlayers) + " out of " + FString::FromInt(MaxPlayers));
+
+                TextRenderWidget->OnFindSessionsComplete(MapName + " " + FString::FromInt(CurrentPlayers) + " | " + FString::FromInt(MaxPlayers));
             }
         }
         else
@@ -167,17 +160,17 @@ void URelicRunnersGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
         }
     }
 
-    // unbind to be tidy
+    //Unbind delegate
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnFindSessionsCompleteDelegates.RemoveAll(this);
     }
 }
 
-/* Leave session: always destroy (client & host). Optionally queue host */
-void URelicRunnersGameInstance::LeaveSession(bool bQueueHost /*= false*/)
+void URelicRunnersGameInstance::LeaveSession(bool bQueueHost)
 {
     if (!SessionInterface.IsValid()) return;
+
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         if (Sess->GetNamedSession(NAME_GameSession))
@@ -191,25 +184,24 @@ void URelicRunnersGameInstance::LeaveSession(bool bQueueHost /*= false*/)
             Sess->OnDestroySessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnDestroySessionComplete);
             Sess->DestroySession(NAME_GameSession);
 
-            // clear local state so it won't reuse stale info
+            // Clear local state so it won't reuse stale info
             PendingJoinIndex = -1;
             SessionSearch.Reset();
         }
     }
 }
 
-/* Called after a session is destroyed (common callback used for queued host/join or travel back) */
 void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
     UE_LOG(LogTemp, Log, TEXT("OnDestroySessionComplete: %s success=%d"), *SessionName.ToString(), bWasSuccessful);
 
-    // unbind delegate
+    //Unbind delegate
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
     }
 
-    // clear stale search/join state
+    //Clear stale search/join state
     PendingJoinIndex = -1;
     SessionSearch.Reset();
 
@@ -217,30 +209,27 @@ void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool
     {
         PendingHostAfterLeave = 0;
 
-        // attempt host now that session was destroyed
+        //Attempt host now that session was destroyed
         HostGame();
         return; 
     }
 
-    TravelToMainMenu();
+    //Travel to main menu
+    if (APlayerController* PC = GetFirstLocalPlayerController())
+    {
+        PC->ClientTravel(TEXT("/Game/ThirdPerson/Maps/MainMenu"), ETravelType::TRAVEL_Absolute);
+    }
 }
 
 void URelicRunnersGameInstance::JoinGame(int32 SessionIndex)
 {
-    if (!SessionInterface.IsValid() || !SessionSearch.IsValid() || SessionIndex < 0 || SessionIndex >= SessionSearch->SearchResults.Num())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("JoinGame: invalid params"));
-        return;
-    }
+    if (!SessionInterface.IsValid() || !SessionSearch.IsValid() || SessionIndex < 0 || SessionIndex >= SessionSearch->SearchResults.Num()) return;
 
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
-        // if local "named" session exists, destroy it first and queue join
+        //If local session exists, destroy it first and queue join
         if (Sess->GetNamedSession(NAME_GameSession))
         {
-            UE_LOG(LogTemp, Log, TEXT("Already in a session, destroying before join..."));
-
-            // queue and destroy
             PendingJoinIndex = SessionIndex;
             Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
             Sess->OnDestroySessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnSessionDestroyedThenJoin);
@@ -248,7 +237,7 @@ void URelicRunnersGameInstance::JoinGame(int32 SessionIndex)
             return;
         }
 
-        // no existing local session -> join immediately
+        //No existing local session, join immediately
         Sess->OnJoinSessionCompleteDelegates.RemoveAll(this);
         Sess->OnJoinSessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnJoinSessionComplete);
         Sess->JoinSession(0, NAME_GameSession, SessionSearch->SearchResults[SessionIndex]);
@@ -256,12 +245,11 @@ void URelicRunnersGameInstance::JoinGame(int32 SessionIndex)
     }
 }
 
-/* called when the destroyed session (before join) is completed */
 void URelicRunnersGameInstance::OnSessionDestroyedThenJoin(FName SessionName, bool bWasSuccessful)
 {
     UE_LOG(LogTemp, Log, TEXT("OnSessionDestroyedThenJoin: %s success=%d"), *SessionName.ToString(), bWasSuccessful);
 
-    // unbind to be tidy
+    //Unbind to be tidy
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
@@ -291,41 +279,119 @@ void URelicRunnersGameInstance::OnSessionDestroyedThenJoin(FName SessionName, bo
     PendingJoinIndex = -1;
 }
 
-/* Join result resolve connect string and travel */
 void URelicRunnersGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
+        //Try game port first
         FString ConnectInfo;
-        // try game port first (some subsystems use NAME_GamePort)
         if (!Sess->GetResolvedConnectString(SessionName, ConnectInfo, NAME_GamePort) || ConnectInfo.IsEmpty())
         {
             if (!Sess->GetResolvedConnectString(SessionName, ConnectInfo) || ConnectInfo.IsEmpty())
             {
                 FString NoConnect = FString::Printf(TEXT("Failed to resolve connect string for session %s"), *SessionName.ToString());
                 UE_LOG(LogTemp, Error, TEXT("%s"), *NoConnect);
-                if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, NoConnect);
                 return;
             }
         }
 
-        UE_LOG(LogTemp, Log, TEXT("Resolved connect string: %s"), *ConnectInfo);
         if (APlayerController* PC = GetFirstLocalPlayerController())
         {
             PC->ClientTravel(ConnectInfo, ETravelType::TRAVEL_Absolute);
         }
     }
 
-    // unbind join delegate
+    //Unbind join delegate
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnJoinSessionCompleteDelegates.RemoveAll(this);
     }
 }
 
-/* Utilities */
-void URelicRunnersGameInstance::SetCharacterName(const FString& NewName) { PlayerName = NewName; }
-FString URelicRunnersGameInstance::GetCharacterName() const { return PlayerName; }
+void URelicRunnersGameInstance::StartSessionGame()
+{
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    // Only server/host can start the session
+    APlayerController* PC = World->GetFirstPlayerController();
+    if (!PC || !PC->HasAuthority())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Only host can start the game."));
+        return;
+    }
+
+    const FString TargetMap = TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap?listen");
+
+    IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+    IOnlineSessionPtr SessionInt = Subsystem ? Subsystem->GetSessionInterface() : nullptr;
+
+    if (!SessionInt.IsValid())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] No Session Interface, fallback travel."));
+        World->ServerTravel(TargetMap);
+        return;
+    }
+
+    FNamedOnlineSession* NamedSession = SessionInt->GetNamedSession(NAME_GameSession);
+    if (!NamedSession)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] No existing session found, fallback travel."));
+        World->ServerTravel(TargetMap);
+        return;
+    }
+
+    EOnlineSessionState::Type State = SessionInt->GetSessionState(NAME_GameSession);
+    if (State == EOnlineSessionState::InProgress)
+    {
+        UE_LOG(LogTemp, Log, TEXT("[StartSessionGame] Session already InProgress -> travel."));
+        World->ServerTravel(TargetMap);
+        return;
+    }
+
+    // --- Safe async callback binding in GameInstance (persistent across travel)
+    FDelegateHandle Handle = SessionInt->OnStartSessionCompleteDelegates.AddUObject(
+        this, &URelicRunnersGameInstance::OnStartSessionComplete, TargetMap);
+
+    UE_LOG(LogTemp, Warning, TEXT("Starting online session before travel..."));
+    SessionInt->StartSession(NAME_GameSession);
+}
+
+void URelicRunnersGameInstance::OnStartSessionComplete(FName SessionName, bool bWasSuccessful, FString TargetMap)
+{
+    IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+    IOnlineSessionPtr SessionInt = Subsystem ? Subsystem->GetSessionInterface() : nullptr;
+
+    if (SessionInt.IsValid())
+        SessionInt->OnStartSessionCompleteDelegates.RemoveAll(this);
+
+    UE_LOG(LogTemp, Log, TEXT("[OnStartSessionComplete] %s Success=%d"), *SessionName.ToString(), bWasSuccessful ? 1 : 0);
+
+    if (!bWasSuccessful)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Session start failed; aborting travel."));
+        return;
+    }
+
+    if (UWorld* World = GetWorld())
+    {
+        UE_LOG(LogTemp, Log, TEXT("[OnStartSessionComplete] Traveling to %s"), *TargetMap);
+        World->ServerTravel(TargetMap);
+    }
+}
+
+bool URelicRunnersGameInstance::IsHost() const
+{
+    if (UWorld* World = GetWorld())
+    {
+        APlayerController* PC = World->GetFirstPlayerController();
+        if (PC)
+        {
+            return PC->HasAuthority();
+        }
+    }
+    return false;
+}
 
 bool URelicRunnersGameInstance::IsInSession() const
 {

@@ -28,6 +28,7 @@ public:
 	void OnAphroditeClicked();
 	UFUNCTION()
 	void OnNemesisClicked();
+
 	void SetSelectedClass(FName ClassKey);
 	void HandleEntryGenerated(UUserWidget& EntryWidget);
 

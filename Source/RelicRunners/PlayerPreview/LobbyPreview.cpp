@@ -29,7 +29,6 @@ ALobbyPreview::ALobbyPreview()
     MeshComp->bNoSkeletonUpdate = false;
     MeshComp->bEnableUpdateRateOptimizations = false;
     MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-    MeshComp->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
     MeshComp->bOnlyAllowAutonomousTickPose = false;
 
     MeshComp->SetIsReplicated(false); // Let animation run locally

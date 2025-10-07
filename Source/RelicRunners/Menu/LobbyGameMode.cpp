@@ -8,6 +8,9 @@
 #include "RelicRunners/PlayerController/RelicRunnersPlayerController.h"
 #include "RelicRunners/Menu/JoinUserWidget.h"
 #include "GameFramework/HUD.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include <OnlineSessionSettings.h>
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -58,6 +61,12 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
     }
 
     UpdateSetup();
+
+    // IMPORTANT: ensure local fogs show up at close range — set the console var to 0 (or small)
+    if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.LocalFogVolume.GlobalStartDistance")))
+    {
+        CVar->Set(0); // default is 2000 (20m). Set to 0 to disable the "start distance" culling.
+    }
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)

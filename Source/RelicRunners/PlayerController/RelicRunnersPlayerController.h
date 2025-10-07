@@ -103,6 +103,12 @@ public:
 	UFUNCTION()
 	void OnRep_LobbyPreview();
 
+	UFUNCTION(Server, Reliable)
+	void Server_RequestStartGame();
+
+	UFUNCTION(Client, Reliable)
+	void Client_LeaveSession();
+
 	UFUNCTION()
 	void UpdatePreviewWithEquippedItems();
 

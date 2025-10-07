@@ -19,6 +19,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "RelicRunners/Classes/ClassData.h"
 #include "RelicRunners/Classes/ClassInfo.h"
+#include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
 
 void UJoinUserWidget::NativeConstruct()
 {
@@ -46,6 +47,13 @@ void UJoinUserWidget::NativeConstruct()
 
 	if (StartButton)
 	{
+		if (const UWorld* World = GetWorld())
+		{
+			//Only show for the listen server / host
+			bool bIsHost = World->GetAuthGameMode() != nullptr;
+			StartButton->SetVisibility(bIsHost ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+		}
+
 		StartButton->OnClicked.AddDynamic(this, &UJoinUserWidget::StartGameButtonClicked);
 	}
 
@@ -241,7 +249,27 @@ void UJoinUserWidget::JoinGameButtonClicked()
 
 void UJoinUserWidget::StartGameButtonClicked()
 {
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC)
+		return;
 
+	// Ask the server (host) to start the session and travel
+	if (PC->HasAuthority())
+	{
+		// We're already the server (listen server)
+		if (URelicRunnersGameInstance* GI = PC->GetGameInstance<URelicRunnersGameInstance>())
+		{
+			GI->StartSessionGame();
+		}
+	}
+	else
+	{
+		// Client - send request to the host
+		if (ARelicRunnersPlayerController* MyPC = Cast<ARelicRunnersPlayerController>(PC))
+		{
+			MyPC->Server_RequestStartGame();
+		}
+	}
 }
 
 void UJoinUserWidget::HandleSessionClicked(USessionListItemData* ClickedSession)

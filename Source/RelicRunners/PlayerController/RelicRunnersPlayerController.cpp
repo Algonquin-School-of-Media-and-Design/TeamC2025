@@ -96,23 +96,6 @@ void ARelicRunnersPlayerController::OnRep_Pawn()
 	}
 }
 
-void ARelicRunnersPlayerController::OnRep_LobbyPreview()
-{
-	if (IsLocalController())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("OnRep_LobbyPreviewInstance: Preview instance replicated"));
-
-		if (LobbyPreviewInstance)
-		{
-			
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("OnRep_LobbyPreviewInstance: Still null"));
-		}
-	}
-}
-
 void ARelicRunnersPlayerController::OnRep_PlayerPreview()
 {
 	if (IsLocalController())
@@ -127,6 +110,31 @@ void ARelicRunnersPlayerController::OnRep_PlayerPreview()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("OnRep_PlayerPreviewInstance: Still null"));
 		}
+	}
+}
+
+void ARelicRunnersPlayerController::OnRep_LobbyPreview()
+{
+
+}
+
+void ARelicRunnersPlayerController::Server_RequestStartGame_Implementation()
+{
+	if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
+	{
+		GI->StartSessionGame();
+	}
+}
+
+void ARelicRunnersPlayerController::Client_LeaveSession_Implementation()
+{
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Client %s leaving current session."), *GetName());
+
+		// Leave the session without queuing as host
+		GI->LeaveSession(false);
 	}
 }
 
@@ -353,6 +361,10 @@ void ARelicRunnersPlayerController::BeginPlay()
 	else if (World && MapName.Contains(TEXT("MainMenu")))
 	{
 		SetupMainMenuView();
+	}
+	else
+	{
+		InitializePawnDependentSystems();
 	}
 
 	if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
