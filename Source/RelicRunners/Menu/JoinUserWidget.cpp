@@ -78,11 +78,6 @@ void UJoinUserWidget::NativeConstruct()
 		NemesisButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnNemesisClicked);
 	}
 
-	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
-		{
-			UpdateFindGamesButtonVisibility();
-		});
-
 	SetSelectedClass("Ares");
 }
 

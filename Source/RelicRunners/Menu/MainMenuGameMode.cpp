@@ -11,6 +11,8 @@ AMainMenuGameMode::AMainMenuGameMode()
 {
     DefaultPawnClass = nullptr;
     PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
+
+    bUseSeamlessTravel = true;
 }
 
 void AMainMenuGameMode::BeginPlay()

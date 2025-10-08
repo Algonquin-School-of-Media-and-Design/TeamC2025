@@ -30,6 +30,7 @@ ALobbyGameMode::ALobbyGameMode()
     {
         CVar->Set(0); // default is 2000 (20m). Set to 0 to disable the "start distance" culling.
     }
+    bUseSeamlessTravel = true;
 }
 
 void ALobbyGameMode::BeginPlay()

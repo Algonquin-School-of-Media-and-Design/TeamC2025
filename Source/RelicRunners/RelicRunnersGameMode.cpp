@@ -35,6 +35,8 @@ ARelicRunnersGameMode::ARelicRunnersGameMode()
 		PlayerPreviewClass = PlayerPreviewBPClass.Class;
 		UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerPreviewClass from constructor."));
 	}
+
+    bUseSeamlessTravel = true;
 }
 
 void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
