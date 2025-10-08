@@ -45,7 +45,7 @@ void URelicRunnersGameInstance::BackToMainMenu()
             Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
             Sess->OnDestroySessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnDestroySessionComplete);
             Sess->DestroySession(NAME_GameSession);
-            return; 
+            return;
         }
     }
 
@@ -69,7 +69,7 @@ void URelicRunnersGameInstance::HostGame()
             Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
             Sess->OnDestroySessionCompleteDelegates.AddUObject(this, &URelicRunnersGameInstance::OnDestroySessionComplete);
             Sess->DestroySession(NAME_GameSession);
-            return; 
+            return;
         }
 
         //If no existing session, create immediately
@@ -211,7 +211,7 @@ void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool
 
         //Attempt host now that session was destroyed
         HostGame();
-        return; 
+        return;
     }
 
     //Travel to main menu
@@ -313,11 +313,10 @@ void URelicRunnersGameInstance::StartSessionGame()
     UWorld* World = GetWorld();
     if (!World) return;
 
-    //Ensure only the host/server runs this
-    APlayerController* PC = World->GetFirstPlayerController();
-    if (!PC || !PC->HasAuthority())
+    // Check server authority on the world itself
+    if (!World->GetAuthGameMode()) // Only the server/game mode has authority
     {
-        UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] Only host can start the game."));
+        UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] Only host/server can start the game."));
         return;
     }
 

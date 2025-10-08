@@ -113,6 +113,15 @@ void ARelicRunnersPlayerController::OnRep_PlayerPreview()
 	}
 }
 
+void ARelicRunnersPlayerController::Server_SetSelectedClass_Implementation(FName NewClass)
+{
+	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+	if (PS)
+	{
+		PS->SetSelectedClass(NewClass);
+	}
+}
+
 void ARelicRunnersPlayerController::OnRep_LobbyPreview()
 {
 
@@ -296,7 +305,6 @@ void ARelicRunnersPlayerController::SetupLobbyView()
 			LobbyWidget->SetVisibility(ESlateVisibility::Visible);
 			bShowMouseCursor = true;
 			SetInputMode(FInputModeUIOnly());
-			LobbyWidget->UpdateFindGamesButtonVisibility();
 		}
 	}
 

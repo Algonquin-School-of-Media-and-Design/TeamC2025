@@ -258,8 +258,6 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* PlayerHUDWorld;
 
-
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	class UInventoryComponent* InventoryComponent;
 

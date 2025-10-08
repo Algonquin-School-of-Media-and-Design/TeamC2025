@@ -10,6 +10,7 @@
 #include "GameFramework/HUD.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 #include <OnlineSessionSettings.h>
 
 ALobbyGameMode::ALobbyGameMode()
@@ -23,6 +24,12 @@ ALobbyGameMode::ALobbyGameMode()
     };
 
     PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
+
+    // IMPORTANT: ensure local fogs show up at close range — set the console var to 0 (or small)
+    if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.LocalFogVolume.GlobalStartDistance")))
+    {
+        CVar->Set(0); // default is 2000 (20m). Set to 0 to disable the "start distance" culling.
+    }
 }
 
 void ALobbyGameMode::BeginPlay()
@@ -34,12 +41,12 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
+    if (!HasAuthority()) return; // Only the server should do spawn logic
+
     if (!NewPlayer || !LobbyPreviewClass) return;
 
-    // Add to our lobby array
     PlayersInLobby.Add(NewPlayer);
 
-    // Spawn lobby preview for this player
     int32 Index = PlayersInLobby.Num() - 1;
     if (LobbySpawnPositions.IsValidIndex(Index))
     {
@@ -56,17 +63,21 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
         if (SpawnedPreview)
         {
-            LobbyPreviews.Add(NewPlayer, SpawnedPreview);
+            // Link preview to this player's PlayerState on the server
+            if (ARelicRunnersPlayerState* RPS = NewPlayer->GetPlayerState<ARelicRunnersPlayerState>())
+            {
+                SpawnedPreview->SetupFromPlayerState(RPS);
+                LobbyPreviews.Add(NewPlayer, SpawnedPreview);
+            }
+            else
+            {
+                // No player state (shouldn't happen), destroy preview
+                SpawnedPreview->Destroy();
+            }
         }
     }
 
     UpdateSetup();
-
-    // IMPORTANT: ensure local fogs show up at close range — set the console var to 0 (or small)
-    if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.LocalFogVolume.GlobalStartDistance")))
-    {
-        CVar->Set(0); // default is 2000 (20m). Set to 0 to disable the "start distance" culling.
-    }
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)

@@ -71,6 +71,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SetPlayerName(const FString& NewName);
 
+	UFUNCTION(Server, Reliable)
+	void Server_SetSelectedClass(FName NewClass);
+
 	virtual void OnRep_Pawn() override;
 
 	virtual void AcknowledgePossession(APawn* Pawn) override;

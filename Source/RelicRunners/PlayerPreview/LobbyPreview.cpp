@@ -3,6 +3,10 @@
 
 #include "LobbyPreview.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/WidgetComponent.h"
+#include <RelicRunners/PlayerState/RelicRunnersPlayerState.h>
+#include <Net/UnrealNetwork.h>
+#include <RelicRunners/PlayerHUD/LobbyHUDWorld.h>
 
 // Sets default values
 ALobbyPreview::ALobbyPreview()
@@ -33,6 +37,15 @@ ALobbyPreview::ALobbyPreview()
 
     MeshComp->SetIsReplicated(false); // Let animation run locally
 
+    LobbyHUDWorld = CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComponent"));
+    LobbyHUDWorld->SetupAttachment(MeshComp);
+    LobbyHUDWorld->SetWorldScale3D(FVector(0.1, 0.1, 0.1));
+    LobbyHUDWorld->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
+    LobbyHUDWorld->SetWidgetSpace(EWidgetSpace::World);
+    LobbyHUDWorld->SetDrawAtDesiredSize(true);
+    LobbyHUDWorld->SetVisibility(true);
+    LobbyHUDWorld->CastShadow = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -40,7 +53,16 @@ void ALobbyPreview::BeginPlay()
 {
 	Super::BeginPlay();
 
-
+    if (LobbyHUDWorld)
+    {
+        if (UUserWidget* Widget = LobbyHUDWorld->GetUserWidgetObject())
+        {
+            if (ULobbyHUDWorld* LobbyWidget = Cast<ULobbyHUDWorld>(Widget))
+            {
+                LobbyWidget->OwningPreview = this;
+            }
+        }
+    }
 	
 }
 
@@ -51,9 +73,34 @@ void ALobbyPreview::Tick(float DeltaTime)
 
 }
 
-void ALobbyPreview::SetupFromPlayerState(APlayerState* PS)
+void ALobbyPreview::SetupFromPlayerState(ARelicRunnersPlayerState* PS)
 {
-	// Example: set mesh, nameplate, etc.
-	// Cast to your custom PlayerState to get cosmetics
+    if (!HasAuthority() || !PS) return;
+
+    LinkedPlayerState = PS;
+    OnRep_LinkedPlayerState(); // run on server immediately
 }
 
+void ALobbyPreview::OnPlayerClassChanged(FName NewClass)
+{
+    if (!LinkedPlayerState) return;
+
+    UE_LOG(LogTemp, Log, TEXT("[LobbyPreview] %s -> class %s"),
+        *GetNameSafe(LinkedPlayerState), *NewClass.ToString());
+
+}
+
+void ALobbyPreview::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(ALobbyPreview, LinkedPlayerState);
+}
+
+void ALobbyPreview::OnRep_LinkedPlayerState()
+{
+    if (LinkedPlayerState)
+    {
+        LinkedPlayerState->OnSelectedClassChanged.AddUObject(this, &ALobbyPreview::OnPlayerClassChanged);
+        OnPlayerClassChanged(LinkedPlayerState->SelectedClass);
+    }
+}

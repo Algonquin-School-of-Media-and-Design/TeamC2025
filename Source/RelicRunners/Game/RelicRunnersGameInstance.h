@@ -22,8 +22,10 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void StartSessionGame();
-
+    UFUNCTION(BlueprintCallable)
     void OnStartSessionComplete(FName SessionName, bool bWasSuccessful, FString TargetMap);
+
+    UFUNCTION(BlueprintCallable)
     void CreateNewSession();
     UFUNCTION(BlueprintCallable)
     void HostGame();

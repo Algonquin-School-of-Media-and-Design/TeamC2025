@@ -20,6 +20,7 @@
 #include "RelicRunners/Classes/ClassData.h"
 #include "RelicRunners/Classes/ClassInfo.h"
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
+#include <RelicRunners/PlayerState/RelicRunnersPlayerState.h>
 
 void UJoinUserWidget::NativeConstruct()
 {
@@ -77,7 +78,11 @@ void UJoinUserWidget::NativeConstruct()
 		NemesisButton->OnClicked.AddDynamic(this, &UJoinUserWidget::OnNemesisClicked);
 	}
 
-	UpdateFindGamesButtonVisibility();
+	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+		{
+			UpdateFindGamesButtonVisibility();
+		});
+
 	SetSelectedClass("Ares");
 }
 
@@ -140,6 +145,27 @@ void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 	if (StrengthBar)     StrengthBar->SetPercent(Normalize(Info.Strength, MaxValues.Strength)); TB_Strength->SetText(FText::FromString(FString::FromInt(Info.Strength)));
 	if (IntelligenceBar) IntelligenceBar->SetPercent(Normalize(Info.Intelligence, MaxValues.Intelligence)); TB_Intelligence->SetText(FText::FromString(FString::FromInt(Info.Intelligence)));
 	if (LuckBar)         LuckBar->SetPercent(Normalize(Info.Luck, MaxValues.Luck)); TB_Luck->SetText(FText::FromString(FString::FromInt(Info.Luck)));
+
+	APlayerController* PC = GetOwningPlayer();
+	if (PC)
+	{
+		ARelicRunnersPlayerState* PS = PC->GetPlayerState<ARelicRunnersPlayerState>();
+		if (PS)
+		{
+			if (PC->HasAuthority())
+			{
+				PS->SetSelectedClass(ClassKey);
+			}
+			else
+			{
+				// If client, call a server RPC
+				if (ARelicRunnersPlayerController* RPC_PC = Cast<ARelicRunnersPlayerController>(PC))
+				{
+					RPC_PC->Server_SetSelectedClass(ClassKey);
+				}
+			}
+		}
+	}
 }
 
 void UJoinUserWidget::HandleEntryGenerated(UUserWidget& EntryWidget)
@@ -181,7 +207,7 @@ void UJoinUserWidget::FindGamesButtonClicked()
 
 void UJoinUserWidget::UpdateFindGamesButtonVisibility()
 {
-	if (!FindGames && !SessionTileView && !SessionsBorder && !JoinBorder)
+	if (!FindGames || !SessionTileView || !SessionsBorder || !JoinBorder)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] UI references not ready yet."));
 		return;
@@ -195,43 +221,60 @@ void UJoinUserWidget::UpdateFindGamesButtonVisibility()
 	}
 
 	AGameStateBase* GS = World->GetGameState();
-	if (!GS || GS->PlayerArray.Num() == 0)
+	if (!GS)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] GameState or PlayerArray not ready, retrying..."));
-
-		FTimerHandle RetryHandle;
-		World->GetTimerManager().SetTimer(
-			RetryHandle,
-			[this]() { UpdateFindGamesButtonVisibility(); },
-			0.1f,
-			false
-		);
+		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] No GameState yet, retrying..."));
+		RetryUpdateVisibility(World, 0.3f);
 		return;
 	}
 
+	// Sometimes PlayerArray replication is delayed
 	const int32 NumPlayers = GS->PlayerArray.Num();
+	if (NumPlayers == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] PlayerArray empty, retrying..."));
+		RetryUpdateVisibility(World, 0.3f);
+		return;
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("[UpdateFindGamesButtonVisibility] NumPlayers: %d"), NumPlayers);
 
-	// Show "Find Games" button if alone in the lobby
+	// Update UI visibility
+	const bool bAlone = (NumPlayers <= 1);
+
 	if (FindGames)
 	{
-		const bool bAlone = (NumPlayers <= 1);
 		FindGames->SetVisibility(bAlone ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 		FindGames->SetIsEnabled(bAlone);
 	}
 
-	// If there are multiple players, hide join UI panels
 	if (NumPlayers > 1)
 	{
-		if (SessionTileView)
-			SessionTileView->ClearListItems();
-
-		if (SessionsBorder)
-			SessionsBorder->SetVisibility(ESlateVisibility::Collapsed);
-
-		if (JoinBorder)
-			JoinBorder->SetVisibility(ESlateVisibility::Collapsed);
+		if (SessionTileView) SessionTileView->ClearListItems();
+		if (SessionsBorder) SessionsBorder->SetVisibility(ESlateVisibility::Collapsed);
+		if (JoinBorder) JoinBorder->SetVisibility(ESlateVisibility::Collapsed);
 	}
+}
+
+// Helper to prevent duplicated timers
+void UJoinUserWidget::RetryUpdateVisibility(UWorld* World, float Delay)
+{
+	static int32 RetryCount = 0;
+
+	if (++RetryCount > 20) // safety limit: stop after 20 tries (~6s)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] Giving up after too many retries."));
+		RetryCount = 0;
+		return;
+	}
+
+	FTimerHandle RetryHandle;
+	World->GetTimerManager().SetTimer(
+		RetryHandle,
+		[this]() { UpdateFindGamesButtonVisibility(); },
+		Delay,
+		false
+	);
 }
 
 void UJoinUserWidget::JoinGameButtonClicked()
