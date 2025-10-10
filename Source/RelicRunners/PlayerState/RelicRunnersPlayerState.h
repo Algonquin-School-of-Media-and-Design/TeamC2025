@@ -28,7 +28,19 @@ class RELICRUNNERS_API ARelicRunnersPlayerState : public APlayerState
 {
     GENERATED_BODY()
 public:
+    UPROPERTY(ReplicatedUsing = OnRep_SelectedClass)
+    FName SelectedClass;
+
+    UFUNCTION()
+    void OnRep_SelectedClass();
+
+    void SetSelectedClass(FName NewClass);
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnSelectedClassChanged, FName);
+
+    FOnSelectedClassChanged OnSelectedClassChanged;
+
 };
 

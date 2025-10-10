@@ -17,8 +17,23 @@
 #include "RelicRunnersPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
+void ARelicRunnersPlayerState::SetSelectedClass(FName NewClass)
+{
+    if (HasAuthority())
+    {
+        SelectedClass = NewClass;
+        OnRep_SelectedClass(); // update immediately on server too
+    }
+}
+
+void ARelicRunnersPlayerState::OnRep_SelectedClass()
+{
+    OnSelectedClassChanged.Broadcast(SelectedClass);
+}
+
 void ARelicRunnersPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
+    DOREPLIFETIME(ARelicRunnersPlayerState, SelectedClass);
 }
+

@@ -2,35 +2,32 @@
 #include "MainMenuWidget.h" 
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
+#include "JoinUserWidget.h"
+#include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
+#include "RelicRunners/PlayerPreview/LobbyPreview.h"
+#include "RelicRunners/Game/RelicRunnersLobbyGameState.h"
 
 AMainMenuGameMode::AMainMenuGameMode()
 {
-    // No pawn should spawn in the menu
     DefaultPawnClass = nullptr;
-    static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_RelicRunnersPlayerController"));
+    PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
 
-    if (PlayerControllerBPClass.Class)
-    {
-        PlayerControllerClass = PlayerControllerBPClass.Class;
-        UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerControllerClass from constructor."));
-    }
-
-    static ConstructorHelpers::FClassFinder<UUserWidget> MainMenuWidgetBPClass(
-        TEXT("/Game/Blueprints/Menu/BP_MainMenuWidget")
-    );
-
-    if (MainMenuWidgetBPClass.Succeeded())
-    {
-        MainMenuWidgetClass = MainMenuWidgetBPClass.Class;
-        UE_LOG(LogTemp, Warning, TEXT("[MainMenuGameMode] Assigned MainMenuWidgetClass in constructor."));
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("[MainMenuGameMode] Failed to find MainMenu widget at path!"));
-    }
+    bUseSeamlessTravel = true;
+    bReplicates = true;
 }
 
 void AMainMenuGameMode::BeginPlay()
 {
     Super::BeginPlay();
+    // IMPORTANT: ensure local fogs show up at close range — set the console var to 0 (or small)
+    if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.LocalFogVolume.GlobalStartDistance")))
+    {
+        CVar->Set(0); // default is 2000 (20m). Set to 0 to disable the "start distance" culling.
+    }
 }
+
+
+
+
+
+
