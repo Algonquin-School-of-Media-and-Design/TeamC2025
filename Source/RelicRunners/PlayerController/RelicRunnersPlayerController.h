@@ -71,6 +71,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SetPlayerName(const FString& NewName);
 
+	UFUNCTION(Client, Reliable)
+	void Client_FinishSeamlessTravelSetup();
+
 	UFUNCTION(Server, Reliable)
 	void Server_SetSelectedClass(FName NewClass);
 
@@ -135,6 +138,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_UpdateLobbyUI();
 
+
+	UFUNCTION(Client, Reliable)
+	void ClientTravelToGame();
+
 	// Begin Actor interface
 protected:
 	ARelicRunnersPlayerController();
@@ -156,7 +163,6 @@ protected:
 	// End Actor interface
 
 	class ARelicRunnersCharacter* PossessedPawn;
-
 
 
 };

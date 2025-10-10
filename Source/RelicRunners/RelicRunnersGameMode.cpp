@@ -37,6 +37,7 @@ ARelicRunnersGameMode::ARelicRunnersGameMode()
 	}
 
     bUseSeamlessTravel = true;
+    bReplicates = true;
 }
 
 void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
@@ -80,5 +81,62 @@ void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerPreviewClass not set!"));
+    }
+
+}
+
+void ARelicRunnersGameMode::PostSeamlessTravel()
+{
+    Super::PostSeamlessTravel();
+
+    UE_LOG(LogTemp, Warning, TEXT("[PostSeamlessTravel] Re-initializing players after seamless travel"));
+
+    static int32 PlayerIndex = 1;
+
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* PC = It->Get();
+        if (!PC) continue;
+
+        // Make sure the player has a pawn
+        if (!PC->GetPawn())
+        {
+            RestartPlayer(PC);
+        }
+
+        // Optional: reset name if needed
+        if (ARelicRunnersPlayerState* PS = PC->GetPlayerState<ARelicRunnersPlayerState>())
+        {
+            if (PS->GetPlayerName().IsEmpty())
+            {
+                PS->SetPlayerName(FString::Printf(TEXT("Player%d"), PlayerIndex++));
+            }
+        }
+
+        // Spawn preview actor (same as before)
+        if (PlayerPreviewClass)
+        {
+            const FVector SpawnLocation = FVector(-1000000 * PlayerIndex, 0, -1000);
+            const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.Owner = PC;
+            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+            APlayerPreview* Preview = GetWorld()->SpawnActor<APlayerPreview>(PlayerPreviewClass, SpawnLocation, SpawnRotation, SpawnParams);
+            if (Preview)
+            {
+                Preview->SetOwner(PC);
+
+                if (ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(PC))
+                {
+                    RRPC->PlayerPreviewInstance = Preview;
+                    RRPC->TrySetupPreviewRenderTarget();
+
+                    //Tell the client to finalize UI + camera setup
+                    RRPC->Client_FinishSeamlessTravelSetup();
+                }
+            }
+        }
     }
 }

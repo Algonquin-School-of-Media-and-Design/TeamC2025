@@ -17,7 +17,6 @@ public:
     ALobbyGameMode();
     virtual void PostLogin(APlayerController* NewPlayer) override;
     virtual void Logout(AController* Exiting) override;
-    void StartGame();
     virtual void BeginPlay() override;
 protected:
     // Where to put players in lobby (pillars etc.)

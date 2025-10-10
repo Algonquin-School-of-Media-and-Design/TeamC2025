@@ -1,6 +1,4 @@
 #include "RelicRunnersGameInstance.h"
-#include "OnlineSubsystem.h"
-#include "OnlineSubsystemUtils.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include <Online/OnlineSessionNames.h>
 #include "Kismet/GameplayStatics.h"
@@ -11,7 +9,6 @@
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
 #include "RelicRunners/PlayerPreview/LobbyPreview.h"
 #include "GameFramework/GameStateBase.h"
-#include "Interfaces/OnlineSessionInterface.h"
 #include "Engine/Engine.h"
 #include <RelicRunners/Menu/LobbyGameMode.h>
 
@@ -313,117 +310,19 @@ void URelicRunnersGameInstance::StartSessionGame()
     UWorld* World = GetWorld();
     if (!World) return;
 
-    // Check server authority on the world itself
-    if (!World->GetAuthGameMode()) // Only the server/game mode has authority
+    FString TravelURL = TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap?listen");
+    UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] Host starting travel to %s"), *TravelURL);
+
+    // Tell all clients to prepare for travel
+    for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] Only host/server can start the game."));
-        return;
-    }
-
-    const FString TargetMap = TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap?listen");
-
-    IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-    IOnlineSessionPtr SessionInt = Subsystem ? Subsystem->GetSessionInterface() : nullptr;
-
-    if (!SessionInt.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] No Session Interface, fallback travel."));
-        World->ServerTravel(TargetMap);
-        return;
-    }
-
-    //Try to get the current session
-    FNamedOnlineSession* NamedSession = SessionInt->GetNamedSession(NAME_GameSession);
-
-    if (!NamedSession)
-    {
-        static int32 RetryCount = 0;
-        if (RetryCount < 5) // retry up to 5 times (0.5 seconds total)
+        ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(*Iterator);
+        if (PC && !PC->IsLocalController()) // skip host
         {
-            RetryCount++;
-            UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] Session not ready yet, retry #%d..."), RetryCount);
-
-            // retry after 0.1 seconds
-            FTimerHandle RetryHandle;
-            World->GetTimerManager().SetTimer(
-                RetryHandle,
-                FTimerDelegate::CreateUObject(this, &URelicRunnersGameInstance::StartSessionGame),
-                0.1f,
-                false
-            );
-            return;
-        }
-
-        UE_LOG(LogTemp, Error, TEXT("[StartSessionGame] Session still not ready after retries, aborting fallback travel."));
-        RetryCount = 0;
-        World->ServerTravel(TargetMap);
-        return;
-    }
-
-    // reset retry counter if session is found
-    static int32 RetryCount = 0;
-    RetryCount = 0;
-
-    // If session already started, just travel immediately
-    EOnlineSessionState::Type State = SessionInt->GetSessionState(NAME_GameSession);
-
-    if (State == EOnlineSessionState::InProgress)
-    {
-        UE_LOG(LogTemp, Log, TEXT("[StartSessionGame] Session already InProgress -> travel."));
-        World->ServerTravel(TargetMap);
-        return;
-    }
-
-    // Bind the async session start callback
-    FDelegateHandle Handle = SessionInt->OnStartSessionCompleteDelegates.AddUObject(
-        this, &URelicRunnersGameInstance::OnStartSessionComplete, TargetMap);
-
-    UE_LOG(LogTemp, Warning, TEXT("[StartSessionGame] Starting online session before travel..."));
-    SessionInt->StartSession(NAME_GameSession);
-}
-
-void URelicRunnersGameInstance::OnStartSessionComplete(FName SessionName, bool bWasSuccessful, FString TargetMap)
-{
-    IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-    IOnlineSessionPtr SessionInt = Subsystem ? Subsystem->GetSessionInterface() : nullptr;
-
-    if (SessionInt.IsValid())
-        SessionInt->OnStartSessionCompleteDelegates.RemoveAll(this);
-
-    UE_LOG(LogTemp, Log, TEXT("[OnStartSessionComplete] %s Success=%d"),
-        *SessionName.ToString(), bWasSuccessful ? 1 : 0);
-
-    if (!bWasSuccessful)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[OnStartSessionComplete] Session start failed; aborting travel."));
-        return;
-    }
-
-    if (UWorld* World = GetWorld())
-    {
-        UE_LOG(LogTemp, Log, TEXT("[OnStartSessionComplete] Traveling to %s"), *TargetMap);
-        World->ServerTravel(TargetMap);
-    }
-}
-
-bool URelicRunnersGameInstance::IsHost() const
-{
-    if (UWorld* World = GetWorld())
-    {
-        APlayerController* PC = World->GetFirstPlayerController();
-        if (PC)
-        {
-            return PC->HasAuthority();
+            PC->ClientTravelToGame();
         }
     }
-    return false;
-}
 
-bool URelicRunnersGameInstance::IsInSession() const
-{
-    if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
-    {
-        return (Sess->GetNamedSession(NAME_GameSession) != nullptr);
-    }
-    return false;
+    // Host starts seamless travel
+    World->SeamlessTravel(TravelURL);
 }

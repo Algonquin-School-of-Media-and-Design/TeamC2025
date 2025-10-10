@@ -76,6 +76,34 @@ void ARelicRunnersPlayerController::ClientRestart_Implementation(APawn* NewPawn)
 	}
 }
 
+void ARelicRunnersPlayerController::Client_FinishSeamlessTravelSetup_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("CLIENT world after travel: %s"), *GetWorld()->GetMapName());
+
+	// Clear the lobby UI
+	if (LobbyWidget)
+	{
+		LobbyWidget->RemoveFromParent();
+		LobbyWidget = nullptr;
+	}
+
+	// Reset the view target if needed
+	if (GetPawn())
+	{
+		SetViewTarget(GetPawn());
+	}
+
+	// Optional: re-enable input
+	SetInputMode(FInputModeGameOnly());
+	bShowMouseCursor = false;
+}
+
+void ARelicRunnersPlayerController::ClientTravelToGame_Implementation()
+{
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	GI->ClientTravelToSession(0, NAME_GameSession);
+}
+
 void ARelicRunnersPlayerController::Server_SetPlayerName_Implementation(const FString& NewName)
 {
 	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();

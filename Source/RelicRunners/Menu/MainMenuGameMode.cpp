@@ -13,12 +13,12 @@ AMainMenuGameMode::AMainMenuGameMode()
     PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
 
     bUseSeamlessTravel = true;
+    bReplicates = true;
 }
 
 void AMainMenuGameMode::BeginPlay()
 {
     Super::BeginPlay();
-
     // IMPORTANT: ensure local fogs show up at close range — set the console var to 0 (or small)
     if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.LocalFogVolume.GlobalStartDistance")))
     {

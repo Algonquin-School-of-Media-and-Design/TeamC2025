@@ -4,9 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Interfaces/OnlineSessionInterface.h"
 #include "AdvancedFriendsGameInstance.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSubsystemUtils.h"
 #include "RelicRunnersGameInstance.generated.h"
+
+USTRUCT()
+struct FPendingClientTravel
+{
+    GENERATED_BODY()
+
+public:
+    FString TravelURL;
+    bool bReady = false;
+};
 
 UCLASS()
 class RELICRUNNERS_API URelicRunnersGameInstance : public UGameInstance
@@ -22,8 +34,9 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void StartSessionGame();
-    UFUNCTION(BlueprintCallable)
-    void OnStartSessionComplete(FName SessionName, bool bWasSuccessful, FString TargetMap);
+
+    UPROPERTY()
+    TArray<FUniqueNetIdRepl> SavedPlayers;
 
     UFUNCTION(BlueprintCallable)
     void CreateNewSession();
@@ -37,27 +50,32 @@ public:
     UFUNCTION(BlueprintCallable)
     void JoinGame(int32 SessionIndex);
 
+    UPROPERTY(BlueprintReadOnly)
+    FString SavedHostAddress;
+
     void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
     void OnSessionDestroyedThenJoin(FName SessionName, bool bWasSuccessful);
 
     UFUNCTION(BlueprintCallable)
     void LeaveSession(bool bQueueHost = false);
     void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
-    bool IsHost() const;
-    bool IsInSession() const;
-
     void SetCharacterName(const FString& NewName) { PlayerName = NewName; }
     FString GetCharacterName() const { return PlayerName; }
 
     TSharedPtr<class FOnlineSessionSearch> SessionSearch;
-
+    UPROPERTY()
+    TMap<FUniqueNetIdRepl, FPendingClientTravel> PendingClientTravels;
 private:
     TWeakPtr<class IOnlineSession, ESPMode::ThreadSafe> SessionInterface;
     TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
 
     int32 PendingHostAfterLeave = 0;
     int32 PendingJoinIndex = -1;
-
+    FString PendingTravelTargetMap;
     FString PlayerName;
+
+
+
 };
