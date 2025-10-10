@@ -27,6 +27,7 @@
 #include "RelicRunners/Inventory/Inventory.h"
 #include "RelicRunners/Inventory/InventoryComponent.h"
 #include "RelicRunners/Item/ItemActor.h"
+#include "RelicRunners/Spawning System/Director.h"
 
 // Sets default values
 AEnemyCharacterAI::AEnemyCharacterAI()
@@ -291,6 +292,18 @@ void AEnemyCharacterAI::BeginPlay()
 				EnemyHUD->InitWidgetWithCharacter(this);
 			}
 		}
+	}
+
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		APawn* enemy = static_cast<APawn*>(this);
+
+		GetWorld()->GetTimerManager().SetTimerForNextTick([World, enemy] {
+			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
+			Director->AddEnemy(enemy);
+			enemy->OnDestroyed.AddDynamic(Director, &ADirector::RemoveEnemy);
+			});
 	}
 
 	TryBindInventoryDelegates();

@@ -48,6 +48,8 @@
 #include "Enemy/EnemyCharacterAI.h"
 #include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
 #include "Game/RelicRunnersGameInstance.h"
+#include "Spawning System/Director.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -491,6 +493,39 @@ void ARelicRunnersCharacter::BeginPlay()
 	{
 		// Always load ItemMeshData locally
 		if (ItemMeshDataClass)
+		// Delay UI setup until everything else is ready
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::InitLocalUI);
+	}
+	/*AActor* Director1 = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>());
+
+	AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(),
+		ADirector::StaticClass());
+
+	int test1 = 0;*/
+	if (HasAuthority())
+	{
+		// Generate initial items only once on server
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
+		//updating the director player list
+		
+
+		UWorld* World = GetWorld();
+		APawn* player = static_cast<APawn*>(this);
+
+		GetWorld()->GetTimerManager().SetTimerForNextTick( [World, player] {
+			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
+			Director->AddPlayer(player);
+			});
+
+	}
+
+	// Attach item mesh components
+	MainhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("MainhandSocket"));
+	OffhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("OffhandSocket"));
+
+	if (PlayerHUDWorld)
+	{
+		if (UPlayerHUDWorld* HUDWorldWidget = Cast<UPlayerHUDWorld>(PlayerHUDWorld->GetUserWidgetObject()))
 		{
 			ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
 		}
