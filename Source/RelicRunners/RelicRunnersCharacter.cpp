@@ -504,23 +504,15 @@ void ARelicRunnersCharacter::BeginPlay()
 		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
 		//updating the director player list
 		
-		FTimerHandle tempHandle;
+
 		UWorld* World = GetWorld();
 		APawn* player = static_cast<APawn*>(this);
-
-		/*AActor* Director = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>());
-		int test = 0;*/
-		//Director->GetWorld();
-		//Director->AddPlayer(player);
 
 		GetWorld()->GetTimerManager().SetTimerForNextTick( [World, player] {
 			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
 			Director->AddPlayer(player);
 			});
-		/*GetWorld()->GetTimerManager().SetTimer(tempHandle, [World, player] {
-		ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, TSubclassOf<ADirector>()));
-		Director->AddPlayer(player);
-	}, 20, false);*/
+
 	}
 
 	// Attach item mesh components

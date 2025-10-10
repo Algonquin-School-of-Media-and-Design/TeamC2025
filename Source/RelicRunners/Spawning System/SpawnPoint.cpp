@@ -172,10 +172,8 @@ void ASpawnPoint::SpawnEnemies()
 					//spawning the enemy and adding it to the array
 					if (newEnemy)
 					{
-						newEnemy->OnDestroyed.AddDynamic(m_pDirector, &ADirector::RemoveEnemy);
 						newEnemy->OnDestroyed.AddDynamic(this, &ASpawnPoint::RemoveEnemy);
 						m_pSpawnedEnemies.Add(newEnemy);
-						m_pDirector->AddEnemy(newEnemy);
 						break;
 					}
 					else

@@ -62,7 +62,7 @@ public:
 	//A method to check if the spawn point is maxed out on how many enemies it can spawn
 	bool IsAtMaxCapacity();
 	//Get a random position based on the spawn point properties to use for spawning
-	FVector GetRandomPosition();
+	virtual FVector GetRandomPosition();
 
 	//A method to try and spawn enemies on near by spawnPoints
 	UFUNCTION()
