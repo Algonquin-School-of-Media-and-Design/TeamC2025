@@ -218,8 +218,7 @@ void UJoinUserWidget::UpdateFindGamesButtonVisibility()
 	AGameStateBase* GS = World->GetGameState();
 	if (!GS)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] No GameState yet, retrying..."));
-		RetryUpdateVisibility(World, 0.3f);
+		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] No GameState yet"));
 		return;
 	}
 
@@ -227,8 +226,7 @@ void UJoinUserWidget::UpdateFindGamesButtonVisibility()
 	const int32 NumPlayers = GS->PlayerArray.Num();
 	if (NumPlayers == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] PlayerArray empty, retrying..."));
-		RetryUpdateVisibility(World, 0.3f);
+		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] PlayerArray empty"));
 		return;
 	}
 
@@ -249,27 +247,6 @@ void UJoinUserWidget::UpdateFindGamesButtonVisibility()
 		if (SessionsBorder) SessionsBorder->SetVisibility(ESlateVisibility::Collapsed);
 		if (JoinBorder) JoinBorder->SetVisibility(ESlateVisibility::Collapsed);
 	}
-}
-
-// Helper to prevent duplicated timers
-void UJoinUserWidget::RetryUpdateVisibility(UWorld* World, float Delay)
-{
-	static int32 RetryCount = 0;
-
-	if (++RetryCount > 20) // safety limit: stop after 20 tries (~6s)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[UpdateFindGamesButtonVisibility] Giving up after too many retries."));
-		RetryCount = 0;
-		return;
-	}
-
-	FTimerHandle RetryHandle;
-	World->GetTimerManager().SetTimer(
-		RetryHandle,
-		[this]() { UpdateFindGamesButtonVisibility(); },
-		Delay,
-		false
-	);
 }
 
 void UJoinUserWidget::JoinGameButtonClicked()

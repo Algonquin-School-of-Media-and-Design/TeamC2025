@@ -29,9 +29,6 @@ public:
 	UFUNCTION()
 	void OnNemesisClicked();
 
-	UFUNCTION()
-	void RetryUpdateVisibility(UWorld* World, float Delay);
-
 	void SetSelectedClass(FName ClassKey);
 	void HandleEntryGenerated(UUserWidget& EntryWidget);
 

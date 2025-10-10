@@ -78,8 +78,8 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
             }
         }
     }
-
-    UpdateSetup();
+    FTimerHandle timer;
+    GetWorld()->GetTimerManager().SetTimer(timer, this, &ALobbyGameMode::UpdateSetup, 1.0f, true, 1.0f);
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)
