@@ -513,8 +513,17 @@ void ARelicRunnersCharacter::BeginPlay()
 		APawn* player = static_cast<APawn*>(this);
 
 		GetWorld()->GetTimerManager().SetTimerForNextTick( [World, player] {
+
+			
 			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
-			Director->AddPlayer(player);
+			if (Director != nullptr)
+			{
+				Director->AddPlayer(player);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("missing director"));
+			}
 			});
 
 	}

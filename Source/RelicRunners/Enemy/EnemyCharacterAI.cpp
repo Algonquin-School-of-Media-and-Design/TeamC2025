@@ -301,8 +301,17 @@ void AEnemyCharacterAI::BeginPlay()
 
 		GetWorld()->GetTimerManager().SetTimerForNextTick([World, enemy] {
 			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
-			Director->AddEnemy(enemy);
-			enemy->OnDestroyed.AddDynamic(Director, &ADirector::RemoveEnemy);
+
+			if (Director != nullptr)
+			{
+				Director->AddEnemy(enemy);
+				enemy->OnDestroyed.AddDynamic(Director, &ADirector::RemoveEnemy);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("missing director"));
+			}
+			
 			});
 	}
 
