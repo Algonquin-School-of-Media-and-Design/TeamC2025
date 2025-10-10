@@ -30,20 +30,78 @@
 #include <RelicRunners/Item/ItemStats.h>
 #include <Kismet/GameplayStatics.h>
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
+#include "RelicRunners/Menu/MainMenuWidget.h"
+#include "RelicRunners/Menu/JoinUserWidget.h"
+
+ARelicRunnersPlayerController::ARelicRunnersPlayerController()
+{
+
+}
 
 void ARelicRunnersPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ARelicRunnersPlayerController, PlayerPreviewInstance);
+	DOREPLIFETIME(ARelicRunnersPlayerController, LobbyPreviewInstance);
 }
 
+void ARelicRunnersPlayerController::AcknowledgePossession(APawn* aPawn)
+{
+	Super::AcknowledgePossession(aPawn);
+
+	if (IsLocalController())
+	{
+		UE_LOG(LogTemp, Log, TEXT("AcknowledgePossession: %s"), *GetNameSafe(aPawn));
+	}
+}
 
 void ARelicRunnersPlayerController::OnPossess(APawn* aPawn)
 {
 	Super::OnPossess(aPawn);
 
 	PossessedPawn = Cast<ARelicRunnersCharacter>(aPawn);
+}
+
+void ARelicRunnersPlayerController::ClientRestart_Implementation(APawn* NewPawn)
+{
+	Super::ClientRestart_Implementation(NewPawn);
+
+	FString MapName = GetWorld()->GetMapName();
+	MapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+
+	if (MapName.Contains("Lobby"))
+	{
+		SetupLobbyView();
+	}
+}
+
+void ARelicRunnersPlayerController::Client_FinishSeamlessTravelSetup_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("CLIENT world after travel: %s"), *GetWorld()->GetMapName());
+
+	// Clear the lobby UI
+	if (LobbyWidget)
+	{
+		LobbyWidget->RemoveFromParent();
+		LobbyWidget = nullptr;
+	}
+
+	// Reset the view target if needed
+	if (GetPawn())
+	{
+		SetViewTarget(GetPawn());
+	}
+
+	// Optional: re-enable input
+	SetInputMode(FInputModeGameOnly());
+	bShowMouseCursor = false;
+}
+
+void ARelicRunnersPlayerController::ClientTravelToGame_Implementation()
+{
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	GI->ClientTravelToSession(0, NAME_GameSession);
 }
 
 void ARelicRunnersPlayerController::Server_SetPlayerName_Implementation(const FString& NewName)
@@ -80,6 +138,40 @@ void ARelicRunnersPlayerController::OnRep_PlayerPreview()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("OnRep_PlayerPreviewInstance: Still null"));
 		}
+	}
+}
+
+void ARelicRunnersPlayerController::Server_SetSelectedClass_Implementation(FName NewClass)
+{
+	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+	if (PS)
+	{
+		PS->SetSelectedClass(NewClass);
+	}
+}
+
+void ARelicRunnersPlayerController::OnRep_LobbyPreview()
+{
+
+}
+
+void ARelicRunnersPlayerController::Server_RequestStartGame_Implementation()
+{
+	if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
+	{
+		GI->StartSessionGame();
+	}
+}
+
+void ARelicRunnersPlayerController::Client_LeaveSession_Implementation()
+{
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Client %s leaving current session."), *GetName());
+
+		// Leave the session without queuing as host
+		GI->LeaveSession(false);
 	}
 }
 
@@ -148,6 +240,14 @@ void ARelicRunnersPlayerController::OnUnPossess()
 	Super::OnUnPossess();
 }
 
+void ARelicRunnersPlayerController::Client_UpdateLobbyUI_Implementation()
+{
+	if (LobbyWidget)
+	{
+		LobbyWidget->UpdateFindGamesButtonVisibility();
+	}
+}
+
 void ARelicRunnersPlayerController::SetupPreviewRenderTarget(APlayerPreview* Preview)
 {
 	if (!IsLocalController() || !Preview)
@@ -204,37 +304,136 @@ void ARelicRunnersPlayerController::TrySetupPreviewRenderTarget()
 	SetupPreviewRenderTarget(PlayerPreviewInstance);
 }
 
+void ARelicRunnersPlayerController::SetupLobbyView()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	TArray<AActor*> Cameras;
+	UGameplayStatics::GetAllActorsWithTag(World, FName("LobbyCamera"), Cameras);
+
+	if (Cameras.Num() == 0)
+	{
+		// Retry until the camera exists
+		UE_LOG(LogTemp, Warning, TEXT("LobbyCamera not found, retrying..."));
+		FTimerHandle RetryHandle;
+		GetWorldTimerManager().SetTimer(RetryHandle, this, &ARelicRunnersPlayerController::SetupLobbyView, 0.1f, false);
+		return;
+	}
+
+	SetViewTargetWithBlend(Cameras[0], 0.0f);
+
+	// Only create UI once
+	if (!LobbyWidget && LobbyWidgetClass)
+	{
+		LobbyWidget = CreateWidget<UJoinUserWidget>(this, LobbyWidgetClass);
+		if (LobbyWidget)
+		{
+			LobbyWidget->AddToViewport();
+			LobbyWidget->SetVisibility(ESlateVisibility::Visible);
+			bShowMouseCursor = true;
+			SetInputMode(FInputModeUIOnly());
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Lobby setup complete for %s"), *GetNameSafe(this));
+}
+
+void ARelicRunnersPlayerController::SetupMainMenuView()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	TArray<AActor*> Cameras;
+	UGameplayStatics::GetAllActorsWithTag(World, FName("MainMenuCamera"), Cameras);
+	if (Cameras.Num() > 0 && Cameras[0])
+	{
+		SetViewTargetWithBlend(Cameras[0], 0.0f);
+	}
+
+	if (MainMenuWidgetClass && !MainMenuWidget)
+	{
+		MainMenuWidget = CreateWidget<UMainMenuWidget>(this, MainMenuWidgetClass);
+		if (MainMenuWidget)
+		{
+			MainMenuWidget->AddToViewport();
+			MainMenuWidget->SetIsEnabled(true);
+			MainMenuWidget->SetVisibility(ESlateVisibility::Visible);
+			bShowMouseCursor = true;
+			SetInputMode(FInputModeUIOnly());
+		}
+	}
+}
+
+void ARelicRunnersPlayerController::Client_SetupLobby_Implementation()
+{
+	SetupLobbyView();
+}
+
 void ARelicRunnersPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsLocalController())
+	if (!IsLocalController())
 	{
-		// Input Mapping
-		if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+		UE_LOG(LogTemp, Log, TEXT("BeginPlay: Not a local controller - skipping UI setup"));
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Error, TEXT("BeginPlay: GetWorld() returned null"));
+		return;
+	}
+
+	const FString MapName = World->GetMapName();
+	UE_LOG(LogTemp, Log, TEXT("BeginPlay LocalController - MapName: %s"), *MapName);
+
+	if (World && MapName.Contains(TEXT("Lobby")))
+	{
+		SetupLobbyView();
+	}
+	else if (World && MapName.Contains(TEXT("MainMenu")))
+	{
+		SetupMainMenuView();
+	}
+	else
+	{
+		InitializePawnDependentSystems();
+	}
+
+	if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
+	{
+		Server_SetPlayerName(GI->GetCharacterName());
+		UE_LOG(LogTemp, Log, TEXT("BeginPlay: Sent server player name: %s"), *GI->GetCharacterName());
+	}
+}
+
+void ARelicRunnersPlayerController::InitializePawnDependentSystems()
+{
+	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
 		{
-			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
-			{
-				Subsystem->AddMappingContext(InputMappingContext, 0);
-			}
-		}
-
-		FTimerHandle TimerHandle;
-		GetWorldTimerManager().SetTimer(TimerHandle, [this]() { ARelicRunnersCharacter* Char = Cast<ARelicRunnersCharacter>(GetPawn());
-			if (!Char) return;
-
-			if (UInventoryComponent* Inv = Char->GetInventoryComponent())
-			{
-			
-				Inv->OnEquipmentChanged.AddUniqueDynamic(this, &ARelicRunnersPlayerController::UpdatePreviewWithEquippedItems);
-			}
-		}, 0.5f, false);
-
-		if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
-		{
-			Server_SetPlayerName(GI->GetCharacterName());
+			Subsystem->AddMappingContext(InputMappingContext, 0);
+			UE_LOG(LogTemp, Log, TEXT("Pawn init: Added input mapping context"));
 		}
 	}
+
+	// Inventory binding
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, [this]()
+		{
+			if (ARelicRunnersCharacter* Char = Cast<ARelicRunnersCharacter>(GetPawn()))
+			{
+				if (UInventoryComponent* Inv = Char->GetInventoryComponent())
+				{
+					Inv->OnEquipmentChanged.AddUniqueDynamic(this, &ARelicRunnersPlayerController::UpdatePreviewWithEquippedItems);
+					UE_LOG(LogTemp, Log, TEXT("Pawn init: Bound inventory OnEquipmentChanged"));
+				}
+			}
+		}, 0.5f, false);
 }
 
 void ARelicRunnersPlayerController::SetupInputComponent()

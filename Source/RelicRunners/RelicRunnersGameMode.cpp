@@ -28,21 +28,7 @@
 ARelicRunnersGameMode::ARelicRunnersGameMode()
 {
 	// Set default pawn class and player controller
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_Player"));
-	static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_RelicRunnersPlayerController"));
 	static ConstructorHelpers::FClassFinder<APlayerPreview> PlayerPreviewBPClass(TEXT("/Game/ThirdPerson/Blueprints/PlayerPreview/BP_PlayerPreview"));
-
-	if (PlayerPawnBPClass.Class)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-		UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerPawnClass from constructor."));
-	}
-
-	if (PlayerControllerBPClass.Class)
-	{
-		PlayerControllerClass = PlayerControllerBPClass.Class;
-		UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerControllerClass from constructor."));
-	}
 
 	if (PlayerPreviewBPClass.Class)
 	{
@@ -50,7 +36,8 @@ ARelicRunnersGameMode::ARelicRunnersGameMode()
 		UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerPreviewClass from constructor."));
 	}
 
-	PlayerStateClass = ARelicRunnersPlayerState::StaticClass();
+    bUseSeamlessTravel = true;
+    bReplicates = true;
 }
 
 void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
@@ -94,5 +81,62 @@ void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerPreviewClass not set!"));
+    }
+
+}
+
+void ARelicRunnersGameMode::PostSeamlessTravel()
+{
+    Super::PostSeamlessTravel();
+
+    UE_LOG(LogTemp, Warning, TEXT("[PostSeamlessTravel] Re-initializing players after seamless travel"));
+
+    static int32 PlayerIndex = 1;
+
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* PC = It->Get();
+        if (!PC) continue;
+
+        // Make sure the player has a pawn
+        if (!PC->GetPawn())
+        {
+            RestartPlayer(PC);
+        }
+
+        // Optional: reset name if needed
+        if (ARelicRunnersPlayerState* PS = PC->GetPlayerState<ARelicRunnersPlayerState>())
+        {
+            if (PS->GetPlayerName().IsEmpty())
+            {
+                PS->SetPlayerName(FString::Printf(TEXT("Player%d"), PlayerIndex++));
+            }
+        }
+
+        // Spawn preview actor (same as before)
+        if (PlayerPreviewClass)
+        {
+            const FVector SpawnLocation = FVector(-1000000 * PlayerIndex, 0, -1000);
+            const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.Owner = PC;
+            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+            APlayerPreview* Preview = GetWorld()->SpawnActor<APlayerPreview>(PlayerPreviewClass, SpawnLocation, SpawnRotation, SpawnParams);
+            if (Preview)
+            {
+                Preview->SetOwner(PC);
+
+                if (ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(PC))
+                {
+                    RRPC->PlayerPreviewInstance = Preview;
+                    RRPC->TrySetupPreviewRenderTarget();
+
+                    //Tell the client to finalize UI + camera setup
+                    RRPC->Client_FinishSeamlessTravelSetup();
+                }
+            }
+        }
     }
 }

@@ -4,12 +4,24 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Interfaces/OnlineSessionInterface.h"
 #include "AdvancedFriendsGameInstance.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSubsystemUtils.h"
 #include "RelicRunnersGameInstance.generated.h"
 
+USTRUCT()
+struct FPendingClientTravel
+{
+    GENERATED_BODY()
+
+public:
+    FString TravelURL;
+    bool bReady = false;
+};
+
 UCLASS()
-class RELICRUNNERS_API URelicRunnersGameInstance : public UAdvancedFriendsGameInstance
+class RELICRUNNERS_API URelicRunnersGameInstance : public UGameInstance
 {
     GENERATED_BODY()
 
@@ -17,30 +29,53 @@ public:
     virtual void Init() override;
     virtual void Shutdown() override;
 
+    UFUNCTION(BlueprintCallable)
+    void BackToMainMenu();
+
+    UFUNCTION(BlueprintCallable)
+    void StartSessionGame();
+
+    UPROPERTY()
+    TArray<FUniqueNetIdRepl> SavedPlayers;
+
+    UFUNCTION(BlueprintCallable)
+    void CreateNewSession();
+    UFUNCTION(BlueprintCallable)
     void HostGame();
+    void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
     void FindGames(class UJoinUserWidget* UserWidget);
+    void OnFindSessionsComplete(bool bWasSuccessful);
+
+    UFUNCTION(BlueprintCallable)
     void JoinGame(int32 SessionIndex);
-    void LeaveSession();
 
-    void SetCharacterName(const FString& NewName);
-    FString GetCharacterName();
+    UPROPERTY(BlueprintReadOnly)
+    FString SavedHostAddress;
 
+    void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
+    void OnSessionDestroyedThenJoin(FName SessionName, bool bWasSuccessful);
+
+    UFUNCTION(BlueprintCallable)
+    void LeaveSession(bool bQueueHost = false);
+    void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
+    void SetCharacterName(const FString& NewName) { PlayerName = NewName; }
+    FString GetCharacterName() const { return PlayerName; }
+
+    TSharedPtr<class FOnlineSessionSearch> SessionSearch;
+    UPROPERTY()
+    TMap<FUniqueNetIdRepl, FPendingClientTravel> PendingClientTravels;
 private:
-    /** Pointer to the session interface */
-    IOnlineSessionPtr SessionInterface;
+    TWeakPtr<class IOnlineSession, ESPMode::ThreadSafe> SessionInterface;
+    TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
 
-    /** Active search handle */
-    TSharedPtr<FOnlineSessionSearch> SessionSearch;
-
-    /** Widget that will display session search results */
-    class UJoinUserWidget* TextRenderWidget;
-
-    /** Cached player name */
+    int32 PendingHostAfterLeave = 0;
+    int32 PendingJoinIndex = -1;
+    FString PendingTravelTargetMap;
     FString PlayerName;
 
-    /** Delegate handlers */
-    void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
-    void OnFindSessionsComplete(bool bWasSuccessful);
-    void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
-    void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
+
 };

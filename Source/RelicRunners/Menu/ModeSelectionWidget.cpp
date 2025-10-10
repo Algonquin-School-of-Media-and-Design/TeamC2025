@@ -16,9 +16,24 @@ void UModeSelectionWidget::NativeConstruct()
 		HostButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::HostButtonClicked);
 	}
 
-	if (JoinButton)
+	if (UpgradesButton)
 	{
-		JoinButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::JoinButtonClicked);
+		UpgradesButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::UpgradesButtonClicked);
+	}
+
+	if (SettingsButton)
+	{
+		SettingsButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::SettingsButtonClicked);
+	}
+
+	if (TutorialButton)
+	{
+		TutorialButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::TutorialButtonClicked);
+	}
+
+	if (CreditsButton)
+	{
+		CreditsButton->OnClicked.AddDynamic(this, &UModeSelectionWidget::CreditsButtonClicked);
 	}
 
 	if (NameTextBox)
@@ -54,11 +69,38 @@ void UModeSelectionWidget::HostButtonClicked()
 
 			GameInstance->HostGame();
 		}
+
+		if (ParentMenu)
+		{
+			ParentMenu->ShowSessionsWidget();
+		}
+	}
+}
+
+void UModeSelectionWidget::ResetUI()
+{
+	if (HostButton)
+	{
+		HostButton->SetIsEnabled(true);
 	}
 }
 
 
-void UModeSelectionWidget::JoinButtonClicked()
+//void UModeSelectionWidget::SessionsButtonClicked()
+//{
+//	if (ParentMenu)
+//	{
+//		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+//
+//		if (GameInstance && NameTextBox)
+//		{
+//			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
+//		}
+//		ParentMenu->ShowSessionsWidget();
+//	}
+//}
+
+void UModeSelectionWidget::SettingsButtonClicked()
 {
 	if (ParentMenu)
 	{
@@ -68,7 +110,49 @@ void UModeSelectionWidget::JoinButtonClicked()
 		{
 			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
 		}
-		ParentMenu->ShowJoinGameWidget();
+		ParentMenu->ShowSettingsWidget();
+	}
+}
+
+void UModeSelectionWidget::CreditsButtonClicked()
+{
+	if (ParentMenu)
+	{
+		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+
+		if (GameInstance && NameTextBox)
+		{
+			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
+		}
+		ParentMenu->ShowCreditsWidget();
+	}
+}
+
+void UModeSelectionWidget::TutorialButtonClicked()
+{
+	if (ParentMenu)
+	{
+		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+
+		if (GameInstance && NameTextBox)
+		{
+			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
+		}
+		ParentMenu->ShowTutorialWidget();
+	}
+}
+
+void UModeSelectionWidget::UpgradesButtonClicked()
+{
+	if (ParentMenu)
+	{
+		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+
+		if (GameInstance && NameTextBox)
+		{
+			GameInstance->SetCharacterName(NameTextBox->GetText().ToString());
+		}
+		ParentMenu->ShowUpgradesWidget();
 	}
 }
 
