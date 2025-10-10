@@ -350,8 +350,6 @@ protected:
 	UPROPERTY()
 	int PlayerStartingLuck;
 	UPROPERTY()
-	int PlayerStartingAbilityPoints;
-	UPROPERTY()
 	int PlayerAbilityPoints;
 
 	//Setup

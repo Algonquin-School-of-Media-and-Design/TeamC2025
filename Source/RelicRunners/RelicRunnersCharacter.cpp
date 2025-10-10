@@ -209,7 +209,6 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	PlayerStrength = 0;
 	PlayerIntelligence = 0;
 	PlayerLuck = 0;
-	PlayerStartingAbilityPoints = 1;
 	PlayerAbilityPoints = 2;
 	PlayerNumInventorySlots = 20;
 
@@ -230,7 +229,6 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerLevel);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
-	DOREPLIFETIME(ARelicRunnersCharacter, PlayerAbilityPoints);
 
 
 	//equipped items
