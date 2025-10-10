@@ -1,0 +1,142 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "AbilitySelection.h"
+#include "Components/Button.h"
+#include "Components/TextBlock.h"
+#include "RelicRunners/Inventory/InventoryComponent.h"
+#include "RelicRunners/Inventory/Inventory.h"
+#include "RelicRunners/RelicRunnersCharacter.h"
+
+
+void UAbilitySelection::NativeConstruct()
+{
+    Super::NativeConstruct();
+
+    B_Upgrade1->OnClicked.AddDynamic(this, &UAbilitySelection::Upgrade1Clicked);
+    B_Upgrade2->OnClicked.AddDynamic(this, &UAbilitySelection::Upgrade2Clicked);
+    B_Upgrade3->OnClicked.AddDynamic(this, &UAbilitySelection::Upgrade3Clicked);
+    B_Upgrade4->OnClicked.AddDynamic(this, &UAbilitySelection::Upgrade4Clicked);
+
+    APlayerController* PC = GetOwningPlayer();
+    PC = GetOwningPlayer();
+    if (PC)
+    {
+        APawn* Pawn = PC->GetPawn();
+        OwningCharacter = Cast<ARelicRunnersCharacter>(Pawn);
+    }
+
+    RefreshUpgrades();
+}
+
+void UAbilitySelection::Upgrade1Clicked()
+{
+    OwningCharacter->SpendAbilityPoints();
+    BuffStatValue(Buff1);
+    RefreshUpgrades();
+}
+
+void UAbilitySelection::Upgrade2Clicked()
+{
+    OwningCharacter->SpendAbilityPoints();
+    BuffStatValue(Buff2);
+    RefreshUpgrades();
+}
+
+void UAbilitySelection::Upgrade3Clicked()
+{
+    OwningCharacter->SpendAbilityPoints();
+    BuffStatValue(Buff3);
+    RefreshUpgrades();
+}
+
+void UAbilitySelection::Upgrade4Clicked()
+{
+    OwningCharacter->SpendAbilityPoints();
+    BuffStatValue(Buff4);
+    RefreshUpgrades();
+}
+
+void UAbilitySelection::BuffStatValue(StatBuff Buff)
+{
+
+
+    if (Buff.StatType == EStats::Health)
+    {
+        OwningCharacter->SetPlayerStartingHealth(OwningCharacter->GetPlayerStartingMaxHealth() + Buff.Percentage);
+    }
+    if (Buff.StatType == EStats::Luck)
+    {
+        OwningCharacter->SetPlayerStartingLuck(OwningCharacter->GetPlayerStartingLuck() + Buff.Percentage);
+    }
+    if (Buff.StatType == EStats::Intelligence)
+    {
+        OwningCharacter->SetPlayerStartingIntelligence(OwningCharacter->GetPlayerStartingIntelligence() + Buff.Percentage);
+    }
+    if (Buff.StatType == EStats::Strength)
+    {
+        OwningCharacter->SetPlayerStartingStrength(OwningCharacter->GetPlayerStartingStrength() + Buff.Percentage);
+    }
+    if (Buff.StatType == EStats::Armor)
+    {
+        OwningCharacter->SetPlayerStartingArmor(OwningCharacter->GetPlayerStartingArmor() + Buff.Percentage);
+    }
+    if (Buff.StatType == EStats::Dexterity)
+    {
+        OwningCharacter->SetPlayerStartingDexterity(OwningCharacter->GetPlayerStartingDexterity() + Buff.Percentage);
+    }
+
+}
+UAbilitySelection::StatBuff UAbilitySelection::RandomStatBuff()
+{
+    StatBuff RandomStatBuff;
+
+    RandomStatBuff.Percentage = FMath::RandRange(3, 5);
+    RandomStatBuff.StatType = static_cast<UAbilitySelection::EStats>(FMath::RandRange(0, 5));
+    RandomStatBuff.StatImage = nullptr;
+
+
+    switch (RandomStatBuff.StatType)
+    {
+    case EStats::Health:
+        RandomStatBuff.StatText = FString::Printf(TEXT("+%d Health"), RandomStatBuff.Percentage);
+        break;
+    case EStats::Armor:
+        RandomStatBuff.StatText = FString::Printf(TEXT("+%d Armor"), RandomStatBuff.Percentage);
+        break;
+    case EStats::Dexterity:
+        RandomStatBuff.StatText = FString::Printf(TEXT("+%d Dexterity"), RandomStatBuff.Percentage);
+        break;
+    case EStats::Intelligence:
+        RandomStatBuff.StatText = FString::Printf(TEXT("+%d Intelligence"), RandomStatBuff.Percentage);
+        break;
+    case EStats::Luck:
+        RandomStatBuff.StatText = FString::Printf(TEXT("+%d Luck"), RandomStatBuff.Percentage);
+        break;
+    case EStats::Strength:
+        RandomStatBuff.StatText = FString::Printf(TEXT("+%d Strength"), RandomStatBuff.Percentage);
+        break;
+    default:
+        break;
+    }
+
+    return RandomStatBuff;
+}
+
+void UAbilitySelection::RefreshUpgrades()
+{
+    OwningCharacter->GetInventoryComponent()->UpdateTotalEquippedStats(OwningCharacter);
+
+    Buff1 = RandomStatBuff();
+    TB_Upgrade1->SetText(FText::FromString(Buff1.StatText));
+
+    Buff2 = RandomStatBuff();
+    TB_Upgrade2->SetText(FText::FromString(Buff2.StatText));
+
+    Buff3 = RandomStatBuff();
+    TB_Upgrade3->SetText(FText::FromString(Buff3.StatText));
+
+    Buff4 = RandomStatBuff();
+    TB_Upgrade4->SetText(FText::FromString(Buff4.StatText));
+}
+

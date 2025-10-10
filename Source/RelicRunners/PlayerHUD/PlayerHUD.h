@@ -46,6 +46,7 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Level;
 
+
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* ExperienceBar;
 

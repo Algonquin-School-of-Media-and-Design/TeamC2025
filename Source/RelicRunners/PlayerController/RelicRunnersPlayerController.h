@@ -52,6 +52,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* InventoryAction;
 
+	/** Inventory Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* AbilitySelectionAction;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
@@ -158,6 +162,10 @@ protected:
 	void Jump(const struct FInputActionValue& Value);
 	void StopJumping(const struct FInputActionValue& Value);
 	void InventoryUI();
+
+	void AbilitySystemUI();
+
+
 	void BasicAttack();
 
 	// End Actor interface

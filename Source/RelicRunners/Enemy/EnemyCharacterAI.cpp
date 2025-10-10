@@ -268,7 +268,7 @@ void AEnemyCharacterAI::Die(AController* KillerController)
 
 int AEnemyCharacterAI::CalculateXPReward() const
 {
-	return EnemyLevel * FMath::RandRange(3,7);
+	return EnemyLevel * FMath::RandRange(50,51);
 }
 
 // Called when the game starts or when spawned
