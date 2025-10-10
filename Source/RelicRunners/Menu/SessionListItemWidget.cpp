@@ -46,7 +46,7 @@ void USessionListItemWidget::SetSelected(bool bInSelected)
     {
         if (bInSelected)
         {
-            SessionNameText->SetColorAndOpacity(FSlateColor(FLinearColor::Yellow)); // gold-ish
+            SessionNameText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 0.5f, 0, 1))); // gold-ish
         }
         else
         {
