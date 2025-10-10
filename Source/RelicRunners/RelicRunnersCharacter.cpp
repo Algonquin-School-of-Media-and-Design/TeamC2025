@@ -38,6 +38,8 @@
 #include "Item/ItemActor.h"
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
+#include "AbilitySystem/AbilityPointCounter.h"
+#include "AbilitySystem/AbilitySelection.h"
 #include "PlayerHUD/PlayerHUDWorld.h"
 #include "PlayerPreview/PlayerPreview.h"
 #include "PlayerState/RelicRunnersPlayerState.h"
@@ -48,6 +50,8 @@
 #include "Enemy/EnemyCharacterAI.h"
 #include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
 #include "Game/RelicRunnersGameInstance.h"
+#include "Spawning System/Director.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -205,6 +209,8 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	PlayerStrength = 0;
 	PlayerIntelligence = 0;
 	PlayerLuck = 0;
+	PlayerStartingAbilityPoints = 1;
+	PlayerAbilityPoints = 2;
 	PlayerNumInventorySlots = 20;
 
 	bAlwaysRelevant = true;
@@ -224,6 +230,8 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerLevel);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerAbilityPoints);
+
 
 	//equipped items
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedChestplateMesh);
@@ -404,6 +412,9 @@ void ARelicRunnersCharacter::OnLevelUp()
 	PlayerLuck++;
 	PlayerNumInventorySlots++;
 
+	//ability points
+	PlayerAbilityPoints++;
+
 	InventoryComponent->UpdateTotalEquippedStats(this);
 
 	APlayerController* PC = Cast<APlayerController>(GetController());
@@ -491,6 +502,48 @@ void ARelicRunnersCharacter::BeginPlay()
 	{
 		// Always load ItemMeshData locally
 		if (ItemMeshDataClass)
+		// Delay UI setup until everything else is ready
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::InitLocalUI);
+	}
+	/*AActor* Director1 = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>());
+
+	AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(),
+		ADirector::StaticClass());
+
+	int test1 = 0;*/
+	if (HasAuthority())
+	{
+		// Generate initial items only once on server
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
+		//updating the director player list
+		
+
+		UWorld* World = GetWorld();
+		APawn* player = static_cast<APawn*>(this);
+
+		GetWorld()->GetTimerManager().SetTimerForNextTick( [World, player] {
+
+			
+			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
+			if (Director != nullptr)
+			{
+				Director->AddPlayer(player);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("missing director"));
+			}
+			});
+
+	}
+
+	// Attach item mesh components
+	MainhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("MainhandSocket"));
+	OffhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("OffhandSocket"));
+
+	if (PlayerHUDWorld)
+	{
+		if (UPlayerHUDWorld* HUDWorldWidget = Cast<UPlayerHUDWorld>(PlayerHUDWorld->GetUserWidgetObject()))
 		{
 			ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
 		}
@@ -545,6 +598,15 @@ void ARelicRunnersCharacter::InitLocalUI()
 		}
 	}
 
+	if (!AbilityPointCounter && AbilityPointCounterClass)
+	{
+		AbilityPointCounter = CreateWidget<UAbilityPointCounter>(PC, AbilityPointCounterClass);
+		if (AbilityPointCounter)
+		{
+			AbilityPointCounter->AddToViewport();
+			AbilityPointCounter->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
 	// === Inventory Widget ===
 	if (!Inventory && InventoryClass)
 	{
@@ -557,6 +619,19 @@ void ARelicRunnersCharacter::InitLocalUI()
 		}
 	}
 
+
+	if (!AbilitySelection && AbilitySelectionClass)
+	{
+		{
+			AbilitySelection = CreateWidget<UAbilitySelection>(PC, AbilitySelectionClass);
+			if (AbilitySelection)
+			{
+				AbilitySelection->AddToViewport();
+				AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+				AbilitySelection->SetIsEnabled(false);
+			}
+		}
+	}
 	TryBindInventoryDelegates();
 }
 
@@ -564,7 +639,7 @@ void ARelicRunnersCharacter::SpawnStarterItems()
 {
 	if (ItemMeshData && InventoryComponent)
 	{
-		for (int i = 0; i < 15; ++i)
+		for (int i = 0; i < 300; ++i)
 		{
 			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateRandomItemData(ItemMeshData), InventoryComponent);
 			InventoryComponent->AddItem(Item);
@@ -860,6 +935,54 @@ void ARelicRunnersCharacter::InventoryUI()
 	}
 }
 
+void ARelicRunnersCharacter::AbilitySystemUI()
+{
+	if (!IsLocallyControlled()) return;
+
+	if (!AbilitySelection) return;
+
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	if (!PlayerController) return;
+
+	if (PlayerAbilityPoints >= 1)
+	{
+		if (AbilitySelection->IsVisible())
+		{
+			AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+			AbilitySelection->SetIsEnabled(false);
+			PlayerController->SetInputMode(FInputModeGameOnly());
+			PlayerController->SetShowMouseCursor(false);
+		}
+		else
+		{
+			AbilitySelection->SetVisibility(ESlateVisibility::Visible);
+			AbilitySelection->SetIsEnabled(true);
+			PlayerController->SetInputMode(FInputModeGameAndUI());
+			PlayerController->SetShowMouseCursor(true);
+		}
+	}
+
+}
+
+void ARelicRunnersCharacter::SpendAbilityPoints()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+
+	if (PlayerAbilityPoints >= 1)
+	{
+		PlayerAbilityPoints--;
+
+		if(PlayerAbilityPoints == 0)
+		{
+			AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+			AbilitySelection->SetIsEnabled(false);
+			PlayerController->SetInputMode(FInputModeGameOnly());
+			PlayerController->SetShowMouseCursor(false);
+		}
+	}
+}
+
+
 void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
 {
 	PlayerMaxHealth = health;
@@ -1050,6 +1173,12 @@ void ARelicRunnersCharacter::UpdateHUD()
 			PlayerXP,
 			PlayerXPToLevel
 		);
+
+	}
+
+	if (AbilityPointCounter)
+	{
+		AbilityPointCounter->UpdateHUD(PlayerAbilityPoints);
 	}
 }
 
@@ -1191,3 +1320,7 @@ int ARelicRunnersCharacter::GetPlayerStartingLuck() const
 {
 	return PlayerStartingLuck;
 }
+
+
+
+

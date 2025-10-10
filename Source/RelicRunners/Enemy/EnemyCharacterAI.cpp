@@ -27,6 +27,7 @@
 #include "RelicRunners/Inventory/Inventory.h"
 #include "RelicRunners/Inventory/InventoryComponent.h"
 #include "RelicRunners/Item/ItemActor.h"
+#include "RelicRunners/Spawning System/Director.h"
 
 // Sets default values
 AEnemyCharacterAI::AEnemyCharacterAI()
@@ -267,7 +268,7 @@ void AEnemyCharacterAI::Die(AController* KillerController)
 
 int AEnemyCharacterAI::CalculateXPReward() const
 {
-	return EnemyLevel * FMath::RandRange(3,7);
+	return EnemyLevel * FMath::RandRange(50,51);
 }
 
 // Called when the game starts or when spawned
@@ -291,6 +292,27 @@ void AEnemyCharacterAI::BeginPlay()
 				EnemyHUD->InitWidgetWithCharacter(this);
 			}
 		}
+	}
+
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		APawn* enemy = static_cast<APawn*>(this);
+
+		GetWorld()->GetTimerManager().SetTimerForNextTick([World, enemy] {
+			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
+
+			if (Director != nullptr)
+			{
+				Director->AddEnemy(enemy);
+				enemy->OnDestroyed.AddDynamic(Director, &ADirector::RemoveEnemy);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("missing director"));
+			}
+			
+			});
 	}
 
 	TryBindInventoryDelegates();
