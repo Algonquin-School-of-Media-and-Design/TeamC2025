@@ -15,6 +15,9 @@
  ************************************************************************************/
 
 #include "LevelUpHUD.h"
+#include "Components/TextBlock.h"
+#include "RelicRunners/RelicRunnersCharacter.h"
+
 
 void ULevelUpHUD::NativeConstruct()
 {
@@ -28,4 +31,22 @@ void ULevelUpHUD::NativeConstruct()
 	// Auto-remove after 4 seconds
 	FTimerHandle RemoveHandle;
 	GetWorld()->GetTimerManager().SetTimer(RemoveHandle, this, &ULevelUpHUD::RemoveFromParent, 4.0f, false);
+
+	EvaluatePlayerLevel();
 }
+
+void ULevelUpHUD::EvaluatePlayerLevel()
+{
+	APlayerController* PC = GetOwningPlayer();
+	PC = GetOwningPlayer();
+	if (PC)
+	{
+		APawn* Pawn = PC->GetPawn();
+		OwningCharacter = Cast<ARelicRunnersCharacter>(Pawn);
+
+		TB_Level->SetText(FText::FromString(FString::Printf(TEXT(" %d"), OwningCharacter->GetPlayerLevel())));
+	}
+	
+}
+
+

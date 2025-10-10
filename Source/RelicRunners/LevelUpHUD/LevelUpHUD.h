@@ -33,6 +33,15 @@ public:
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	UWidgetAnimation* Fade;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_Level;
+
+	UPROPERTY()
+	class ARelicRunnersCharacter* OwningCharacter;
+
+
 	virtual void NativeConstruct() override;
+
+	void EvaluatePlayerLevel();
 
 };
