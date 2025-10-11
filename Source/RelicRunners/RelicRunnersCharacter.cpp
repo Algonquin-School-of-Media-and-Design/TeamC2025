@@ -485,56 +485,42 @@ void ARelicRunnersCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FString MapName = GetWorld()->GetMapName();
-	MapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
-
-	if (MapName.Contains("MainMenu"))
+	// Always load ItemMeshData locally
+	if (ItemMeshDataClass)
 	{
-
+		ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
 	}
-	else if (MapName.Contains("Lobby"))
-	{
 
+	// === Server-only logic ===
+	if (HasAuthority())
+	{
+		// Setup health regen loop
+		GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
 	}
-	else if (MapName.Contains("ThirdPersonMap"))
+
+	// === Local client UI setup ===
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC && PC->IsLocalController())
 	{
-		// Always load ItemMeshData locally
-		if (ItemMeshDataClass)
-		{
-			ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
-		}
+		// Delay UI setup until everything else is ready
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::InitLocalUI);
+	}
 
-		// === Server-only logic ===
-		if (HasAuthority())
-		{
-			// Setup health regen loop
-			GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
-		}
+	if (HasAuthority())
+	{
+		// Generate initial items only once on server
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
+	}
 
-		// === Local client UI setup ===
-		APlayerController* PC = Cast<APlayerController>(GetController());
-		if (PC && PC->IsLocalController())
-		{
-			// Delay UI setup until everything else is ready
-			GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::InitLocalUI);
-		}
+	// Attach item mesh components
+	MainhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("MainhandSocket"));
+	OffhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("OffhandSocket"));
 
-		if (HasAuthority())
+	if (PlayerHUDWorld)
+	{
+		if (UPlayerHUDWorld* HUDWorldWidget = Cast<UPlayerHUDWorld>(PlayerHUDWorld->GetUserWidgetObject()))
 		{
-			// Generate initial items only once on server
-			GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
-		}
-
-		// Attach item mesh components
-		MainhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("MainhandSocket"));
-		OffhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("OffhandSocket"));
-
-		if (PlayerHUDWorld)
-		{
-			if (UPlayerHUDWorld* HUDWorldWidget = Cast<UPlayerHUDWorld>(PlayerHUDWorld->GetUserWidgetObject()))
-			{
-				HUDWorldWidget->InitWidgetWithCharacter(this);
-			}
+			HUDWorldWidget->InitWidgetWithCharacter(this);
 		}
 	}
 }
