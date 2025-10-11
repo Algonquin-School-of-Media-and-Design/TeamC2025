@@ -268,7 +268,7 @@ void AEnemyCharacterAI::Die(AController* KillerController)
 
 int AEnemyCharacterAI::CalculateXPReward() const
 {
-	return EnemyLevel * FMath::RandRange(50,51);
+	return EnemyLevel * FMath::RandRange(100,150);
 }
 
 // Called when the game starts or when spawned
@@ -294,7 +294,7 @@ void AEnemyCharacterAI::BeginPlay()
 		}
 	}
 
-	if (HasAuthority())
+	/*if (HasAuthority())
 	{
 		UWorld* World = GetWorld();
 		APawn* enemy = static_cast<APawn*>(this);
@@ -313,7 +313,7 @@ void AEnemyCharacterAI::BeginPlay()
 			}
 			
 			});
-	}
+	}*/
 
 	TryBindInventoryDelegates();
 
@@ -442,9 +442,14 @@ void AEnemyCharacterAI::Client_UpdateEquippedStats_Implementation(const FEquippe
 	}
 }
 
-void AEnemyCharacterAI::Server_SetMaxHealth_Implementation(int health)
+void AEnemyCharacterAI::SetMaxHealth(int health)
 {
+	if (!HasAuthority()) return;
 	EnemyMaxHealth = health;
+}
+
+void AEnemyCharacterAI::OnRep_MaxHealth()
+{
 }
 
 void AEnemyCharacterAI::Server_UnequipItemByID_Implementation(FGuid ID)
@@ -575,7 +580,6 @@ void AEnemyCharacterAI::SetReplicatedMeshByItemType(UObject* MeshAsset, const FS
 
 	if (!HasAuthority())
 	{
-		Server_SetReplicatedMeshByItemType(MeshAsset, ItemType);
 		return;
 	}
 

@@ -500,48 +500,6 @@ void ARelicRunnersCharacter::BeginPlay()
 	{
 		// Always load ItemMeshData locally
 		if (ItemMeshDataClass)
-		// Delay UI setup until everything else is ready
-		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::InitLocalUI);
-	}
-	/*AActor* Director1 = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<ADirector>());
-
-	AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(),
-		ADirector::StaticClass());
-
-	int test1 = 0;*/
-	if (HasAuthority())
-	{
-		// Generate initial items only once on server
-		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
-		//updating the director player list
-		
-
-		UWorld* World = GetWorld();
-		APawn* player = static_cast<APawn*>(this);
-
-		GetWorld()->GetTimerManager().SetTimerForNextTick( [World, player] {
-
-			
-			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
-			if (Director != nullptr)
-			{
-				Director->AddPlayer(player);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("missing director"));
-			}
-			});
-
-	}
-
-	// Attach item mesh components
-	MainhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("MainhandSocket"));
-	OffhandItemMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("OffhandSocket"));
-
-	if (PlayerHUDWorld)
-	{
-		if (UPlayerHUDWorld* HUDWorldWidget = Cast<UPlayerHUDWorld>(PlayerHUDWorld->GetUserWidgetObject()))
 		{
 			ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
 		}
@@ -637,7 +595,7 @@ void ARelicRunnersCharacter::SpawnStarterItems()
 {
 	if (ItemMeshData && InventoryComponent)
 	{
-		for (int i = 0; i < 300; ++i)
+		for (int i = 0; i < 100; ++i)
 		{
 			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateRandomItemData(ItemMeshData), InventoryComponent);
 			InventoryComponent->AddItem(Item);

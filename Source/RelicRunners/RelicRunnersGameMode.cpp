@@ -44,45 +44,39 @@ void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    //fallback name
     static int32 PlayerIndex = 1;
     if (ARelicRunnersPlayerState* PS = NewPlayer->GetPlayerState<ARelicRunnersPlayerState>())
     {
         PS->SetPlayerName("Player" + FString::FromInt(PlayerIndex++));
     }
 
-    // === SPAWN THE PREVIEW ACTOR (OFFSCREEN) ===
-    const FVector SpawnLocation = FVector(-1000000 * PlayerIndex, 0, -1000);
-    const FRotator SpawnRotation = FRotator::ZeroRotator;
-
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.Owner = NewPlayer;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-    if (PlayerPreviewClass)
+    // Skip the host player (listen server’s own controller)
+    if (NewPlayer->IsLocalController())
     {
-        APlayerPreview* Preview = GetWorld()->SpawnActor<APlayerPreview>(PlayerPreviewClass, SpawnLocation, SpawnRotation, SpawnParams);
-        if (Preview)
-        {
-            Preview->SetOwner(NewPlayer);
+        UE_LOG(LogTemp, Warning, TEXT("[GameMode] Skipping preview spawn for host: %s"), *NewPlayer->GetName());
+        return;
+    }
 
-            if (ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(NewPlayer))
+    if (ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(NewPlayer))
+    {
+        const FVector SpawnLocation = FVector(-1000000 * PlayerIndex, 0, -1000);
+        const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = NewPlayer;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+        if (PlayerPreviewClass && !RRPC->PlayerPreviewInstance)
+        {
+            APlayerPreview* Preview = GetWorld()->SpawnActor<APlayerPreview>(PlayerPreviewClass, SpawnLocation, SpawnRotation, SpawnParams);
+            if (Preview)
             {
                 RRPC->PlayerPreviewInstance = Preview;
                 RRPC->TrySetupPreviewRenderTarget();
-                UE_LOG(LogTemp, Warning, TEXT("[GameMode] Spawned preview actor for %s: %s"), *NewPlayer->GetName(), *Preview->GetName());
+                UE_LOG(LogTemp, Warning, TEXT("[GameMode] Spawned preview for %s: %s"), *RRPC->GetName(), *Preview->GetName());
             }
         }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("[GameMode] Failed to spawn preview actor for %s"), *NewPlayer->GetName());
-        }
     }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[GameMode] PlayerPreviewClass not set!"));
-    }
-
 }
 
 void ARelicRunnersGameMode::PostSeamlessTravel()
@@ -132,9 +126,6 @@ void ARelicRunnersGameMode::PostSeamlessTravel()
                 {
                     RRPC->PlayerPreviewInstance = Preview;
                     RRPC->TrySetupPreviewRenderTarget();
-
-                    //Tell the client to finalize UI + camera setup
-                    RRPC->Client_FinishSeamlessTravelSetup();
                 }
             }
         }

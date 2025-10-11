@@ -426,14 +426,15 @@ void UInventoryComponent::UpdateTotalEquippedStats(AEnemyCharacterAI* Char)
 
     FEquippedStatsSummary Stats = CalculateEquippedStats();
 
-    Char->Server_SetMaxHealth(Stats.TotalHealth);
+    if (Char->HasAuthority())
+    {
+        Char->SetMaxHealth(Stats.TotalHealth);
+    }
 
-    // Notify owning client
     Char->Client_UpdateEquippedStats(Stats);
 
-    // Store for local access/UI
     CachedEquippedStats = Stats;
-    OnStatsChanged.Broadcast(Stats); // Works only on server/UI
+    OnStatsChanged.Broadcast(Stats);
 }
 
 FEquippedStatsSummary UInventoryComponent::CalculateEquippedStats() const
