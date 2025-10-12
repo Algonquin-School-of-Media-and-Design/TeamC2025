@@ -6,11 +6,14 @@
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "PackedLevelActor/PackedLevelActor.h"
+#include "../RelicRunnersGameMode.h"
 
 /*
 TODO:
-	Initialize the Obstacle type that each terrain tile will spawn on itself
-	Make sure to check there is exclusively 1 starting tile and 1 ending tile
+Create "Key tiles" that create paths from the start tile like how it works with the ending tile
+Make the path generation move horizontally and vertically in a random pattern
+Make the navmesh work with the level generation
+
 */
 
 // Sets default values
@@ -21,8 +24,8 @@ ALevelGenerator::ALevelGenerator() :
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
 	ConvexCornerPiece(nullptr),
-	SpawnWidth(1),
-	SpawnDepth(1),
+	SpawnWidth(2),
+	SpawnDepth(2),
 	FullPercentage(75.0f),
 	CenterForceFull(0),
 	BorderForceFull(0),
@@ -53,28 +56,27 @@ ALevelGenerator::ALevelGenerator() :
 	bAlwaysRelevant = true;
 }
 
-// Called when the game starts or when spawned
-void ALevelGenerator::BeginPlay()
+void ALevelGenerator::PostInitializeComponents()
 {
-	Super::BeginPlay();
+	Super::PostInitializeComponents();
 
 	if (HasAuthority())
 	{
-		int startingX = FMath::RandRange(0, SpawnWidth-1);
-		int startingY = FMath::RandRange(0, SpawnDepth-1);
-		int endingX = FMath::RandRange(0, SpawnWidth-1);
-		int endingY = FMath::RandRange(0, SpawnDepth-1);
+		int startingX = FMath::RandRange(0, SpawnWidth - 1);
+		int startingY = FMath::RandRange(0, SpawnDepth - 1);
+		int endingX = FMath::RandRange(0, SpawnWidth - 1);
+		int endingY = FMath::RandRange(0, SpawnDepth - 1);
 
 		while (startingX == endingX && SpawnDepth * SpawnWidth > 1)
 		{
-			startingX = FMath::RandRange(0, SpawnWidth-1);
-			endingX = FMath::RandRange(0, SpawnWidth-1);
+			startingX = FMath::RandRange(0, SpawnWidth - 1);
+			endingX = FMath::RandRange(0, SpawnWidth - 1);
 		}
 
 		while (startingY == endingY && SpawnDepth * SpawnWidth > 1)
 		{
-			startingY = FMath::RandRange(0, SpawnDepth-1);
-			endingY = FMath::RandRange(0, SpawnDepth-1);
+			startingY = FMath::RandRange(0, SpawnDepth - 1);
+			endingY = FMath::RandRange(0, SpawnDepth - 1);
 		}
 
 		for (int y = 0; y < SpawnDepth; y++)
@@ -98,13 +100,17 @@ void ALevelGenerator::BeginPlay()
 			{
 				CheckFloor(x, y);
 
-				SpawnFloorObstacles(x, y);
+				Server_SpawnFloorObstacles(x, y);
 			}
 		}
 		CreateFloor();
-
-		int num = PackedLevelArray.Num();
 	}
+}
+
+// Called when the game starts or when spawned
+void ALevelGenerator::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void ALevelGenerator::GenerateFloor(int x, int y)
@@ -157,6 +163,14 @@ void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y)
 	int index = x + (y * SpawnWidth);
 
 	FloorValuesArray[index].IsFullTile = forcedFloor;
+
+	if (forcedFloor)
+	{
+		if (FloorValuesArray[index].FloorObstacle == EFloorObstacle::None)
+		{
+			InitializeModularObstacle(FloorValuesArray[index]);
+		}
+	}
 }
 
 void ALevelGenerator::SetStartingAndEndingPoints(int startingX, int startingY, int endingX, int endingY)
@@ -212,17 +226,15 @@ void ALevelGenerator::FindStartToEndPath(int startingX, int startingY, int endin
 void ALevelGenerator::InitializeModularObstacle(FloorValues& floorValue)
 {
 	float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
-	if (randomObstaclePerc > 75.0f)
+	if (randomObstaclePerc < BasicObstaclePercentage)
 	{
-		int randomObstacle = FMath::RandRange(0, int(EFloorObstacle::MAX) - 1);
-		floorValue.FloorObstacle = EFloorObstacle(randomObstacle);
+		floorValue.FloorObstacle = EFloorObstacle::Basic;
 
 		floorValue.randomFloorToSpawn = FMath::RandRange(0, PackedLevelArray.Num() - 1);
 
 		floorValue.obstacleYaw = FMath::RandRange(0, 3) * 90;
 	}
 }
-
 
 void ALevelGenerator::CheckFloor(int x, int y)
 {
@@ -577,6 +589,11 @@ void ALevelGenerator::SetBottomRightFloorShape(int x, int y)
 	}
 }
 
+void ALevelGenerator::Server_SpawnFloorObstacles_Implementation(int x, int y)
+{
+	SpawnFloorObstacles(x, y);
+}
+
 void ALevelGenerator::SpawnFloorObstacles(int x, int y)
 {
 	int index = x + (y * SpawnWidth);
@@ -655,7 +672,7 @@ void ALevelGenerator::OnRep_FloorValuesArrayChange()
 		{
 			CheckFloor(x, y);
 
-			SpawnFloorObstacles(x, y);
+			//SpawnFloorObstacles(x, y);
 		}
 	}
 	CreateFloor();

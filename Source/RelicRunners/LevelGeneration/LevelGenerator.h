@@ -28,7 +28,6 @@ enum class EFloorObstacle : uint8
 	Basic,
 	EnemyTower,
 	Shop,
-	MAX,
 	Start,
 	End,
 };
@@ -99,6 +98,9 @@ public:
 	float FullPercentage;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	float BasicObstaclePercentage;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
 	int CenterForceFull;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
@@ -117,6 +119,8 @@ public:
 	int MaxShopAmount;
 
 protected:
+	virtual void PostInitializeComponents() override;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -144,6 +148,9 @@ public:
 	void SetTopRightFloorShape(int x, int y);
 	void SetBottomLeftFloorShape(int x, int y);
 	void SetBottomRightFloorShape(int x, int y);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnFloorObstacles(int x, int y);
 
 	void SpawnFloorObstacles(int x, int y);
 
