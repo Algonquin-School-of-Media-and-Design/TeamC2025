@@ -55,6 +55,18 @@ void ALevelChangeTrigger::OnConstruction(const FTransform& transform)
 void ALevelChangeTrigger::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (TargetLevel.IsNull())
+	{
+		FString LevelString = FString("No Level");
+		LevelTargetTextRender->SetText(FText::FromString(LevelString));
+	}
+	else
+	{
+		const FString LevelString = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString()));
+		LevelTargetTextRender->SetText(FText::FromString(LevelString));
+	}
+
 }
 
 void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

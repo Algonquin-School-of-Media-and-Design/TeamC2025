@@ -6,14 +6,12 @@
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "PackedLevelActor/PackedLevelActor.h"
-#include "../RelicRunnersGameMode.h"
 
 /*
 TODO:
 Create "Key tiles" that create paths from the start tile like how it works with the ending tile
-Make the path generation move horizontally and vertically in a random pattern
 Make the navmesh work with the level generation
-
+Teleport every player to the starting point when the level starts
 */
 
 // Sets default values
@@ -27,6 +25,7 @@ ALevelGenerator::ALevelGenerator() :
 	SpawnWidth(2),
 	SpawnDepth(2),
 	FullPercentage(75.0f),
+	BasicObstaclePercentage(50.0f),
 	CenterForceFull(0),
 	BorderForceFull(0),
 	TileScale(1.0f),
@@ -192,35 +191,56 @@ void ALevelGenerator::SetStartingAndEndingPoints(int startingX, int startingY, i
 
 void ALevelGenerator::FindStartToEndPath(int startingX, int startingY, int endingX, int endingY)
 {
+	/*TODO:
+	Combine Member variables so that it's only (int startingIndex, int targetIndex)
+
+	Seperate the index to get X and Y;
+
+	int newX = startingIndex % SpawnWidth;
+	int newY = startingIndex / SpawnWidth;
+
+	Do same thing with target index.
+
+	*/
+
 	int currentX = startingX;
 	int currentY = startingY;
 
-	while (currentX != endingX && currentX >= 0 && currentX < SpawnWidth)
+	bool bReachEndX = currentX == endingX;
+
+	bool bReachEndY = currentY == endingY;
+
+	while (!(bReachEndX && bReachEndY))
 	{
-		if (currentX > endingX)
+		float random = FMath::FRandRange(0.0f, 100.0f);
+
+		if (random >= 50.0f)
 		{
-			currentX--;
+			if (currentX > endingX)
+			{
+				currentX--;
+			}
+			else if (currentX < endingX)
+			{
+				currentX++;
+			}
 		}
-		else if (currentX < endingX)
+		else
 		{
-			currentX++;
+			if (currentY > endingY)
+			{
+				currentY--;
+			}
+			else if (currentY < endingY)
+			{
+				currentY++;
+			}
 		}
 		ForceFloorBool(true, currentX, currentY);
-	}
 
-	while (currentY != endingY && currentY >= 0 && currentY < SpawnWidth)
-	{
-		if (currentY > endingY)
-		{
-			currentY--;
-		}
-		else if (currentY < endingY)
-		{
-			currentY++;
-		}
-		ForceFloorBool(true, currentX, currentY);
+		bReachEndX = currentX == endingX;
+		bReachEndY = currentY == endingY;
 	}
-
 }
 
 void ALevelGenerator::InitializeModularObstacle(FloorValues& floorValue)
@@ -656,12 +676,8 @@ void ALevelGenerator::CreateFloor()
 			ISMComp->SetMaterial(0, meshArray[i]->GetMaterial(0));
 		}
 
-		ISMComp->SetFlags(RF_Transactional);
-		this->AddInstanceComponent(ISMComp);
-
-		ISMComp->AddInstances(arrayOfTransformArrays[i], true);
+		ISMComp->AddInstances(arrayOfTransformArrays[i], false, true, true);
 	}
-
 }
 
 void ALevelGenerator::OnRep_FloorValuesArrayChange()
