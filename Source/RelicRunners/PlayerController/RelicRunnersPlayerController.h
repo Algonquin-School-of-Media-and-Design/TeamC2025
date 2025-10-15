@@ -52,6 +52,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* InventoryAction;
 
+	/** Inventory Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* AbilitySelectionAction;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
@@ -64,12 +68,20 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnPossess(APawn* aPawn) override;
 
+	virtual void ClientRestart_Implementation(APawn* NewPawn) override;
+
 	class ARelicRunnersCharacter* GetPossessedPawn() { return PossessedPawn; }
 
 	UFUNCTION(Server, Reliable)
 	void Server_SetPlayerName(const FString& NewName);
 
+	UFUNCTION(Server, Reliable)
+	void Server_SetSelectedClass(FName NewClass);
+
 	virtual void OnRep_Pawn() override;
+
+	virtual void AcknowledgePossession(APawn* Pawn) override;
+
 	virtual void OnUnPossess() override;
 
 	UFUNCTION()
@@ -77,6 +89,11 @@ public:
 
 	UFUNCTION()
 	void TrySetupPreviewRenderTarget();
+
+	UFUNCTION()
+	void SetupLobbyView();
+
+	void SetupMainMenuView();
 
 	UFUNCTION(Server, Reliable)
 	void Server_RequestPickup(class AItemActor* Item);
@@ -87,15 +104,51 @@ public:
 	UFUNCTION()
 	void OnRep_PlayerPreview();
 
+	UPROPERTY(ReplicatedUsing = OnRep_LobbyPreview)
+	class ALobbyPreview* LobbyPreviewInstance;
+
+	UFUNCTION()
+	void OnRep_LobbyPreview();
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestStartGame();
+
+	UFUNCTION(Client, Reliable)
+	void Client_LeaveSession();
+
 	UFUNCTION()
 	void UpdatePreviewWithEquippedItems();
 
 	void UpdatePreviewItemVisual(UObject* MeshAsset, const FString& ItemType);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UJoinUserWidget> LobbyWidgetClass = nullptr;
+
+	UPROPERTY()
+	class UJoinUserWidget* LobbyWidget = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UMainMenuWidget> MainMenuWidgetClass = nullptr;
+
+	UPROPERTY()
+	class UMainMenuWidget* MainMenuWidget = nullptr;
+
+	UFUNCTION(Client, Reliable)
+	void Client_SetupLobby();
+
+	UFUNCTION(Client, Reliable)
+	void Client_UpdateLobbyUI();
+
+
+	UFUNCTION(Client, Reliable)
+	void ClientTravelToGame();
+
 	// Begin Actor interface
 protected:
-
+	ARelicRunnersPlayerController();
 	virtual void BeginPlay() override;
+
+	void InitializePawnDependentSystems();
 
 	virtual void SetupInputComponent() override;
 
@@ -107,12 +160,14 @@ protected:
 	void StopJumping(const struct FInputActionValue& Value);
 	void InventoryUI();
 
+	void AbilitySystemUI();
+
+
 	void BasicAttack();
 
 	// End Actor interface
 
 	class ARelicRunnersCharacter* PossessedPawn;
-
 
 
 };

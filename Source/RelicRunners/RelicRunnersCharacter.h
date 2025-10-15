@@ -135,6 +135,8 @@ public:
 	void Look(const FInputActionValue& Value);
 	void Interact();
 	void InventoryUI();
+	void AbilitySystemUI();
+	void SpendAbilityPoints();
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
@@ -148,6 +150,7 @@ public:
 	int GetPlayerMaxResource() { return PlayerMaxResource; }
 	int GetPlayerXP() { return PlayerXP; }
 	int GetPlayerXPToLevel() { return PlayerXPToLevel; }
+	int GetPlayerAbilityPoints() { return PlayerAbilityPoints; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
 	int GetPlayerStartingMaxHealth() const;
@@ -169,6 +172,25 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
 	int GetPlayerStartingLuck() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetPlayerStartingArmor(int StartingArmor) { PlayerStartingArmor =  StartingArmor; }
+
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetPlayerStartingDexterity(int StartingDexterity) { PlayerStartingDexterity = StartingDexterity; }
+
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetPlayerStartingIntelligence(int StartingIntelligence) { PlayerStartingIntelligence = StartingIntelligence; }
+
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetPlayerStartingLuck(int StartingLuck) { PlayerStartingLuck = StartingLuck; }
+
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetPlayerStartingHealth(int StartingHealth) { PlayerStartingMaxHealth = StartingHealth; }
+
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetPlayerStartingStrength(int StartingStrength) { PlayerStartingStrength = StartingStrength; }
+
 
 	class UInventory* GetInventory() { return Inventory; };
 	class UInventoryComponent* GetInventoryComponent() { return InventoryComponent; };
@@ -251,14 +273,24 @@ protected:
 	class UPlayerHUD* PlayerHUD;
 
 	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UAbilityPointCounter> AbilityPointCounterClass;
+
+	UPROPERTY()
+	class UAbilityPointCounter* AbilityPointCounter;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UAbilitySelection> AbilitySelectionClass;
+
+	UPROPERTY()
+	class UAbilitySelection* AbilitySelection;
+
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ULevelUpHUD> LevelUpHUDClass;
 	UPROPERTY()
 	class ULevelUpHUD* LevelUpHUD;
 
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* PlayerHUDWorld;
-
-
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	class UInventoryComponent* InventoryComponent;
@@ -317,6 +349,8 @@ protected:
 	int PlayerStartingIntelligence;
 	UPROPERTY()
 	int PlayerStartingLuck;
+	UPROPERTY()
+	int PlayerAbilityPoints;
 
 	//Setup
 	virtual void BeginPlay();

@@ -92,7 +92,7 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth)
 	int EnemyHealth = 100;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
+	UPROPERTY(ReplicatedUsing = OnRep_MaxHealth)
 	int EnemyMaxHealth = 100;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
@@ -139,12 +139,13 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_UnequipItemByID(FGuid ID);
 
-	UFUNCTION(Server, Reliable)
-	void Server_SetMaxHealth(int health);
+	void SetMaxHealth(int health);
 
 	void OnRep_MeshUpdate(UObject* MeshAsset, const FString& ItemType);
 
 	void SetReplicatedMeshByItemType(UObject* MeshAsset, const FString& ItemType);
+	UFUNCTION()
+	void OnRep_MaxHealth();
 	UFUNCTION()
 	void OnRep_ChestplateMesh();
 	UFUNCTION()

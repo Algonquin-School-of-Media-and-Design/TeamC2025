@@ -46,4 +46,5 @@ void UPlayerHUD::UpdateHUD(float CurrentHealth, float MaxHealth, float CurrentRe
 	TB_Resource->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), FMath::RoundToInt(CurrentResource), FMath::RoundToInt(MaxResource))));
 	TB_Level->SetText(FText::FromString(FString::Printf(TEXT("Level %d"), CurrentLevel)));
 	TB_Experience->SetText(FText::FromString(FString::Printf(TEXT("%d / %d XP"), FMath::RoundToInt(CurrentXP), FMath::RoundToInt(XPToLevel))));
+	
 }

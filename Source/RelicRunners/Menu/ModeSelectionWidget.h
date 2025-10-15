@@ -17,18 +17,36 @@ public:
 	class UButton* HostButton = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UButton* JoinButton = nullptr;
+	class UButton* UpgradesButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* SettingsButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* TutorialButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* CreditsButton = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UEditableTextBox* NameTextBox = nullptr;
 
 	void SetParentMenu(class UMainMenuWidget* InParentMenu);
 
+	void ResetUI();
+
 protected:
 	UFUNCTION()
 	void HostButtonClicked();
+
 	UFUNCTION()
-	void JoinButtonClicked();
+	void SettingsButtonClicked();
+	UFUNCTION()
+	void CreditsButtonClicked();
+	UFUNCTION()
+	void TutorialButtonClicked();
+	UFUNCTION()
+	void UpgradesButtonClicked();
 
 	UPROPERTY()
 	class UMainMenuWidget* ParentMenu;
