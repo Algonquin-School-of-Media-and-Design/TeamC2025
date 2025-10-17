@@ -136,6 +136,11 @@ public:
 	void Interact();
 	void InventoryUI();
 	void AbilitySystemUI();
+	void DamageAbility();
+	void DefenceAbility();
+	void UtilityAbility();
+	void UltimateAbility();
+	void HealthPotions();
 	void SpendAbilityPoints();
 
 	//Ticking
@@ -279,6 +284,12 @@ protected:
 	class UAbilityPointCounter* AbilityPointCounter;
 
 	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UHealthPotion> HealthPotionClass;
+
+	UPROPERTY()
+	class UHealthPotion* HealthPotion;
+
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UAbilitySelection> AbilitySelectionClass;
 
 	UPROPERTY()
@@ -308,6 +319,9 @@ protected:
 	UFUNCTION()
 	void OnRep_HUD();
 
+	UFUNCTION()
+	void OnRep_AbilityPoints();
+
 	//Stats
 	UPROPERTY()
 	int PlayerNumInventorySlots;
@@ -325,6 +339,8 @@ protected:
 	int PlayerXPToLevel;
 	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerLevel;
+	UPROPERTY(ReplicatedUsing = OnRep_AbilityPoints)
+	int PlayerAbilityPoints;
 	UPROPERTY()
 	int PlayerArmor;
 	UPROPERTY()
@@ -349,8 +365,16 @@ protected:
 	int PlayerStartingIntelligence;
 	UPROPERTY()
 	int PlayerStartingLuck;
+
 	UPROPERTY()
-	int PlayerAbilityPoints;
+	int HealthPotionCount;   
+	UPROPERTY()
+	int HealthGranted;         
+
+	float DamageCooldown = 5.f;
+	float DefenceCooldown = 5.f;
+	float UtilityCooldown = 5.f;
+	float UltimateCooldown = 10.f;
 
 	//Setup
 	virtual void BeginPlay();

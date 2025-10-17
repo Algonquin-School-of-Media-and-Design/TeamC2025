@@ -52,7 +52,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* InventoryAction;
 
-	/** Inventory Input Action */
+	/** AbilitySelection Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* AbilitySelectionAction;
 
@@ -63,6 +63,26 @@ protected:
 	/** Basic attack Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* BasicAttackAction;
+
+	/** Damage Ability Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* DamageAbilityAction;
+
+	/** Defence Ability Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* DefenceAbilityAction;
+
+	/** Utility Ability Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* UtilityAbilityAction;
+
+	/** Ultimate Ability Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* UltimateAbilityAction;
+
+	/** Health Potion Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* HealthPotionAction;
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -159,10 +179,12 @@ protected:
 	void Jump(const struct FInputActionValue& Value);
 	void StopJumping(const struct FInputActionValue& Value);
 	void InventoryUI();
-
 	void AbilitySystemUI();
-
-
+	void DamageAbility();
+	void DefenceAbility();
+	void UtilityAbility();
+	void UltimateAbility();
+	void HealthPotion();
 	void BasicAttack();
 
 	// End Actor interface
