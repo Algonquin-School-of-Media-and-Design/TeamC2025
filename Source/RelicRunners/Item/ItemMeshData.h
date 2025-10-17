@@ -27,15 +27,10 @@ class UItemMeshData : public UDataAsset
 
 public:
     UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* SwordMesh;
-    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* WaistMesh;
-    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* WristMesh;
-    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* ShouldersMesh;
     UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* ShieldMesh;
+    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* LowerMesh;
+    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* UpperMesh;
     UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* NecklaceMesh;
-    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* BackpackMesh;
-    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* BootsMesh;
-    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* ChestplateMesh;
     UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* HelmetMesh;
-    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* GlovesMesh;
-    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* LeggingsMesh;
+    UPROPERTY(EditDefaultsOnly, Category = "Meshes") UStaticMesh* ArmsMesh;
 };

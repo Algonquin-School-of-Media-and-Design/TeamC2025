@@ -30,31 +30,16 @@ public:
 	AEnemyCharacterAI();
 
 	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* ChestplateMesh;
+	USkeletalMeshComponent* LowerMesh;
 
 	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* BootsMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* LeggingsMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* ShouldersMesh;
+	USkeletalMeshComponent* UpperMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* HelmetMesh;
 
 	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* WaistMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* BackpackMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* GlovesMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* WristMesh;
+	USkeletalMeshComponent* ArmsMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* NecklaceMesh;
@@ -147,47 +132,27 @@ public:
 	UFUNCTION()
 	void OnRep_MaxHealth();
 	UFUNCTION()
-	void OnRep_ChestplateMesh();
+	void OnRep_UpperMesh();
 	UFUNCTION()
-	void OnRep_BootsMesh();
+	void OnRep_LowerMesh();
 	UFUNCTION()
-	void OnRep_LeggingsMesh();
-	UFUNCTION()
-	void OnRep_ShouldersMesh();
+	void OnRep_ArmsMesh();
 	UFUNCTION()
 	void OnRep_HelmetMesh();
-	UFUNCTION()
-	void OnRep_WaistMesh();
-	UFUNCTION()
-	void OnRep_BackpackMesh();
-	UFUNCTION()
-	void OnRep_GlovesMesh();
-	UFUNCTION()
-	void OnRep_WristMesh();
 	UFUNCTION()
 	void OnRep_NecklaceMesh();
 	UFUNCTION()
 	void OnRep_MainhandMesh();
 	UFUNCTION()
 	void OnRep_OffhandMesh();
-	UPROPERTY(ReplicatedUsing = OnRep_ChestplateMesh)
-	USkeletalMesh* ReplicatedChestplateMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_BootsMesh)
-	USkeletalMesh* ReplicatedBootsMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_LeggingsMesh)
-	USkeletalMesh* ReplicatedLeggingsMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_ShouldersMesh)
-	USkeletalMesh* ReplicatedShouldersMesh;
 	UPROPERTY(ReplicatedUsing = OnRep_HelmetMesh)
 	USkeletalMesh* ReplicatedHelmetMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_WaistMesh)
-	USkeletalMesh* ReplicatedWaistMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_BackpackMesh)
-	USkeletalMesh* ReplicatedBackpackMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_GlovesMesh)
-	USkeletalMesh* ReplicatedGlovesMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_WristMesh)
-	USkeletalMesh* ReplicatedWristMesh;
+	UPROPERTY(ReplicatedUsing = OnRep_UpperMesh)
+	USkeletalMesh* ReplicatedUpperMesh;
+	UPROPERTY(ReplicatedUsing = OnRep_LowerMesh)
+	USkeletalMesh* ReplicatedLowerMesh;
+	UPROPERTY(ReplicatedUsing = OnRep_ArmsMesh)
+	USkeletalMesh* ReplicatedArmsMesh;
 	UPROPERTY(ReplicatedUsing = OnRep_NecklaceMesh)
 	USkeletalMesh* ReplicatedNecklaceMesh;
 	UPROPERTY(ReplicatedUsing = OnRep_MainhandMesh)

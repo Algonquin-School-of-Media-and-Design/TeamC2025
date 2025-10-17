@@ -144,12 +144,10 @@ void AItemActor::SetupVisuals()
     StaticMeshComponent->CastShadow = false;
 
     static const TMap<FString, FVector> ItemScaleMap = {
-        { "Gloves", FVector(1.25f) }, { "Wrist", FVector(1.0f) },
-        { "Chestplate", FVector(1.5f) }, { "Leggings", FVector(1.5f) },
-        { "Waist", FVector(1.75f) }, { "Shoulders", FVector(1.75f) },
-        { "Backpack", FVector(1.6f) }, { "Shield", FVector(0.4f) },
-        { "Sword", FVector(2.0f) }, { "Boots", FVector(1.25f) },
-        { "Helmet", FVector(1.6f) }, { "Necklace", FVector(4.0f) },
+        { "Lower", FVector(1.25f) }, { "Upper", FVector(1.5f) },
+        { "Shield", FVector(0.4f) }, { "Sword", FVector(2.0f) }, 
+        { "Helmet", FVector(1.6f) }, { "Arms", FVector(1.25f) }, 
+        { "Necklace", FVector(4.0f) },
     };
 
     if (const FVector* Scale = ItemScaleMap.Find(ItemData.ItemType))

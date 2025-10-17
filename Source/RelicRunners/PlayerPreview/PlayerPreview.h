@@ -51,31 +51,16 @@ public:
 	class USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* ChestplateMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* BootsMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* LeggingsMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* ShouldersMesh;
+	USkeletalMeshComponent* UpperMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* HelmetMesh;
 
 	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* WaistMesh;
+	USkeletalMeshComponent* LowerMesh;
 
 	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* BackpackMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* GlovesMesh;
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* WristMesh;
+	USkeletalMeshComponent* ArmsMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* NecklaceMesh;

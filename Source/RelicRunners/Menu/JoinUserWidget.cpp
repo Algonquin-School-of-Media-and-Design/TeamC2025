@@ -10,6 +10,7 @@
 #include "SessionListItemWidget.h"
 #include "SessionListItemData.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
 #include "Components/Border.h"
 #include "Components/ProgressBar.h"
 #include "MainMenuWidget.h"
@@ -88,6 +89,20 @@ void UJoinUserWidget::SetButtonColor(UButton* Button, const FLinearColor& Color)
 	Button->SetBackgroundColor(Color);
 }
 
+void UJoinUserWidget::SetBorderColor(UBorder* Border, const FLinearColor& Color)
+{
+	if (!Border) return;
+
+	Border->SetBrushColor(Color);
+}
+
+void UJoinUserWidget::SetImageColor(UImage* Image, const FLinearColor& Color)
+{
+	if (!Image) return;
+
+	Image->SetColorAndOpacity(Color);
+}
+
 void UJoinUserWidget::OnAresClicked() { SetSelectedClass("Ares"); }
 void UJoinUserWidget::OnArtemisClicked() { SetSelectedClass("Artemis"); }
 void UJoinUserWidget::OnAphroditeClicked() { SetSelectedClass("Aphrodite"); }
@@ -95,21 +110,53 @@ void UJoinUserWidget::OnNemesisClicked() { SetSelectedClass("Nemesis"); }
 
 void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 {
-	FLinearColor Gold(1, 0.5f, 0, 1.f);
+	FLinearColor Gold(1.f, 0.5f, 0, 1.f);
 	FLinearColor Cyan(0.f, 1.f, 1.f, 1.f);
+	FLinearColor DarkCyan(0, 0.021f, 0.02f, 1.f);
+	FLinearColor DarkGold(0.3f, 0.15, 0, 1.f);
+	FLinearColor Black(0,0,0,1);
+	FLinearColor White(1, 1, 1, 1);
 
 	// Reset all buttons to cyan
 	SetButtonColor(AresButton, Cyan);
 	SetButtonColor(ArtemisButton, Cyan);
 	SetButtonColor(AphroditeButton, Cyan);
 	SetButtonColor(NemesisButton, Cyan);
+	SetBorderColor(B_Ares, DarkCyan);
+	SetBorderColor(B_Artemis, DarkCyan);
+	SetBorderColor(B_Aphrodite, DarkCyan);
+	SetBorderColor(B_Nemesis, DarkCyan);
+	SetImageColor(I_Ares, White);
+	SetImageColor(I_Artemis, White);
+	SetImageColor(I_Aphrodite, White);
+	SetImageColor(I_Nemesis, White);
 
 	// Highlight the selected one gold
-	if (ClassKey == "Ares") SetButtonColor(AresButton, Gold);
-	else if (ClassKey == "Artemis") SetButtonColor(ArtemisButton, Gold);
-	else if (ClassKey == "Aphrodite") SetButtonColor(AphroditeButton, Gold);
-	else if (ClassKey == "Nemesis") SetButtonColor(NemesisButton, Gold);
-	
+	if (ClassKey == "Ares")
+	{
+		SetButtonColor(AresButton, Gold);
+		SetBorderColor(B_Ares, DarkGold);
+		SetImageColor(I_Ares, Black);
+	}
+	else if (ClassKey == "Artemis")
+	{
+		SetButtonColor(ArtemisButton, Gold);
+		SetBorderColor(B_Artemis, DarkGold);
+		SetImageColor(I_Artemis, Black);
+	}
+	else if (ClassKey == "Aphrodite")
+	{
+		SetButtonColor(AphroditeButton, Gold);
+		SetBorderColor(B_Aphrodite, DarkGold);
+		SetImageColor(I_Aphrodite, Black);
+	}
+	else if (ClassKey == "Nemesis")
+	{
+		SetButtonColor(NemesisButton, Gold);
+		SetBorderColor(B_Nemesis, DarkGold);
+		SetImageColor(I_Nemesis, Black);
+	}
+
 	if (!ClassDataAsset || !ClassDataAsset->Classes.Contains(ClassKey))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Invalid class key: %s"), *ClassKey.ToString());
