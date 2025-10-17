@@ -231,7 +231,6 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerLevel);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
-	DOREPLIFETIME(ARelicRunnersCharacter, PlayerAbilityPoints);
 
 
 	//equipped items
@@ -371,13 +370,6 @@ void ARelicRunnersCharacter::OnRep_OffhandMesh()
 void ARelicRunnersCharacter::OnRep_HUD()
 {
 	UpdateHUD();
-}
-
-void ARelicRunnersCharacter::OnRep_AbilityPoints()
-{
-
-	UpdateHUD();
-	AbilitySystemUI();
 }
 
 void ARelicRunnersCharacter::AddExperience(int Amount)
@@ -593,7 +585,6 @@ void ARelicRunnersCharacter::InitLocalUI()
 			}
 		}
 	}
-	bUILoaded = true;
 	TryBindInventoryDelegates();
 }
 
@@ -901,7 +892,7 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 {
 	if (!IsLocallyControlled()) return;
 
-	if (!AbilitySelection) return;
+	if (AbilitySelection == nullptr) return;
 
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	if (!PlayerController) return;
@@ -947,7 +938,6 @@ void ARelicRunnersCharacter::UltimateAbility()
 
 void ARelicRunnersCharacter::HealthPotions()
 {
-	//if (!HealthPotion) return;
 
 	HealthPotion->OnHealthPotionClicked(PlayerHealth, PlayerMaxHealth, HealthPotionCount, HealthGranted);
 	UpdateHUD();
@@ -968,6 +958,7 @@ void ARelicRunnersCharacter::SpendAbilityPoints()
 			PlayerController->SetInputMode(FInputModeGameOnly());
 			PlayerController->SetShowMouseCursor(false);
 		}
+		UpdateHUD();
 	}
 }
 

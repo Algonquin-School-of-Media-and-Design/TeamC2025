@@ -141,6 +141,7 @@ public:
 	void UtilityAbility();
 	void UltimateAbility();
 	void HealthPotions();
+
 	void SpendAbilityPoints();
 
 	//Ticking
@@ -319,9 +320,6 @@ protected:
 	UFUNCTION()
 	void OnRep_HUD();
 
-	UFUNCTION()
-	void OnRep_AbilityPoints();
-
 	//Stats
 	UPROPERTY()
 	int PlayerNumInventorySlots;
@@ -339,7 +337,7 @@ protected:
 	int PlayerXPToLevel;
 	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerLevel;
-	UPROPERTY(ReplicatedUsing = OnRep_AbilityPoints)
+	UPROPERTY()
 	int PlayerAbilityPoints;
 	UPROPERTY()
 	int PlayerArmor;
