@@ -212,6 +212,8 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	PlayerAbilityPoints = 2;
 	PlayerNumInventorySlots = 20;
 
+	Tags.Add("Player");
+
 	bAlwaysRelevant = true;
 	SetReplicates(true);
 	SetReplicateMovement(true);
