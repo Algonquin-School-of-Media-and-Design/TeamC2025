@@ -444,6 +444,15 @@ void ARelicRunnersPlayerController::SetupInputComponent()
 
 		// BasicAttack
 		EnhancedInputComponent->BindAction(BasicAttackAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::BasicAttack);
+		
+		// Abilities
+		EnhancedInputComponent->BindAction(DamageAbilityAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::DamageAbility);
+		EnhancedInputComponent->BindAction(DefenceAbilityAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::DefenceAbility);
+		EnhancedInputComponent->BindAction(UtilityAbilityAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::UtilityAbility);
+		EnhancedInputComponent->BindAction(UltimateAbilityAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::UltimateAbility);
+
+		// Health Potion
+		EnhancedInputComponent->BindAction(HealthPotionAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::HealthPotion);
 	}
 	else
 	{
@@ -499,6 +508,36 @@ void ARelicRunnersPlayerController::AbilitySystemUI()
 	}
 }
 
+void ARelicRunnersPlayerController::DamageAbility()
+{
+	if (PossessedPawn)
+	{
+		PossessedPawn->DamageAbility();
+	}
+}
+void ARelicRunnersPlayerController::DefenceAbility()
+{
+	if (PossessedPawn)
+	{
+		PossessedPawn->DefenceAbility();
+	}
+}
+
+void ARelicRunnersPlayerController::UtilityAbility()
+{
+	if (PossessedPawn)
+	{
+		PossessedPawn->UtilityAbility();
+	}
+}
+
+void ARelicRunnersPlayerController::UltimateAbility()
+{
+	if (PossessedPawn)
+	{
+		PossessedPawn->UltimateAbility();
+	}
+}
 void ARelicRunnersPlayerController::BasicAttack()
 {
 	if (PossessedPawn)
@@ -522,6 +561,7 @@ void ARelicRunnersPlayerController::StopJumping(const FInputActionValue& Value)
 		PossessedPawn->StopJumping();
 	}
 }
+
 
 void ARelicRunnersPlayerController::AddGold(int32 Amount)
 {
@@ -550,6 +590,14 @@ void ARelicRunnersPlayerController::SpendGold(int32 Amount)
 				UE_LOG(LogTemp, Log, TEXT("Spent %d gold. New total: %d"), Amount, Inv->GetGold());
 			}
 		}
+	}
+}
+
+void ARelicRunnersPlayerController::HealthPotion()
+{
+	if (PossessedPawn)
+	{
+		PossessedPawn->HealthPotions();
 	}
 }
 
