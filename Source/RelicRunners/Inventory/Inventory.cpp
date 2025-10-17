@@ -49,15 +49,10 @@ void UInventory::NativeConstruct()
     InventoryItemOptionsClass = LoadClass<UInventoryItemOptions>(nullptr, TEXT("/Game/Inventory/BP_InventoryItemOptions.BP_InventoryItemOptions_C"));
     InventorySortingOptionsClass = LoadClass<UInventorySortingOptions>(nullptr, TEXT("/Game/Inventory/BP_InventorySortingOptions.BP_InventorySortingOptions_C"));
 
-    B_Backpack->OnClicked.AddDynamic(this, &UInventory::BackpackSlotClicked);
     B_Helmet->OnClicked.AddDynamic(this, &UInventory::HelmetSlotClicked);
-    B_Waist->OnClicked.AddDynamic(this, &UInventory::WaistSlotClicked);
-    B_Shoulders->OnClicked.AddDynamic(this, &UInventory::ShouldersSlotClicked);
-    B_Gloves->OnClicked.AddDynamic(this, &UInventory::GlovesSlotClicked);
-    B_Wrist->OnClicked.AddDynamic(this, &UInventory::WristSlotClicked);
-    B_Chestplate->OnClicked.AddDynamic(this, &UInventory::ChestplateSlotClicked);
-    B_Boots->OnClicked.AddDynamic(this, &UInventory::BootsSlotClicked);
-    B_Leggings->OnClicked.AddDynamic(this, &UInventory::LeggingsSlotClicked);
+    B_Arms->OnClicked.AddDynamic(this, &UInventory::ArmsSlotClicked);
+    B_Upper->OnClicked.AddDynamic(this, &UInventory::UpperSlotClicked);
+    B_Lower->OnClicked.AddDynamic(this, &UInventory::LowerSlotClicked);
     B_Mainhand->OnClicked.AddDynamic(this, &UInventory::MainhandSlotClicked);
     B_Offhand->OnClicked.AddDynamic(this, &UInventory::OffhandlotClicked);
     B_Necklace->OnClicked.AddDynamic(this, &UInventory::NecklaceSlotClicked);
@@ -101,10 +96,9 @@ void UInventory::RefreshInventoryUI()
 
 void UInventory::RefreshEquippedUI()
 {
-    // Step 1: Clear all slot visuals
     TArray<FString> AllItemTypes = {
-        "Helmet", "Chestplate", "Shoulders", "Leggings", "Boots", "Gloves",
-        "Wrist", "Waist", "Necklace", "Backpack", "Shield", "Sword"
+        "Helmet", "Upper", "Lower", "Arms",
+        "Necklace", "Shield", "Sword"
     };
 
     for (const FString& Type : AllItemTypes)
@@ -112,7 +106,6 @@ void UInventory::RefreshEquippedUI()
         UpdateButtonWithTooltip(nullptr, Type, nullptr, FLinearColor::Gray);
     }
 
-    // Step 2: Apply visuals
     for (const FEquippedItemEntry& Pair : InventoryComponent->EquippedItems)
     {
         UItemObject* Item = Pair.Item;
@@ -145,15 +138,10 @@ void UInventory::RefreshEquippedUI()
 UInventory::FSlotUIComponents UInventory::GetUIComponentsForItemType(const FString& ItemType)
 {
     if (ItemType == "Helmet") return { B_Helmet, I_Helmet, TB_LevelHelmet };
-    if (ItemType == "Chestplate") return { B_Chestplate, I_Chestplate, TB_LevelChestplate };
-    if (ItemType == "Shoulders") return { B_Shoulders, I_Shoulders, TB_LevelShoulders };
-    if (ItemType == "Leggings") return { B_Leggings, I_Leggings, TB_LevelLeggings };
-    if (ItemType == "Boots") return { B_Boots, I_Boots, TB_LevelBoots };
-    if (ItemType == "Gloves") return { B_Gloves, I_Gloves, TB_LevelGloves };
-    if (ItemType == "Wrist") return { B_Wrist, I_Wrist, TB_LevelWrist };
-    if (ItemType == "Waist") return { B_Waist, I_Waist, TB_LevelWaist };
+    if (ItemType == "Arms") return { B_Arms, I_Arms, TB_LevelArms };
+    if (ItemType == "Upper") return { B_Upper, I_Upper, TB_LevelUpper };
+    if (ItemType == "Lower") return { B_Lower, I_Lower, TB_LevelLower };
     if (ItemType == "Necklace") return { B_Necklace, I_Necklace, TB_LevelNecklace };
-    if (ItemType == "Backpack") return { B_Backpack, I_Backpack, TB_LevelBackpack };
     if (ItemType == "Shield") return { B_Offhand, I_Offhand, TB_LevelOffhand };
     if (ItemType == "Sword") return { B_Mainhand, I_Mainhand, TB_LevelMainhand };
 
@@ -329,49 +317,29 @@ FReply UInventory::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointe
     return FReply::Unhandled(); 
 }
 
-void UInventory::BackpackSlotClicked()
-{
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Backpack"));
-}
-
 void UInventory::HelmetSlotClicked()
 {
     OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Helmet"));
 }
 
-void UInventory::WaistSlotClicked()
+void UInventory::ArmsSlotClicked()
 {
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Waist"));
+    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Arms"));
 }
 
-void UInventory::ShouldersSlotClicked()
+void UInventory::UpperSlotClicked()
 {
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Shoulders"));
+    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Upper"));
 }
 
-void UInventory::GlovesSlotClicked()
+void UInventory::LowerSlotClicked()
 {
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Gloves"));
+    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Lower"));
 }
 
-void UInventory::WristSlotClicked()
+void UInventory::NecklaceSlotClicked()
 {
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Wrist"));
-}
-
-void UInventory::ChestplateSlotClicked()
-{
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Chestplate"));
-}
-
-void UInventory::BootsSlotClicked()
-{
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Boots"));
-}
-
-void UInventory::LeggingsSlotClicked()
-{
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Leggings"));
+    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Necklace"));
 }
 
 void UInventory::MainhandSlotClicked()
@@ -382,11 +350,6 @@ void UInventory::MainhandSlotClicked()
 void UInventory::OffhandlotClicked()
 {
     OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Shield"));
-}
-
-void UInventory::NecklaceSlotClicked()
-{
-    OnEquippedSlotClick(InventoryComponent->GetEquippedItemByType("Necklace"));
 }
 
 void UInventory::SortingTypeClicked()

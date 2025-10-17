@@ -65,31 +65,16 @@ public:
 	class UButton* B_Helmet;
 
 	UPROPERTY(meta = (BindWidget))
-	class UButton* B_Shoulders;
+	class UButton* B_Upper;
 
 	UPROPERTY(meta = (BindWidget))
-	class UButton* B_Chestplate;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_Leggings;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_Boots;
+	class UButton* B_Lower;
 
 	UPROPERTY(meta = (BindWidget))
 	class UButton* B_Necklace;
 
 	UPROPERTY(meta = (BindWidget))
-	class UButton* B_Wrist;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_Gloves;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_Waist;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_Backpack;
+	class UButton* B_Arms;
 
 	UPROPERTY(meta = (BindWidget))
 	class UButton* B_Mainhand;
@@ -107,31 +92,16 @@ public:
 	class UTextBlock* TB_LevelHelmet;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_LevelShoulders;
+	class UTextBlock* TB_LevelUpper;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_LevelChestplate;
-
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_LevelLeggings;
-
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_LevelBoots;
+	class UTextBlock* TB_LevelLower;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_LevelNecklace;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_LevelWrist;
-
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_LevelGloves;
-
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_LevelWaist;
-
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_LevelBackpack;
+	class UTextBlock* TB_LevelArms;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_LevelMainhand;
@@ -146,31 +116,16 @@ public:
 	class UImage* I_Helmet;
 
 	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Shoulders;
+	class UImage* I_Upper;
 
 	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Chestplate;
-
-	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Leggings;
-
-	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Boots;
+	class UImage* I_Lower;
 
 	UPROPERTY(meta = (BindWidget))
 	class UImage* I_Necklace;
 
 	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Wrist;
-
-	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Gloves;
-
-	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Waist;
-
-	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Backpack;
+	class UImage* I_Arms;
 
 	UPROPERTY(meta = (BindWidget))
 	class UImage* I_Mainhand;
@@ -214,29 +169,19 @@ public:
 	class UInventoryComponent* LocalInventory;
 
 	UFUNCTION()
-	void BackpackSlotClicked();
-	UFUNCTION()
 	void HelmetSlotClicked();
 	UFUNCTION()
-	void WaistSlotClicked();
+	void ArmsSlotClicked();
 	UFUNCTION()
-	void ShouldersSlotClicked();
+	void UpperSlotClicked();
 	UFUNCTION()
-	void GlovesSlotClicked();
+	void LowerSlotClicked();
 	UFUNCTION()
-	void WristSlotClicked();
-	UFUNCTION()
-	void ChestplateSlotClicked();
-	UFUNCTION()
-	void BootsSlotClicked();
-	UFUNCTION()
-	void LeggingsSlotClicked();
+	void NecklaceSlotClicked();
 	UFUNCTION()
 	void MainhandSlotClicked();
 	UFUNCTION()
 	void OffhandlotClicked();
-	UFUNCTION()
-	void NecklaceSlotClicked();
 	UFUNCTION()
 	void SortingTypeClicked();
 

@@ -58,13 +58,13 @@ public:
     static const TMap<FString, FRarityData>& GetRarityDataMap()
     {
         static const TMap<FString, FRarityData> RarityDataMap = {
-            { "Common",    FRarityData("Common",    FLinearColor(0.753f, 0.753f, 0.753f, 1), 1.0f, 47.5f) },
-            { "Uncommon",  FRarityData("Uncommon",  FLinearColor(0.5f, 1.0f, 0.0f, 1),       1.25f, 27.5f) },
-            { "Rare",      FRarityData("Rare",      FLinearColor(0.0f, 0.3f, 0.9f, 1),       1.5f, 18.0f) },
-            { "Epic",      FRarityData("Epic",      FLinearColor(0.4f, 0.0f, 0.8f, 1),       1.75f, 5.5f) },
-            { "Legendary", FRarityData("Legendary", FLinearColor(0.9f, 0.4f, 0.0f, 1),       2.0f, 1.0f) },
-            { "Mythic",    FRarityData("Mythic",    FLinearColor(0.745f, 0.0f, 0.314f, 1),   2.5f, 0.4f) },
-            { "Relic",     FRarityData("Relic",     FLinearColor(0.0f, 0.76f, 0.76f, 1),     3.0f, 0.1f) }
+            { "Common",    FRarityData("Common",    FLinearColor(0.753f, 0.753f, 0.753f, 1), 1.0f, 60.0f) },
+            { "Uncommon",  FRarityData("Uncommon",  FLinearColor(0.5f, 1.0f, 0.0f, 1),       1.5f, 20.0f) },
+            { "Rare",      FRarityData("Rare",      FLinearColor(0.0f, 0.3f, 0.9f, 1),       2.0f, 12.0f) },
+            { "Epic",      FRarityData("Epic",      FLinearColor(0.4f, 0.0f, 0.8f, 1),       2.5f, 6.0f) },
+            { "Legendary", FRarityData("Legendary", FLinearColor(0.9f, 0.4f, 0.0f, 1),       3.0f, 1.5f) },
+            { "Mythic",    FRarityData("Mythic",    FLinearColor(0.745f, 0.0f, 0.314f, 1),   3.5f, 0.4f) },
+            { "Relic",     FRarityData("Relic",     FLinearColor(0.0f, 0.76f, 0.76f, 1),     4.0f, 0.1f) }
         };
         return RarityDataMap;
     }
@@ -89,8 +89,7 @@ public:
     static FString GetRandomItemType()
     {
         static const TArray<FString> ItemTypes = {
-            "Helmet", "Waist", "Shoulders", "Gloves", "Wrist",
-            "Chestplate", "Boots", "Leggings", "Backpack",
+            "Helmet", "Arms", "Upper", "Lower",
             "Sword", "Shield", "Necklace"
         };
 
@@ -125,11 +124,10 @@ public:
         float Min = BaseMin * ItemData.Level * Multiplier;
         float Max = BaseMax * ItemData.Level * Multiplier;
 
-        const TSet<FString> ArmorTypes = { "Helmet", "Waist", "Shoulders", "Gloves", "Wrist", "Chestplate", "Boots", "Leggings" };
+        const TSet<FString> ArmorTypes = { "Helmet", "Upper", "Lower", "Arms" };
         const TSet<FString> WeaponTypes = { "Sword" };
         const TSet<FString> ShieldTypes = { "Shield" };
         const TSet<FString> MixedTypes = { "Necklace" };
-        const TSet<FString> CapacityTypes = { "Backpack" };
 
         if (ArmorTypes.Contains(ItemData.ItemType))
         {
@@ -157,10 +155,6 @@ public:
             ItemData.Intelligence = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
             ItemData.Luck = FMath::RoundToInt(FMath::FRandRange(Min * 0.5f, Max));
         }
-        else if (CapacityTypes.Contains(ItemData.ItemType))
-        {
-            ItemData.Slots = FMath::RoundToInt(FMath::FRandRange(Min * 0.5f, Max));
-        }
 
         if (MeshData)
         {
@@ -182,15 +176,10 @@ public:
         const TMap<FString, UStaticMesh*> MeshMap = {
             { "Sword", MeshData->SwordMesh },
             { "Helmet", MeshData->HelmetMesh },
-            { "Waist", MeshData->WaistMesh },
-            { "Shoulders", MeshData->ShouldersMesh },
-            { "Gloves", MeshData->GlovesMesh },
-            { "Wrist", MeshData->WristMesh },
-            { "Chestplate", MeshData->ChestplateMesh },
-            { "Boots", MeshData->BootsMesh },
-            { "Leggings", MeshData->LeggingsMesh },
+            { "Upper", MeshData->UpperMesh },
+            { "Lower", MeshData->LowerMesh },
+            { "Arms", MeshData->ArmsMesh },
             { "Shield", MeshData->ShieldMesh },
-            { "Backpack", MeshData->BackpackMesh },
             { "Necklace", MeshData->NecklaceMesh },
         };
 

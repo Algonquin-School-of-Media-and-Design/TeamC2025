@@ -39,41 +39,22 @@ APlayerPreview::APlayerPreview()
 	SceneCaptureComponent2D->bCaptureOnMovement = false;
 
 	// Mesh attachments
-	ChestplateMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChestplateMesh"));
-	ChestplateMesh->SetupAttachment(BodyMesh);
-	ChestplateMesh->SetLeaderPoseComponent(BodyMesh);
 
-	BootsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BootsMesh"));
-	BootsMesh->SetupAttachment(BodyMesh);
-	BootsMesh->SetLeaderPoseComponent(BodyMesh);
+	UpperMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("UpperMesh"));
+	UpperMesh->SetupAttachment(BodyMesh);
+	UpperMesh->SetLeaderPoseComponent(BodyMesh);
 
-	LeggingsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LeggingsMesh"));
-	LeggingsMesh->SetupAttachment(BodyMesh);
-	LeggingsMesh->SetLeaderPoseComponent(BodyMesh);
+	LowerMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LowerMesh"));
+	LowerMesh->SetupAttachment(BodyMesh);
+	LowerMesh->SetLeaderPoseComponent(BodyMesh);
 
-	ShouldersMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShouldersMesh"));
-	ShouldersMesh->SetupAttachment(BodyMesh);
-	ShouldersMesh->SetLeaderPoseComponent(BodyMesh);
+	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
+	ArmsMesh->SetupAttachment(BodyMesh);
+	ArmsMesh->SetLeaderPoseComponent(BodyMesh);
 
 	HelmetMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetMesh"));
 	HelmetMesh->SetupAttachment(BodyMesh);
 	HelmetMesh->SetLeaderPoseComponent(BodyMesh);
-
-	WaistMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WaistMesh"));
-	WaistMesh->SetupAttachment(BodyMesh);
-	WaistMesh->SetLeaderPoseComponent(BodyMesh);
-
-	BackpackMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BackpackMesh"));
-	BackpackMesh->SetupAttachment(BodyMesh);
-	BackpackMesh->SetLeaderPoseComponent(BodyMesh);
-
-	WristMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WristMesh"));
-	WristMesh->SetupAttachment(BodyMesh);
-	WristMesh->SetLeaderPoseComponent(BodyMesh);
-
-	GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlovesMesh"));
-	GlovesMesh->SetupAttachment(BodyMesh);
-	GlovesMesh->SetLeaderPoseComponent(BodyMesh);
 
 	NecklaceMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NecklaceMesh"));
 	NecklaceMesh->SetupAttachment(BodyMesh);
@@ -109,15 +90,10 @@ void APlayerPreview::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 void APlayerPreview::ClearAllPreviewMeshes()
 {
 	// Skeletal meshes (armor, accessories)
-	ChestplateMesh->SetSkeletalMesh(nullptr);
-	BootsMesh->SetSkeletalMesh(nullptr);
-	LeggingsMesh->SetSkeletalMesh(nullptr);
-	ShouldersMesh->SetSkeletalMesh(nullptr);
+	UpperMesh->SetSkeletalMesh(nullptr);
+	LowerMesh->SetSkeletalMesh(nullptr);
+	ArmsMesh->SetSkeletalMesh(nullptr);
 	HelmetMesh->SetSkeletalMesh(nullptr);
-	WaistMesh->SetSkeletalMesh(nullptr);
-	BackpackMesh->SetSkeletalMesh(nullptr);
-	WristMesh->SetSkeletalMesh(nullptr);
-	GlovesMesh->SetSkeletalMesh(nullptr);
 	NecklaceMesh->SetSkeletalMesh(nullptr);
 
 	// Static meshes (weapons)
@@ -160,15 +136,10 @@ UTextureRenderTarget2D* APlayerPreview::CreateRenderTarget()
 
 USkeletalMeshComponent* APlayerPreview::GetSkeletalMeshComponentByItemType(const FString& ItemType)
 {
-	if (ItemType == "Chestplate") return ChestplateMesh;
-	if (ItemType == "Leggings") return LeggingsMesh;
-	if (ItemType == "Boots") return BootsMesh;
-	if (ItemType == "Shoulders") return ShouldersMesh;
+	if (ItemType == "Upper") return UpperMesh;
+	if (ItemType == "Lower") return LowerMesh;
+	if (ItemType == "Arms") return ArmsMesh;
 	if (ItemType == "Helmet") return HelmetMesh;
-	if (ItemType == "Waist") return WaistMesh;
-	if (ItemType == "Backpack") return BackpackMesh;
-	if (ItemType == "Gloves") return GlovesMesh;
-	if (ItemType == "Wrist") return WristMesh;
 	if (ItemType == "Necklace") return NecklaceMesh;
 	return nullptr;
 }
@@ -182,50 +153,25 @@ UStaticMeshComponent* APlayerPreview::GetStaticMeshComponentByItemType(const FSt
 
 void APlayerPreview::SetPreviewMeshByItemType(const FString& ItemType, UObject* MeshAsset)
 {
-	if (ItemType == "Chestplate")
+	if (ItemType == "Upper")
 	{
 		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
-		if (ChestplateMesh && Mesh) ChestplateMesh->SetSkeletalMesh(Mesh);
+		if (UpperMesh && Mesh) UpperMesh->SetSkeletalMesh(Mesh);
 	}
-	else if (ItemType == "Boots")
+	else if (ItemType == "Lower")
 	{
 		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
-		if (BootsMesh && Mesh) BootsMesh->SetSkeletalMesh(Mesh);
+		if (LowerMesh && Mesh) LowerMesh->SetSkeletalMesh(Mesh);
 	}
-	else if (ItemType == "Leggings")
+	else if (ItemType == "Arms")
 	{
 		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
-		if (LeggingsMesh && Mesh) LeggingsMesh->SetSkeletalMesh(Mesh);
-	}
-	else if (ItemType == "Shoulders")
-	{
-		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
-		if (ShouldersMesh && Mesh) ShouldersMesh->SetSkeletalMesh(Mesh);
+		if (ArmsMesh && Mesh) ArmsMesh->SetSkeletalMesh(Mesh);
 	}
 	else if (ItemType == "Helmet")
 	{
 		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
 		if (HelmetMesh && Mesh) HelmetMesh->SetSkeletalMesh(Mesh);
-	}
-	else if (ItemType == "Waist")
-	{
-		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
-		if (WaistMesh && Mesh) WaistMesh->SetSkeletalMesh(Mesh);
-	}
-	else if (ItemType == "Backpack")
-	{
-		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
-		if (BackpackMesh && Mesh) BackpackMesh->SetSkeletalMesh(Mesh);
-	}
-	else if (ItemType == "Gloves")
-	{
-		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
-		if (GlovesMesh && Mesh) GlovesMesh->SetSkeletalMesh(Mesh);
-	}
-	else if (ItemType == "Wrist")
-	{
-		USkeletalMesh* Mesh = Cast<USkeletalMesh>(MeshAsset);
-		if (WristMesh && Mesh) WristMesh->SetSkeletalMesh(Mesh);
 	}
 	else if (ItemType == "Necklace")
 	{

@@ -55,47 +55,28 @@ public:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 	EInventorySorting GetCurrentSortingMethod() const;
 	UFUNCTION()
-	void OnRep_ChestplateMesh();
+	void OnRep_UpperMesh();
 	UFUNCTION()
-	void OnRep_BootsMesh();
+	void OnRep_LowerMesh();
 	UFUNCTION()
-	void OnRep_LeggingsMesh();
-	UFUNCTION()
-	void OnRep_ShouldersMesh();
+	void OnRep_ArmsMesh();
 	UFUNCTION()
 	void OnRep_HelmetMesh();
-	UFUNCTION()
-	void OnRep_WaistMesh();
-	UFUNCTION()
-	void OnRep_BackpackMesh();
-	UFUNCTION()
-	void OnRep_GlovesMesh();
-	UFUNCTION()
-	void OnRep_WristMesh();
 	UFUNCTION()
 	void OnRep_NecklaceMesh();
 	UFUNCTION()
 	void OnRep_MainhandMesh();
 	UFUNCTION()
 	void OnRep_OffhandMesh();
-	UPROPERTY(ReplicatedUsing = OnRep_ChestplateMesh)
-	USkeletalMesh* ReplicatedChestplateMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_BootsMesh)
-	USkeletalMesh* ReplicatedBootsMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_LeggingsMesh)
-	USkeletalMesh* ReplicatedLeggingsMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_ShouldersMesh)
-	USkeletalMesh* ReplicatedShouldersMesh;
+
 	UPROPERTY(ReplicatedUsing = OnRep_HelmetMesh)
 	USkeletalMesh* ReplicatedHelmetMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_WaistMesh)
-	USkeletalMesh* ReplicatedWaistMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_BackpackMesh)
-	USkeletalMesh* ReplicatedBackpackMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_GlovesMesh)
-	USkeletalMesh* ReplicatedGlovesMesh;
-	UPROPERTY(ReplicatedUsing = OnRep_WristMesh)
-	USkeletalMesh* ReplicatedWristMesh;
+	UPROPERTY(ReplicatedUsing = OnRep_UpperMesh)
+	USkeletalMesh* ReplicatedUpperMesh;
+	UPROPERTY(ReplicatedUsing = OnRep_LowerMesh)
+	USkeletalMesh* ReplicatedLowerMesh;
+	UPROPERTY(ReplicatedUsing = OnRep_ArmsMesh)
+	USkeletalMesh* ReplicatedArmsMesh;
 	UPROPERTY(ReplicatedUsing = OnRep_NecklaceMesh)
 	USkeletalMesh* ReplicatedNecklaceMesh;
 	UPROPERTY(ReplicatedUsing = OnRep_MainhandMesh)
@@ -219,30 +200,25 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimSequence* SwordBasicAttack3;
 
-	//Meshes
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* ChestplateMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* BootsMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* LeggingsMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* ShouldersMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* LowerMesh;
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* UpperMesh;
+
+	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* HelmetMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* WaistMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* BackpackMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* GlovesMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* WristMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* ArmsMesh;
+
+	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* NecklaceMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
+
+	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* MainhandItemMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
+
+	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* OffhandItemMesh;
 
 	//Other Classes

@@ -39,33 +39,26 @@ AEnemyCharacterAI::AEnemyCharacterAI()
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
 	// Mesh attachments
-	ChestplateMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChestplateMesh"));
-	ChestplateMesh->SetupAttachment(GetMesh());
-	ChestplateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ChestplateMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	ChestplateMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	ChestplateMesh->SetLeaderPoseComponent(GetMesh());
+	UpperMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("UpperMesh"));
+	UpperMesh->SetupAttachment(GetMesh());
+	UpperMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	UpperMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	UpperMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	UpperMesh->SetLeaderPoseComponent(GetMesh());
 
-	BootsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BootsMesh"));
-	BootsMesh->SetupAttachment(GetMesh());
-	BootsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	BootsMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	BootsMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	BootsMesh->SetLeaderPoseComponent(GetMesh());
+	LowerMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LowerMesh"));
+	LowerMesh->SetupAttachment(GetMesh());
+	LowerMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LowerMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	LowerMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	LowerMesh->SetLeaderPoseComponent(GetMesh());
 
-	LeggingsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LeggingsMesh"));
-	LeggingsMesh->SetupAttachment(GetMesh());
-	LeggingsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LeggingsMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	LeggingsMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	LeggingsMesh->SetLeaderPoseComponent(GetMesh());
-
-	ShouldersMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShouldersMesh"));
-	ShouldersMesh->SetupAttachment(GetMesh());
-	ShouldersMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ShouldersMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	ShouldersMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	ShouldersMesh->SetLeaderPoseComponent(GetMesh());
+	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
+	ArmsMesh->SetupAttachment(GetMesh());
+	ArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ArmsMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	ArmsMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	ArmsMesh->SetLeaderPoseComponent(GetMesh());
 
 	HelmetMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetMesh"));
 	HelmetMesh->SetupAttachment(GetMesh());
@@ -73,34 +66,6 @@ AEnemyCharacterAI::AEnemyCharacterAI()
 	HelmetMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	HelmetMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	HelmetMesh->SetLeaderPoseComponent(GetMesh());
-
-	WaistMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WaistMesh"));
-	WaistMesh->SetupAttachment(GetMesh());
-	WaistMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WaistMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	WaistMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	WaistMesh->SetLeaderPoseComponent(GetMesh());
-
-	BackpackMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BackpackMesh"));
-	BackpackMesh->SetupAttachment(GetMesh());
-	BackpackMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	BackpackMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	BackpackMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	BackpackMesh->SetLeaderPoseComponent(GetMesh());
-
-	WristMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WristMesh"));
-	WristMesh->SetupAttachment(GetMesh());
-	WristMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WristMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	WristMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	WristMesh->SetLeaderPoseComponent(GetMesh());
-
-	GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlovesMesh"));
-	GlovesMesh->SetupAttachment(GetMesh());
-	GlovesMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GlovesMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	GlovesMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	GlovesMesh->SetLeaderPoseComponent(GetMesh());
 
 	NecklaceMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NecklaceMesh"));
 	NecklaceMesh->SetupAttachment(GetMesh());
@@ -120,7 +85,6 @@ AEnemyCharacterAI::AEnemyCharacterAI()
 	OffhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	OffhandItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	OffhandItemMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-
 
 	AIControllerClass = AEnemyControllerAI::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -169,15 +133,10 @@ void AEnemyCharacterAI::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AEnemyCharacterAI, EnemyLevel);
 
 	//equipped items
-	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedChestplateMesh);
-	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedBootsMesh);
-	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedLeggingsMesh);
-	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedShouldersMesh);
+	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedArmsMesh);
+	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedUpperMesh);
+	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedLowerMesh);
 	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedHelmetMesh);
-	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedWaistMesh);
-	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedBackpackMesh);
-	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedGlovesMesh);
-	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedWristMesh);
 	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedNecklaceMesh);
 	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedMainhandMesh);
 	DOREPLIFETIME(AEnemyCharacterAI, ReplicatedOffhandMesh);
@@ -343,9 +302,8 @@ void AEnemyCharacterAI::InitializeStartingEquipment()
 	if (!InventoryComponent) return;
 
 	TArray<FString> StartingItems = {
-		"Sword", "Shield", "Helmet", "Shoulders", "Chestplate",
-		"Leggings", "Boots", "Backpack", "Necklace",
-		"Waist", "Wrist", "Gloves"
+		"Sword", "Shield", "Helmet", "Upper", "Lower",
+		"Necklace", "Arms",
 	};
 
 	for (const FString& ItemName : StartingItems)
@@ -490,15 +448,10 @@ FString AEnemyCharacterAI::GetMeshPathByItemType(const FString& ItemType)
 
 USkeletalMeshComponent* AEnemyCharacterAI::GetSkeletalMeshComponentByItemType(const FString& ItemType)
 {
-	if (ItemType == "Chestplate") return ChestplateMesh;
-	if (ItemType == "Leggings") return LeggingsMesh;
-	if (ItemType == "Boots") return BootsMesh;
-	if (ItemType == "Shoulders") return ShouldersMesh;
+	if (ItemType == "Arms") return ArmsMesh;
 	if (ItemType == "Helmet") return HelmetMesh;
-	if (ItemType == "Waist") return WaistMesh;
-	if (ItemType == "Backpack") return BackpackMesh;
-	if (ItemType == "Gloves") return GlovesMesh;
-	if (ItemType == "Wrist") return WristMesh;
+	if (ItemType == "Lower") return LowerMesh;
+	if (ItemType == "Upper") return UpperMesh;
 	if (ItemType == "Necklace") return NecklaceMesh;
 	return nullptr;
 }
@@ -515,24 +468,14 @@ void AEnemyCharacterAI::Server_SetReplicatedMeshByItemType_Implementation(UObjec
 	SetReplicatedMeshByItemType(MeshAsset, ItemType);
 }
 
-void AEnemyCharacterAI::OnRep_ChestplateMesh()
+void AEnemyCharacterAI::OnRep_UpperMesh()
 {
-	if (ChestplateMesh) ChestplateMesh->SetSkeletalMesh(ReplicatedChestplateMesh);
+	if (UpperMesh) UpperMesh->SetSkeletalMesh(ReplicatedUpperMesh);
 }
 
-void AEnemyCharacterAI::OnRep_BootsMesh()
+void AEnemyCharacterAI::OnRep_LowerMesh()
 {
-	if (BootsMesh) BootsMesh->SetSkeletalMesh(ReplicatedBootsMesh);
-}
-
-void AEnemyCharacterAI::OnRep_LeggingsMesh()
-{
-	if (LeggingsMesh) LeggingsMesh->SetSkeletalMesh(ReplicatedLeggingsMesh);
-}
-
-void AEnemyCharacterAI::OnRep_ShouldersMesh()
-{
-	if (ShouldersMesh) ShouldersMesh->SetSkeletalMesh(ReplicatedShouldersMesh);
+	if (LowerMesh) LowerMesh->SetSkeletalMesh(ReplicatedLowerMesh);
 }
 
 void AEnemyCharacterAI::OnRep_HelmetMesh()
@@ -540,24 +483,9 @@ void AEnemyCharacterAI::OnRep_HelmetMesh()
 	if (HelmetMesh) HelmetMesh->SetSkeletalMesh(ReplicatedHelmetMesh);
 }
 
-void AEnemyCharacterAI::OnRep_WaistMesh()
+void AEnemyCharacterAI::OnRep_ArmsMesh()
 {
-	if (WaistMesh) WaistMesh->SetSkeletalMesh(ReplicatedWaistMesh);
-}
-
-void AEnemyCharacterAI::OnRep_BackpackMesh()
-{
-	if (BackpackMesh) BackpackMesh->SetSkeletalMesh(ReplicatedBackpackMesh);
-}
-
-void AEnemyCharacterAI::OnRep_GlovesMesh()
-{
-	if (GlovesMesh) GlovesMesh->SetSkeletalMesh(ReplicatedGlovesMesh);
-}
-
-void AEnemyCharacterAI::OnRep_WristMesh()
-{
-	if (WristMesh) WristMesh->SetSkeletalMesh(ReplicatedWristMesh);
+	if (ArmsMesh) ArmsMesh->SetSkeletalMesh(ReplicatedArmsMesh);
 }
 
 void AEnemyCharacterAI::OnRep_NecklaceMesh()
@@ -583,50 +511,25 @@ void AEnemyCharacterAI::SetReplicatedMeshByItemType(UObject* MeshAsset, const FS
 		return;
 	}
 
-	if (ItemType == "Chestplate")
+	if (ItemType == "Upper")
 	{
-		ReplicatedChestplateMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_ChestplateMesh();
+		ReplicatedUpperMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_UpperMesh();
 	}
-	else if (ItemType == "Boots")
+	else if (ItemType == "Lower")
 	{
-		ReplicatedBootsMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_BootsMesh();
-	}
-	else if (ItemType == "Leggings")
-	{
-		ReplicatedLeggingsMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_LeggingsMesh();
-	}
-	else if (ItemType == "Shoulders")
-	{
-		ReplicatedShouldersMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_ShouldersMesh();
+		ReplicatedLowerMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_LowerMesh();
 	}
 	else if (ItemType == "Helmet")
 	{
 		ReplicatedHelmetMesh = Cast<USkeletalMesh>(MeshAsset);
 		OnRep_HelmetMesh();
 	}
-	else if (ItemType == "Waist")
+	else if (ItemType == "Arms")
 	{
-		ReplicatedWaistMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_WaistMesh();
-	}
-	else if (ItemType == "Backpack")
-	{
-		ReplicatedBackpackMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_BackpackMesh();
-	}
-	else if (ItemType == "Gloves")
-	{
-		ReplicatedGlovesMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_GlovesMesh();
-	}
-	else if (ItemType == "Wrist")
-	{
-		ReplicatedWristMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_WristMesh();
+		ReplicatedArmsMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_ArmsMesh();
 	}
 	else if (ItemType == "Necklace")
 	{

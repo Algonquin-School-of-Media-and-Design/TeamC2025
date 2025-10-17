@@ -92,88 +92,53 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Equipment Meshes
-	ChestplateMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChestplateMesh"));
-	ChestplateMesh->SetupAttachment(GetMesh());
-	ChestplateMesh->SetLeaderPoseComponent(GetMesh());
-	ChestplateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ChestplateMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	ChestplateMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	// Mesh attachments
+	UpperMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("UpperMesh"));
+	UpperMesh->SetupAttachment(GetMesh());
+	UpperMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	UpperMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	UpperMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	UpperMesh->SetLeaderPoseComponent(GetMesh());
 
-	BootsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BootsMesh"));
-	BootsMesh->SetupAttachment(GetMesh());
-	BootsMesh->SetLeaderPoseComponent(GetMesh());
-	BootsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	BootsMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	BootsMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	LowerMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LowerMesh"));
+	LowerMesh->SetupAttachment(GetMesh());
+	LowerMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LowerMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	LowerMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	LowerMesh->SetLeaderPoseComponent(GetMesh());
 
-	LeggingsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LeggingsMesh"));
-	LeggingsMesh->SetupAttachment(GetMesh());
-	LeggingsMesh->SetLeaderPoseComponent(GetMesh());
-	LeggingsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	LeggingsMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	LeggingsMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-
-	ShouldersMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShouldersMesh"));
-	ShouldersMesh->SetupAttachment(GetMesh());
-	ShouldersMesh->SetLeaderPoseComponent(GetMesh());
-	ShouldersMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ShouldersMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	ShouldersMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
+	ArmsMesh->SetupAttachment(GetMesh());
+	ArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ArmsMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	ArmsMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	ArmsMesh->SetLeaderPoseComponent(GetMesh());
 
 	HelmetMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetMesh"));
 	HelmetMesh->SetupAttachment(GetMesh());
-	HelmetMesh->SetLeaderPoseComponent(GetMesh());
 	HelmetMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	HelmetMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	HelmetMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-
-	WaistMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WaistMesh"));
-	WaistMesh->SetupAttachment(GetMesh());
-	WaistMesh->SetLeaderPoseComponent(GetMesh());
-	WaistMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WaistMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	WaistMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-
-	BackpackMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BackpackMesh"));
-	BackpackMesh->SetupAttachment(GetMesh());
-	BackpackMesh->SetLeaderPoseComponent(GetMesh());
-	BackpackMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	BackpackMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	BackpackMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-
-	WristMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WristMesh"));
-	WristMesh->SetupAttachment(GetMesh());
-	WristMesh->SetLeaderPoseComponent(GetMesh());
-	WristMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WristMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	WristMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-
-	GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlovesMesh"));
-	GlovesMesh->SetupAttachment(GetMesh());
-	GlovesMesh->SetLeaderPoseComponent(GetMesh());
-	GlovesMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GlovesMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	GlovesMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	HelmetMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	HelmetMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	HelmetMesh->SetLeaderPoseComponent(GetMesh());
 
 	NecklaceMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NecklaceMesh"));
 	NecklaceMesh->SetupAttachment(GetMesh());
-	NecklaceMesh->SetLeaderPoseComponent(GetMesh());
 	NecklaceMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	NecklaceMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	NecklaceMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	NecklaceMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	NecklaceMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	NecklaceMesh->SetLeaderPoseComponent(GetMesh());
 
-	MainhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainhandItemMesh"));
-	MainhandItemMesh->SetupAttachment(GetMesh());
+	MainhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainhandMesh"));
+	MainhandItemMesh->SetupAttachment(GetMesh(), TEXT("MainhandSocket"));
 	MainhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	MainhandItemMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	MainhandItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	MainhandItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	MainhandItemMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 
-	OffhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OffhandItemMesh"));
-	OffhandItemMesh->SetupAttachment(GetMesh());
+	OffhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OffhandMesh"));
+	OffhandItemMesh->SetupAttachment(GetMesh(), TEXT("OffhandSocket"));
 	OffhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	OffhandItemMesh->SetCollisionProfileName(TEXT("NoCollision"));
-	OffhandItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	OffhandItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	OffhandItemMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 
 	//UI
 	PlayerHUDWorld = CreateDefaultSubobject<UWidgetComponent>(TEXT("TooltipWidgetComponent"));
@@ -232,19 +197,13 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 
 
 	//equipped items
-	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedChestplateMesh);
-	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedBootsMesh);
-	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedLeggingsMesh);
-	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedShouldersMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedArmsMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedUpperMesh);
+	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedLowerMesh);
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedHelmetMesh);
-	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedWaistMesh);
-	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedBackpackMesh);
-	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedGlovesMesh);
-	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedWristMesh);
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedNecklaceMesh);
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedMainhandMesh);
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedOffhandMesh);
-
 }
 
 EInventorySorting ARelicRunnersCharacter::GetCurrentSortingMethod() const
@@ -305,24 +264,14 @@ void ARelicRunnersCharacter::Server_SetReplicatedMeshByItemType_Implementation(U
 	SetReplicatedMeshByItemType(MeshAsset, ItemType);
 }
 
-void ARelicRunnersCharacter::OnRep_ChestplateMesh()
+void ARelicRunnersCharacter::OnRep_UpperMesh()
 {
-	if (ChestplateMesh) ChestplateMesh->SetSkeletalMesh(ReplicatedChestplateMesh);
+	if (UpperMesh) UpperMesh->SetSkeletalMesh(ReplicatedUpperMesh);
 }
 
-void ARelicRunnersCharacter::OnRep_BootsMesh()
+void ARelicRunnersCharacter::OnRep_LowerMesh()
 {
-	if (BootsMesh) BootsMesh->SetSkeletalMesh(ReplicatedBootsMesh);
-}
-
-void ARelicRunnersCharacter::OnRep_LeggingsMesh()
-{
-	if (LeggingsMesh) LeggingsMesh->SetSkeletalMesh(ReplicatedLeggingsMesh);
-}
-
-void ARelicRunnersCharacter::OnRep_ShouldersMesh()
-{
-	if (ShouldersMesh) ShouldersMesh->SetSkeletalMesh(ReplicatedShouldersMesh);
+	if (LowerMesh) LowerMesh->SetSkeletalMesh(ReplicatedLowerMesh);
 }
 
 void ARelicRunnersCharacter::OnRep_HelmetMesh()
@@ -330,24 +279,9 @@ void ARelicRunnersCharacter::OnRep_HelmetMesh()
 	if (HelmetMesh) HelmetMesh->SetSkeletalMesh(ReplicatedHelmetMesh);
 }
 
-void ARelicRunnersCharacter::OnRep_WaistMesh()
+void ARelicRunnersCharacter::OnRep_ArmsMesh()
 {
-	if (WaistMesh) WaistMesh->SetSkeletalMesh(ReplicatedWaistMesh);
-}
-
-void ARelicRunnersCharacter::OnRep_BackpackMesh()
-{
-	if (BackpackMesh) BackpackMesh->SetSkeletalMesh(ReplicatedBackpackMesh);
-}
-
-void ARelicRunnersCharacter::OnRep_GlovesMesh()
-{
-	if (GlovesMesh) GlovesMesh->SetSkeletalMesh(ReplicatedGlovesMesh);
-}
-
-void ARelicRunnersCharacter::OnRep_WristMesh()
-{
-	if (WristMesh) WristMesh->SetSkeletalMesh(ReplicatedWristMesh);
+	if (ArmsMesh) ArmsMesh->SetSkeletalMesh(ReplicatedArmsMesh);
 }
 
 void ARelicRunnersCharacter::OnRep_NecklaceMesh()
@@ -363,6 +297,51 @@ void ARelicRunnersCharacter::OnRep_MainhandMesh()
 void ARelicRunnersCharacter::OnRep_OffhandMesh()
 {
 	if (OffhandItemMesh) OffhandItemMesh->SetStaticMesh(ReplicatedOffhandMesh);
+}
+
+void ARelicRunnersCharacter::SetReplicatedMeshByItemType(UObject* MeshAsset, const FString& ItemType)
+{
+
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (ItemType == "Upper")
+	{
+		ReplicatedUpperMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_UpperMesh();
+	}
+	else if (ItemType == "Lower")
+	{
+		ReplicatedLowerMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_LowerMesh();
+	}
+	else if (ItemType == "Helmet")
+	{
+		ReplicatedHelmetMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_HelmetMesh();
+	}
+	else if (ItemType == "Arms")
+	{
+		ReplicatedArmsMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_ArmsMesh();
+	}
+	else if (ItemType == "Necklace")
+	{
+		ReplicatedNecklaceMesh = Cast<USkeletalMesh>(MeshAsset);
+		OnRep_NecklaceMesh();
+	}
+	else if (ItemType == "Sword" || ItemType == "Mainhand")
+	{
+		ReplicatedMainhandMesh = Cast<UStaticMesh>(MeshAsset);
+		OnRep_MainhandMesh();
+	}
+	else if (ItemType == "Shield" || ItemType == "Offhand")
+	{
+		ReplicatedOffhandMesh = Cast<UStaticMesh>(MeshAsset);
+		OnRep_OffhandMesh();
+	}
 }
 
 void ARelicRunnersCharacter::OnRep_HUD()
@@ -692,7 +671,7 @@ void ARelicRunnersCharacter::PerformSwingTrace()
 		End,
 		FQuat::Identity,
 		ECC_Pawn,
-		FCollisionShape::MakeSphere(10.0f), // Adjust the thickness of your sword
+		FCollisionShape::MakeSphere(100.0f), // Adjust the thickness of your sword
 		Params
 	);
 
@@ -1137,15 +1116,10 @@ FString ARelicRunnersCharacter::GetMeshPathByItemType(const FString& ItemType)
 
 USkeletalMeshComponent* ARelicRunnersCharacter::GetSkeletalMeshComponentByItemType(const FString& ItemType)
 {
-	if (ItemType == "Chestplate") return ChestplateMesh;
-	if (ItemType == "Leggings") return LeggingsMesh;
-	if (ItemType == "Boots") return BootsMesh;
-	if (ItemType == "Shoulders") return ShouldersMesh;
+	if (ItemType == "Arms") return ArmsMesh;
 	if (ItemType == "Helmet") return HelmetMesh;
-	if (ItemType == "Waist") return WaistMesh;
-	if (ItemType == "Backpack") return BackpackMesh;
-	if (ItemType == "Gloves") return GlovesMesh;
-	if (ItemType == "Wrist") return WristMesh;
+	if (ItemType == "Lower") return LowerMesh;
+	if (ItemType == "Upper") return UpperMesh;
 	if (ItemType == "Necklace") return NecklaceMesh;
 	return nullptr;
 }
@@ -1155,77 +1129,6 @@ UStaticMeshComponent* ARelicRunnersCharacter::GetStaticMeshComponentByItemType(c
 	if (ItemType == "Sword") return MainhandItemMesh;
 	if (ItemType == "Shield") return OffhandItemMesh;
 	return nullptr;
-}
-
-void ARelicRunnersCharacter::SetReplicatedMeshByItemType(UObject* MeshAsset, const FString& ItemType)
-{
-
-	if (!HasAuthority())
-	{
-		Server_SetReplicatedMeshByItemType(MeshAsset, ItemType);
-		return;
-	}
-
-	if (ItemType == "Chestplate")
-	{
-		ReplicatedChestplateMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_ChestplateMesh();
-	}
-	else if (ItemType == "Boots")
-	{
-		ReplicatedBootsMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_BootsMesh();
-	}
-	else if (ItemType == "Leggings")
-	{
-		ReplicatedLeggingsMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_LeggingsMesh();
-	}
-	else if (ItemType == "Shoulders")
-	{
-		ReplicatedShouldersMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_ShouldersMesh();
-	}
-	else if (ItemType == "Helmet")
-	{
-		ReplicatedHelmetMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_HelmetMesh();
-	}
-	else if (ItemType == "Waist")
-	{
-		ReplicatedWaistMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_WaistMesh();
-	}
-	else if (ItemType == "Backpack")
-	{
-		ReplicatedBackpackMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_BackpackMesh();
-	}
-	else if (ItemType == "Gloves")
-	{
-		ReplicatedGlovesMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_GlovesMesh();
-	}
-	else if (ItemType == "Wrist")
-	{
-		ReplicatedWristMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_WristMesh();
-	}
-	else if (ItemType == "Necklace")
-	{
-		ReplicatedNecklaceMesh = Cast<USkeletalMesh>(MeshAsset);
-		OnRep_NecklaceMesh();
-	}
-	else if (ItemType == "Sword" || ItemType == "Mainhand")
-	{
-		ReplicatedMainhandMesh = Cast<UStaticMesh>(MeshAsset);
-		OnRep_MainhandMesh();
-	}
-	else if (ItemType == "Shield" || ItemType == "Offhand")
-	{
-		ReplicatedOffhandMesh = Cast<UStaticMesh>(MeshAsset);
-		OnRep_OffhandMesh();
-	}
 }
 
 int ARelicRunnersCharacter::GetPlayerStartingMaxHealth() const
