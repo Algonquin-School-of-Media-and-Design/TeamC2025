@@ -58,6 +58,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Luck;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_Gold;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tooltip")
 	TSubclassOf<UUserWidget> TooltipWidgetClass;
 
@@ -255,6 +258,9 @@ public:
 
 	UFUNCTION()
 	void RefreshEquippedUI();
+
+	UFUNCTION()
+	void RefreshGoldUI(int32 NewGold);
 private:
 
 	

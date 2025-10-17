@@ -38,6 +38,28 @@ void UInventoryComponent::BeginPlay()
     UE_LOG(LogTemp, Warning, TEXT("InventoryComponent BeginPlay on %s (Role: %d)"), *GetOwner()->GetName(), (int32)GetOwnerRole());
 }
 
+bool UInventoryComponent::TryChangeGold(int32 Delta)
+{
+    const int32 NewGold = Gold + Delta;
+    if (NewGold < 0)
+    {
+        return false; // would go negative
+    }
+
+    Gold = NewGold;
+
+    // Notify UI
+    OnGoldChanged.Broadcast(Gold);
+    OnInventoryChanged.Broadcast(); // reuse existing refresh
+    return true;
+}
+
+void UInventoryComponent::OnRep_Gold()
+{
+    OnGoldChanged.Broadcast(Gold);
+    OnInventoryChanged.Broadcast();
+}
+
 bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
     bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
@@ -476,5 +498,6 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME(UInventoryComponent, InventoryItems);
     DOREPLIFETIME(UInventoryComponent, EquippedItems);
     DOREPLIFETIME(UInventoryComponent, CurrentSortingMethod);
+    DOREPLIFETIME(UInventoryComponent, Gold);
 
 }

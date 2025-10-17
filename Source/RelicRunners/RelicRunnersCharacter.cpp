@@ -51,7 +51,7 @@
 #include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
 #include "Game/RelicRunnersGameInstance.h"
 #include "Spawning System/Director.h"
-
+#include "Engine/Engine.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -1285,6 +1285,44 @@ int ARelicRunnersCharacter::GetPlayerStartingLuck() const
 	return PlayerStartingLuck;
 }
 
+void ARelicRunnersCharacter::AddGold(int32 Amount)
+{
+    if (UInventoryComponent* Inv = GetInventoryComponent())
+    {
+        Inv->TryChangeGold(Amount);
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(
+                -1, 2.f, FColor::Yellow,
+                FString::Printf(TEXT("Gold +%d  ->  %d"), Amount, Inv->GetGold())
+            );
+        }
+    }
+}
 
-
-
+void ARelicRunnersCharacter::SpendGold(int32 Amount)
+{
+    if (UInventoryComponent* Inv = GetInventoryComponent())
+    {
+        if (!Inv->TryChangeGold(-Amount))
+        {
+            if (GEngine)
+            {
+                GEngine->AddOnScreenDebugMessage(
+                    -1, 2.f, FColor::Red,
+                    FString::Printf(TEXT("Not enough gold to spend %d"), Amount)
+                );
+            }
+        }
+        else
+        {
+            if (GEngine)
+            {
+                GEngine->AddOnScreenDebugMessage(
+                    -1, 2.f, FColor::Yellow,
+                    FString::Printf(TEXT("Gold -%d  ->  %d"), Amount, Inv->GetGold())
+                );
+            }
+        }
+    }
+}

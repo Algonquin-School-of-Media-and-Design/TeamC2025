@@ -21,6 +21,7 @@
 #include "RelicRunnersPlayerController.generated.h"
 
 class UInputMappingContext;
+class UInventoryComponent;
 
 UCLASS()
 class RELICRUNNERS_API ARelicRunnersPlayerController : public APlayerController
@@ -142,6 +143,13 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ClientTravelToGame();
+
+	//  Currency Cheats
+	UFUNCTION(Exec)
+	void AddGold(int32 Amount = 10);
+
+	UFUNCTION(Exec)
+	void SpendGold(int32 Amount = 10);
 
 	// Begin Actor interface
 protected:

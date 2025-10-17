@@ -195,6 +195,10 @@ public:
 	class UInventory* GetInventory() { return Inventory; };
 	class UInventoryComponent* GetInventoryComponent() { return InventoryComponent; };
 
+	// Currency cheats
+	UFUNCTION(Exec) void AddGold(int32 Amount = 10);
+	UFUNCTION(Exec) void SpendGold(int32 Amount = 10);
+
 	//Update functions
 	void UpdateItemVisuals(UObject* MeshAsset, const FString& ItemType);
 	void UpdateItemVisuals(class UItemObject* Item);
