@@ -9,11 +9,6 @@
 class UItemObject;
 class UWidgetComponent;
 
-//for contoler
-//class UAIPerceptionComponent;
-//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//UAIPerceptionComponent* AIPerceptionComp;
-
 UENUM(BlueprintType)
 enum class EEnemyType : uint8
 {
@@ -69,31 +64,34 @@ public:
 	virtual bool IsDead() { return CurrentHealth <= 0; }
 
 	UFUNCTION(BlueprintCallable)
-	float GetCurrentHealth() { return CurrentHealth; }
-	UFUNCTION(BlueprintCallable)
-	float GetMaxHealth() { return MaxHealth; }
-	UFUNCTION(BlueprintCallable)
-	float GetStunTime() { return RemainingStunTime; }
-	UFUNCTION(BlueprintCallable)
-	int GetEnemyLevel() { return Level; }
-	UFUNCTION(BlueprintCallable)
-	EEnemyType GetEnemyType() { return TypeOfEnemy; }
+	void ReduceStunTime(float DeltaTime);
 
 	UFUNCTION(BlueprintCallable)
-	void SetCurrentHealth(float newHealth) { CurrentHealth = newHealth; }
+	float GetCurrentHealth() { return CurrentHealth; } const
 	UFUNCTION(BlueprintCallable)
-	void SetMaxHealth(float newHealth) { MaxHealth = newHealth; }
+	float GetMaxHealth() { return MaxHealth; } const
 	UFUNCTION(BlueprintCallable)
-	void SetStunTime(float newStunTime) { RemainingStunTime = newStunTime; }
+	float GetStunTime() { return RemainingStunTime; } const
 	UFUNCTION(BlueprintCallable)
-	void SetEnemyLevel(int newLevel) { Level = newLevel; }
+	int GetEnemyLevel() { return Level; } const
+	UFUNCTION(BlueprintCallable)
+	EEnemyType GetEnemyType() { return TypeOfEnemy; } const
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentHealth(const float& newHealth) { CurrentHealth = newHealth; }
+	UFUNCTION(BlueprintCallable)
+	void SetMaxHealth(const float& newHealth) { MaxHealth = newHealth; }
+	UFUNCTION(BlueprintCallable)
+	void SetStunTime(const float& newStunTime) { RemainingStunTime = newStunTime; }
+	UFUNCTION(BlueprintCallable)
+	void SetEnemyLevel(const int& newLevel) { Level = newLevel; }
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	virtual void spawnItem();
+	virtual void SpawnItem();
 
 	UFUNCTION(BlueprintCallable)
 	virtual float CalculateXP() const;

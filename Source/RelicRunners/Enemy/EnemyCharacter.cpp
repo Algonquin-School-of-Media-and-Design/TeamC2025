@@ -40,7 +40,6 @@ void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-
 	DOREPLIFETIME(AEnemyCharacter, CurrentHealth);
 	DOREPLIFETIME(AEnemyCharacter, MaxHealth);
 	DOREPLIFETIME(AEnemyCharacter, RemainingStunTime);
@@ -87,7 +86,7 @@ void AEnemyCharacter::Die(AController* EventInstigator)
 {
 	if (HasAuthority())
 	{
-		spawnItem();
+		SpawnItem();
 
 		if (EventInstigator)
 		{
@@ -103,6 +102,18 @@ void AEnemyCharacter::Die(AController* EventInstigator)
 		}
 
 		Destroy();
+	}
+}
+
+void AEnemyCharacter::ReduceStunTime(float DeltaTime)
+{
+	if (RemainingStunTime > 0)
+	{
+		RemainingStunTime -= DeltaTime;
+		if (RemainingStunTime < 0)
+		{
+			RemainingStunTime = 0;
+		}
 	}
 }
 
@@ -134,7 +145,7 @@ void AEnemyCharacter::BeginPlay()
 	}
 }
 
-void AEnemyCharacter::spawnItem()
+void AEnemyCharacter::SpawnItem()
 {
 	if (ItemLootPool.Num() > 0)
 	{
@@ -197,7 +208,6 @@ void AEnemyCharacter::UpdateEnemyHUDWorldFacing()
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input

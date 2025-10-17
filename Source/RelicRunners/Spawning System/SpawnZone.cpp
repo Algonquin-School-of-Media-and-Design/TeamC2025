@@ -18,15 +18,15 @@ FVector ASpawnZone::GetRandomPosition()
 		radiusToUse = boxExtent.GetMax();
 	}
 
-	FNavLocation RandomPoint;
+	FNavLocation randomPoint;
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 
-	if (NavSys->GetRandomPointInNavigableRadius(origin, radiusToUse, RandomPoint))
+	if (NavSys->GetRandomPointInNavigableRadius(origin, radiusToUse, randomPoint))
 	{
-		return RandomPoint.Location;
+		return randomPoint.Location;
 	}
 
 	UE_LOG(LogTemp, Error, TEXT("could not find random spawn point on navmesh"));
 
-	return FVector();
+	return FVector::ZeroVector;
 }
