@@ -40,6 +40,7 @@
 #include "PlayerHUD/PlayerHUD.h"
 #include "AbilitySystem/AbilityPointCounter.h"
 #include "AbilitySystem/AbilitySelection.h"
+#include "AbilitySystem/HealthPotion.h"
 #include "PlayerHUD/PlayerHUDWorld.h"
 #include "PlayerPreview/PlayerPreview.h"
 #include "PlayerState/RelicRunnersPlayerState.h"
@@ -157,7 +158,7 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	//Starting Stats
 	PlayerStartingMaxHealth = 100;
 	PlayerMaxHealth = PlayerStartingMaxHealth;
-	PlayerHealth = PlayerMaxHealth;
+	PlayerHealth = 20;
 	PlayerStartingMaxResource = 100;
 	PlayerMaxResource = PlayerStartingMaxResource;
 	PlayerResource = PlayerMaxResource;
@@ -177,7 +178,11 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	PlayerAbilityPoints = 2;
 	PlayerNumInventorySlots = 20;
 
+
 	Tags.Add("Player");
+
+	HealthPotionCount = 3;
+	HealthGranted = 50;
 
 	bAlwaysRelevant = true;
 	SetReplicates(true);
@@ -476,7 +481,7 @@ void ARelicRunnersCharacter::BeginPlay()
 	if (HasAuthority())
 	{
 		// Setup health regen loop
-		GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
+		//GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
 	}
 
 	// === Local client UI setup ===
@@ -540,7 +545,7 @@ void ARelicRunnersCharacter::InitLocalUI()
 			PlayerHUD->AddToViewport();
 		}
 	}
-
+	// === Ability Points Widget ===
 	if (!AbilityPointCounter && AbilityPointCounterClass)
 	{
 		AbilityPointCounter = CreateWidget<UAbilityPointCounter>(PC, AbilityPointCounterClass);
@@ -548,6 +553,16 @@ void ARelicRunnersCharacter::InitLocalUI()
 		{
 			AbilityPointCounter->AddToViewport();
 			AbilityPointCounter->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+	// === Health Potion Widget ===
+	if (!HealthPotion && HealthPotionClass)
+	{
+		HealthPotion = CreateWidget<UHealthPotion>(PC, HealthPotionClass);
+		if (HealthPotion)
+		{
+			HealthPotion->AddToViewport();
+			HealthPotion->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
 	// === Inventory Widget ===
@@ -561,8 +576,7 @@ void ARelicRunnersCharacter::InitLocalUI()
 			Inventory->SetIsEnabled(false);
 		}
 	}
-
-
+	// === Ability Selection HUD Widget ===
 	if (!AbilitySelection && AbilitySelectionClass)
 	{
 		{
@@ -882,7 +896,7 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 {
 	if (!IsLocallyControlled()) return;
 
-	if (!AbilitySelection) return;
+	if (AbilitySelection == nullptr) return;
 
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	if (!PlayerController) return;
@@ -906,6 +920,32 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 	}
 
 }
+void ARelicRunnersCharacter::DamageAbility()
+{
+	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+}
+
+void ARelicRunnersCharacter::DefenceAbility()
+{
+	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+}
+
+void ARelicRunnersCharacter::UtilityAbility()
+{
+	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+}
+
+void ARelicRunnersCharacter::UltimateAbility()
+{
+	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+}
+
+void ARelicRunnersCharacter::HealthPotions()
+{
+
+	HealthPotion->OnHealthPotionClicked(PlayerHealth, PlayerMaxHealth, HealthPotionCount, HealthGranted);
+	UpdateHUD();
+}
 
 void ARelicRunnersCharacter::SpendAbilityPoints()
 {
@@ -922,6 +962,7 @@ void ARelicRunnersCharacter::SpendAbilityPoints()
 			PlayerController->SetInputMode(FInputModeGameOnly());
 			PlayerController->SetShowMouseCursor(false);
 		}
+		UpdateHUD();
 	}
 }
 
