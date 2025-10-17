@@ -196,7 +196,7 @@ public:
 
 	class UInventoryComponent* GetInventoryComponent() { return InventoryComponent; };
 	UFUNCTION(BlueprintCallable, Category="Inventory")
-	void SetInventoryComponent(UInventoryComponent* InvComp) { InventoryComponent = InvComp; }
+	void SetInventoryComponent(UInventoryComponent* InvComp);
 
 	//Update functions
 	void UpdateItemVisuals(UObject* MeshAsset, const FString& ItemType);
