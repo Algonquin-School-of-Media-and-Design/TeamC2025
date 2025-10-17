@@ -1,0 +1,174 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
+#include "JoinUserWidget.generated.h"
+
+/**
+ *
+ */
+class FOnlineSessionSearchResult;
+
+UCLASS()
+class RELICRUNNERS_API UJoinUserWidget : public UUserWidget
+{
+	GENERATED_BODY()
+public:
+	void NativeConstruct() override;
+
+	void SetButtonColor(class UButton* Button, const FLinearColor& Color);
+
+	void SetBorderColor(class UBorder* Border, const FLinearColor& Color);
+
+	UFUNCTION()
+	void OnAresClicked();
+	UFUNCTION()
+	void OnArtemisClicked();
+	UFUNCTION()
+	void OnAphroditeClicked();
+	UFUNCTION()
+	void OnNemesisClicked();
+
+	void SetSelectedClass(FName ClassKey);
+	void HandleEntryGenerated(UUserWidget& EntryWidget);
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* BackButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* FindGames = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* JoinButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* JoinBorder = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* SessionsBorder = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* B_Ares = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* B_Artemis = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* B_Aphrodite = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* B_Nemesis = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UCircularThrobber* RefreshProgress = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UProgressBar* HealthBar = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UProgressBar* ArmorBar = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UProgressBar* DexterityBar = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UProgressBar* StrengthBar = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UProgressBar* IntelligenceBar = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UProgressBar* LuckBar = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_ClassName = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_ClassRole = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Ability1 = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Ability2 = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Ability3 = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Ability4 = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* AresButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* ArtemisButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* AphroditeButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* NemesisButton = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class")
+	class UClassInfo* ClassDataAsset = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* StartButton = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Health = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Armor = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Dexterity = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Strength = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Intelligence = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* TB_Luck = nullptr;
+
+	UFUNCTION()
+	void UpdateFindGamesButtonVisibility();
+protected:
+	UFUNCTION()
+	void BackButtonClicked();
+	UFUNCTION()
+	void FindGamesButtonClicked();
+
+	UFUNCTION()
+	void JoinGameButtonClicked();
+	UFUNCTION()
+	void StartGameButtonClicked();
+
+	UFUNCTION()
+	void HandleSessionClicked(class USessionListItemData* ClickedSession);
+
+	void SearchForLanGames();
+
+	UPROPERTY(meta = (BindWidget))
+
+	class UTileView* SessionTileView;
+
+	UObject* LastSelectedItem = nullptr;
+	void ShowJoinButton(bool IsEnabled);
+
+	UPROPERTY()
+	class UMainMenuWidget* ParentMenu;
+public:
+	void OnFindSessionsComplete(FString Str);
+
+	void EnableRefresh();
+
+	void SetParentMenu(class UMainMenuWidget* InParentMenu);
+
+	void RefreshMenu();
+};

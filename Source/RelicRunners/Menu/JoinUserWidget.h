@@ -22,6 +22,8 @@ public:
 
 	void SetBorderColor(class UBorder* Border, const FLinearColor& Color);
 
+	void SetImageColor(class UImage* Image, const FLinearColor& Color);
+
 	UFUNCTION()
 	void OnAresClicked();
 	UFUNCTION()
@@ -33,6 +35,18 @@ public:
 
 	void SetSelectedClass(FName ClassKey);
 	void HandleEntryGenerated(UUserWidget& EntryWidget);
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UImage* I_Ares = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UImage* I_Artemis = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UImage* I_Aphrodite = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UImage* I_Nemesis = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* BackButton = nullptr;
