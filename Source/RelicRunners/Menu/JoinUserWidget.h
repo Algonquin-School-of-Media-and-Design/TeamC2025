@@ -20,6 +20,8 @@ public:
 
 	void SetButtonColor(class UButton* Button, const FLinearColor& Color);
 
+	void SetBorderColor(class UBorder* Border, const FLinearColor& Color);
+
 	UFUNCTION()
 	void OnAresClicked();
 	UFUNCTION()
@@ -46,6 +48,18 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UBorder* SessionsBorder = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* B_Ares = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* B_Artemis = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* B_Aphrodite = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UBorder* B_Nemesis = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UCircularThrobber* RefreshProgress = nullptr;

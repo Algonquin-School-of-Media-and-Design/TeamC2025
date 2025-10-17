@@ -88,6 +88,13 @@ void UJoinUserWidget::SetButtonColor(UButton* Button, const FLinearColor& Color)
 	Button->SetBackgroundColor(Color);
 }
 
+void UJoinUserWidget::SetBorderColor(UBorder* Border, const FLinearColor& Color)
+{
+	if (!Border) return;
+
+	Border->SetBrushColor(Color);
+}
+
 void UJoinUserWidget::OnAresClicked() { SetSelectedClass("Ares"); }
 void UJoinUserWidget::OnArtemisClicked() { SetSelectedClass("Artemis"); }
 void UJoinUserWidget::OnAphroditeClicked() { SetSelectedClass("Aphrodite"); }
@@ -95,21 +102,43 @@ void UJoinUserWidget::OnNemesisClicked() { SetSelectedClass("Nemesis"); }
 
 void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 {
-	FLinearColor Gold(1, 0.5f, 0, 1.f);
+	FLinearColor Gold(1.f, 0.5f, 0, 1.f);
 	FLinearColor Cyan(0.f, 1.f, 1.f, 1.f);
+	FLinearColor DarkCyan(0, 0.021f, 0.02f, 1.f);
+	FLinearColor DarkGold(0.3f, 0.15, 0, 1.f);
 
 	// Reset all buttons to cyan
 	SetButtonColor(AresButton, Cyan);
 	SetButtonColor(ArtemisButton, Cyan);
 	SetButtonColor(AphroditeButton, Cyan);
 	SetButtonColor(NemesisButton, Cyan);
+	SetBorderColor(B_Ares, DarkCyan);
+	SetBorderColor(B_Artemis, DarkCyan);
+	SetBorderColor(B_Aphrodite, DarkCyan);
+	SetBorderColor(B_Nemesis, DarkCyan);
 
 	// Highlight the selected one gold
-	if (ClassKey == "Ares") SetButtonColor(AresButton, Gold);
-	else if (ClassKey == "Artemis") SetButtonColor(ArtemisButton, Gold);
-	else if (ClassKey == "Aphrodite") SetButtonColor(AphroditeButton, Gold);
-	else if (ClassKey == "Nemesis") SetButtonColor(NemesisButton, Gold);
-	
+	if (ClassKey == "Ares")
+	{
+		SetButtonColor(AresButton, Gold);
+		SetBorderColor(B_Ares, DarkGold);
+	}
+	else if (ClassKey == "Artemis")
+	{
+		SetButtonColor(ArtemisButton, Gold);
+		SetBorderColor(B_Artemis, DarkGold);
+	}
+	else if (ClassKey == "Aphrodite")
+	{
+		SetButtonColor(AphroditeButton, Gold);
+		SetBorderColor(B_Aphrodite, DarkGold);
+	}
+	else if (ClassKey == "Nemesis")
+	{
+		SetButtonColor(NemesisButton, Gold);
+		SetBorderColor(B_Nemesis, DarkGold);
+	}
+
 	if (!ClassDataAsset || !ClassDataAsset->Classes.Contains(ClassKey))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Invalid class key: %s"), *ClassKey.ToString());
