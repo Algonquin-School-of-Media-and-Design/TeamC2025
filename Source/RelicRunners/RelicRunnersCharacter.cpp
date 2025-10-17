@@ -523,6 +523,26 @@ void ARelicRunnersCharacter::BeginPlay()
 			HUDWorldWidget->InitWidgetWithCharacter(this);
 		}
 	}
+
+	if (HasAuthority())
+	{
+		UWorld* World = GetWorld();
+		APawn* player = static_cast<APawn*>(this);
+
+		GetWorld()->GetTimerManager().SetTimerForNextTick([World, player] {
+			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
+
+			if (Director != nullptr)
+			{
+				Director->AddPlayer(player);
+				player->OnDestroyed.AddDynamic(Director, &ADirector::RemoveEnemy);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("missing director"));
+			}
+		});
+	}
 }
 
 void ARelicRunnersCharacter::InitLocalUI()

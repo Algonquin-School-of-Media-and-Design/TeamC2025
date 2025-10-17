@@ -294,7 +294,11 @@ void AEnemyCharacterAI::BeginPlay()
 		}
 	}
 
-	/*if (HasAuthority())
+	TryBindInventoryDelegates();
+
+	InitializeStartingEquipment();
+
+	if (HasAuthority())
 	{
 		UWorld* World = GetWorld();
 		APawn* enemy = static_cast<APawn*>(this);
@@ -311,13 +315,9 @@ void AEnemyCharacterAI::BeginPlay()
 			{
 				UE_LOG(LogTemp, Error, TEXT("missing director"));
 			}
-			
-			});
-	}*/
 
-	TryBindInventoryDelegates();
-
-	InitializeStartingEquipment();
+		});
+	}
 }
 
 void AEnemyCharacterAI::TryBindInventoryDelegates()
