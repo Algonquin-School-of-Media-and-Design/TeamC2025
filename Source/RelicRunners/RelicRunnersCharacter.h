@@ -174,7 +174,10 @@ public:
 
 
 	class UInventory* GetInventory() { return Inventory; };
+
 	class UInventoryComponent* GetInventoryComponent() { return InventoryComponent; };
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	void SetInventoryComponent(UInventoryComponent* InvComp) { InventoryComponent = InvComp; }
 
 	// Currency cheats
 	UFUNCTION(Exec) void AddGold(int32 Amount = 10);
