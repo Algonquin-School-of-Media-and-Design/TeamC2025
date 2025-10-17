@@ -41,7 +41,7 @@ public:
 	UFUNCTION()
 	void ChangeLevel();
 
-	UFUNCTION(NetMulticast, Reliable)
-	void MC_ChangeLevel();
+	UFUNCTION(Server, Reliable)
+	void Server_ChangeLevel();
 
 };

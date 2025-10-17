@@ -26,9 +26,8 @@ enum class EFloorObstacle : uint8
 {
 	None,
 	Basic,
-	EnemyTower,
+	KeyTile,
 	Shop,
-	MAX,
 	Start,
 	End,
 };
@@ -68,56 +67,58 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class USceneComponent* Origin;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues");
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle");
 	TArray <TSubclassOf<class APackedLevelActor>> PackedLevelArray;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues");
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle");
 	TSubclassOf<class APackedLevelActor> LevelStartPackedLevel;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues");
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle");
 	TSubclassOf<class APackedLevelActor> LevelEndPackedLevel;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
 	class UStaticMeshComponent* FullPiece;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
 	class UStaticMeshComponent* SidePiece;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
 	class UStaticMeshComponent* ConcaveCornerPiece;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues")
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
 	class UStaticMeshComponent* ConvexCornerPiece;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
 	int SpawnWidth;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
 	int SpawnDepth;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
 	float FullPercentage;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	float BasicObstaclePercentage;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
 	int CenterForceFull;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
 	int BorderForceFull;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
 	float TileScale;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
-	int MaxBasicObstacleAmount;
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000"))
+	int MaxKeyTileAmount;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
-	int MaxEnemyTowerAmount;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000"))
 	int MaxShopAmount;
 
 protected:
-	// Called when the game starts or when spawned
+
+	virtual void PostInitializeComponents() override;
+
 	virtual void BeginPlay() override;
 
 public:
@@ -128,9 +129,11 @@ public:
 
 	void InitializeModularObstacle(FloorValues& floorValue);
 
-	void SetStartingAndEndingPoints(int startingX, int startingY, int endingX, int endingY);
+	void SetStartingAndEndingPoints(int startingIndex, int endingIndex);
 
-	void FindStartToEndPath(int startingX, int startingY, int endingX, int endingY);
+	void SetKeyTile(int index);
+
+	void FindStartToEndPath(int startingIndex, int targetIndex);
 
 	void CheckFloor(int x, int y);
 
@@ -144,6 +147,9 @@ public:
 	void SetTopRightFloorShape(int x, int y);
 	void SetBottomLeftFloorShape(int x, int y);
 	void SetBottomRightFloorShape(int x, int y);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnFloorObstacles(int x, int y);
 
 	void SpawnFloorObstacles(int x, int y);
 

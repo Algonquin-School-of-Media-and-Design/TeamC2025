@@ -6,6 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "../PlayerController/RelicRunnersPlayerController.h"
 
 // Sets default values
 ALevelChangeTrigger::ALevelChangeTrigger():
@@ -31,6 +32,7 @@ ALevelChangeTrigger::ALevelChangeTrigger():
 
 	SetReplicates(true);
 	bAlwaysRelevant = true;
+	bReplicates = true;
 }
 
 void ALevelChangeTrigger::OnConstruction(const FTransform& transform)
@@ -53,14 +55,28 @@ void ALevelChangeTrigger::OnConstruction(const FTransform& transform)
 void ALevelChangeTrigger::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (TargetLevel.IsNull())
+	{
+		FString LevelString = FString("No Level");
+		LevelTargetTextRender->SetText(FText::FromString(LevelString));
+	}
+	else
+	{
+		const FString LevelString = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString()));
+		LevelTargetTextRender->SetText(FText::FromString(LevelString));
+	}
+
 }
 
 void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (HasAuthority())
+	if (OtherActor->ActorHasTag("Player"))
 	{
-		MC_ChangeLevel();
+		if (HasAuthority())
+		{
+			Server_ChangeLevel();
+		}
 	}
 }
 
@@ -74,12 +90,26 @@ void ALevelChangeTrigger::ChangeLevel()
 	if (TargetLevel.IsNull())
 		return;
 
-	const FString LevelString = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString() + "?listen"));
+	const FString LevelURL = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString() + "?listen"));
 
-	world->ServerTravel(LevelString);
+	//for (FConstPlayerControllerIterator Iterator = world->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	//{
+	//	ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(*Iterator);
+	//	if (PC && !PC->IsLocalController()) // skip host
+	//	{
+	//		PC->ClientTravelToGame();
+	//	}
+	//}
+
+	//world->SeamlessTravel(LevelURL);
+
+	if (HasAuthority())
+	{
+		world->ServerTravel(LevelURL);
+	}
 }
 
-void ALevelChangeTrigger::MC_ChangeLevel_Implementation()
+void ALevelChangeTrigger::Server_ChangeLevel_Implementation()
 {
 	ChangeLevel();
 }

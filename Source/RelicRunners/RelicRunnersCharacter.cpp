@@ -187,6 +187,8 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	bAlwaysRelevant = true;
 	SetReplicates(true);
 	SetReplicateMovement(true);
+
+	Tags.Add("Player");
 }
 
 void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

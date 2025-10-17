@@ -9,11 +9,11 @@
 
 /*
 TODO:
-	Initialize the Obstacle type that each terrain tile will spawn on itself
-	Make sure to check there is exclusively 1 starting tile and 1 ending tile
+Create "Key tiles" that create paths from the start tile like how it works with the ending tile
+Make the navmesh work with the level generation
+Teleport every player to the starting point when the level starts
 */
 
-// Sets default values
 ALevelGenerator::ALevelGenerator() :
 	LevelStartPackedLevel(nullptr),
 	LevelEndPackedLevel(nullptr),
@@ -21,60 +21,50 @@ ALevelGenerator::ALevelGenerator() :
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
 	ConvexCornerPiece(nullptr),
-	SpawnWidth(1),
-	SpawnDepth(1),
+	SpawnWidth(2),
+	SpawnDepth(2),
 	FullPercentage(75.0f),
+	BasicObstaclePercentage(50.0f),
 	CenterForceFull(0),
 	BorderForceFull(0),
 	TileScale(1.0f),
-	MaxBasicObstacleAmount(1),
-	MaxEnemyTowerAmount(1),
+	MaxKeyTileAmount(1),
 	MaxShopAmount(1)
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 	Origin = CreateDefaultSubobject<USceneComponent>("Origin");
 	RootComponent = Origin;
 
 	FullPiece = CreateDefaultSubobject<UStaticMeshComponent>("FullPiece");
-	FullPiece->SetupAttachment(RootComponent);
+	FullPiece->SetupAttachment(Origin);
 
 	SidePiece = CreateDefaultSubobject<UStaticMeshComponent>("SidePiece");
-	SidePiece->SetupAttachment(RootComponent);
+	SidePiece->SetupAttachment(Origin);
 
 	ConcaveCornerPiece = CreateDefaultSubobject<UStaticMeshComponent>("ConcaveCornerPiece");
-	ConcaveCornerPiece->SetupAttachment(RootComponent);
+	ConcaveCornerPiece->SetupAttachment(Origin);
 
 	ConvexCornerPiece = CreateDefaultSubobject<UStaticMeshComponent>("ConvexCornerPiece");
-	ConvexCornerPiece->SetupAttachment(RootComponent);
+	ConvexCornerPiece->SetupAttachment(Origin);
 
 	SetReplicates(true);
 	bAlwaysRelevant = true;
 }
 
-// Called when the game starts or when spawned
-void ALevelGenerator::BeginPlay()
+void ALevelGenerator::PostInitializeComponents()
 {
-	Super::BeginPlay();
+	Super::PostInitializeComponents();
 
 	if (HasAuthority())
 	{
-		int startingX = FMath::RandRange(0, SpawnWidth-1);
-		int startingY = FMath::RandRange(0, SpawnDepth-1);
-		int endingX = FMath::RandRange(0, SpawnWidth-1);
-		int endingY = FMath::RandRange(0, SpawnDepth-1);
+		int startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+		int endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 
-		while (startingX == endingX && SpawnDepth * SpawnWidth > 1)
+		while (startingIndex == endingIndex)
 		{
-			startingX = FMath::RandRange(0, SpawnWidth-1);
-			endingX = FMath::RandRange(0, SpawnWidth-1);
-		}
-
-		while (startingY == endingY && SpawnDepth * SpawnWidth > 1)
-		{
-			startingY = FMath::RandRange(0, SpawnDepth-1);
-			endingY = FMath::RandRange(0, SpawnDepth-1);
+			startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+			endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 		}
 
 		for (int y = 0; y < SpawnDepth; y++)
@@ -87,10 +77,43 @@ void ALevelGenerator::BeginPlay()
 
 		if (SpawnDepth * SpawnWidth > 1)
 		{
-			SetStartingAndEndingPoints(startingX, startingY, endingX, endingY);
+			SetStartingAndEndingPoints(startingIndex, endingIndex);
 
-			FindStartToEndPath(startingX, startingY, endingX, endingY);
+			FindStartToEndPath(startingIndex, endingIndex);
 		}
+
+		for (int i = 0; i < MaxKeyTileAmount; i++)
+		{
+			int keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
+			int whileLoopLimit = 0;
+
+			while (FloorValuesArray[keyTileIndex].FloorObstacle > EFloorObstacle::Basic)
+			{
+				keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
+				whileLoopLimit++;
+
+				if (whileLoopLimit >= 10)
+				{
+					break;
+				}
+			}
+
+			if (whileLoopLimit < 10)
+			{
+				SetKeyTile(keyTileIndex);
+
+				FindStartToEndPath(startingIndex, keyTileIndex);
+			}
+		}
+
+		/*
+		TODO: 
+		Make a for loop that takes the key tiles array and sets the indexes of the specific FloorValuesArray and
+		overrides whatever's there with the special tile like how the starting and ending tiles are done.
+		Also - Create a path from the starting tile to the specific tile based on the index in the for loop.
+		*/
 
 		for (int y = 0; y < SpawnDepth; y++)
 		{
@@ -98,13 +121,16 @@ void ALevelGenerator::BeginPlay()
 			{
 				CheckFloor(x, y);
 
-				SpawnFloorObstacles(x, y);
+				Server_SpawnFloorObstacles(x, y);
 			}
 		}
 		CreateFloor();
-
-		int num = PackedLevelArray.Num();
 	}
+}
+
+void ALevelGenerator::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void ALevelGenerator::GenerateFloor(int x, int y)
@@ -157,13 +183,18 @@ void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y)
 	int index = x + (y * SpawnWidth);
 
 	FloorValuesArray[index].IsFullTile = forcedFloor;
+
+	if (forcedFloor)
+	{
+		if (FloorValuesArray[index].FloorObstacle == EFloorObstacle::None)
+		{
+			InitializeModularObstacle(FloorValuesArray[index]);
+		}
+	}
 }
 
-void ALevelGenerator::SetStartingAndEndingPoints(int startingX, int startingY, int endingX, int endingY)
+void ALevelGenerator::SetStartingAndEndingPoints(int startingIndex, int endingIndex)
 {
-	int startingIndex = startingX + (startingY * SpawnWidth);
-	int endingIndex = endingX + (endingY * SpawnWidth);
-
 	FloorValuesArray[startingIndex].IsFullTile = true;
 	FloorValuesArray[startingIndex].FloorObstacle = EFloorObstacle::Start;
 	FloorValuesArray[startingIndex].randomFloorToSpawn = 0;
@@ -176,53 +207,72 @@ void ALevelGenerator::SetStartingAndEndingPoints(int startingX, int startingY, i
 	FloorValuesArray[endingIndex].obstacleYaw = FMath::RandRange(0, 3) * 90;
 }
 
-void ALevelGenerator::FindStartToEndPath(int startingX, int startingY, int endingX, int endingY)
+void ALevelGenerator::SetKeyTile(int index)
 {
-	int currentX = startingX;
-	int currentY = startingY;
+	FloorValuesArray[index].IsFullTile = true;
+	FloorValuesArray[index].FloorObstacle = EFloorObstacle::KeyTile;
+	FloorValuesArray[index].randomFloorToSpawn = 0;
+	FloorValuesArray[index].obstacleYaw = FMath::RandRange(0, 3) * 90;
 
-	while (currentX != endingX && currentX >= 0 && currentX < SpawnWidth)
+}
+
+void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex)
+{
+	int currentX = startingIndex % SpawnWidth;
+	int currentY = startingIndex / SpawnWidth;
+
+	int targetX = targetIndex % SpawnWidth;
+	int targetY = targetIndex / SpawnWidth;
+
+	bool bReachEndX = currentX == targetX;
+
+	bool bReachEndY = currentY == targetY;
+
+	while (!(bReachEndX && bReachEndY))
 	{
-		if (currentX > endingX)
+		float random = FMath::FRandRange(0.0f, 100.0f);
+
+		if (random >= 50.0f)
 		{
-			currentX--;
+			if (currentX > targetX)
+			{
+				currentX--;
+			}
+			else if (currentX < targetX)
+			{
+				currentX++;
+			}
 		}
-		else if (currentX < endingX)
+		else
 		{
-			currentX++;
+			if (currentY > targetY)
+			{
+				currentY--;
+			}
+			else if (currentY < targetY)
+			{
+				currentY++;
+			}
 		}
 		ForceFloorBool(true, currentX, currentY);
-	}
 
-	while (currentY != endingY && currentY >= 0 && currentY < SpawnWidth)
-	{
-		if (currentY > endingY)
-		{
-			currentY--;
-		}
-		else if (currentY < endingY)
-		{
-			currentY++;
-		}
-		ForceFloorBool(true, currentX, currentY);
+		bReachEndX = currentX == targetX;
+		bReachEndY = currentY == targetY;
 	}
-
 }
 
 void ALevelGenerator::InitializeModularObstacle(FloorValues& floorValue)
 {
 	float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
-	if (randomObstaclePerc > 75.0f)
+	if (randomObstaclePerc < BasicObstaclePercentage)
 	{
-		int randomObstacle = FMath::RandRange(0, int(EFloorObstacle::MAX) - 1);
-		floorValue.FloorObstacle = EFloorObstacle(randomObstacle);
+		floorValue.FloorObstacle = EFloorObstacle::Basic;
 
 		floorValue.randomFloorToSpawn = FMath::RandRange(0, PackedLevelArray.Num() - 1);
 
 		floorValue.obstacleYaw = FMath::RandRange(0, 3) * 90;
 	}
 }
-
 
 void ALevelGenerator::CheckFloor(int x, int y)
 {
@@ -577,6 +627,11 @@ void ALevelGenerator::SetBottomRightFloorShape(int x, int y)
 	}
 }
 
+void ALevelGenerator::Server_SpawnFloorObstacles_Implementation(int x, int y)
+{
+	SpawnFloorObstacles(x, y);
+}
+
 void ALevelGenerator::SpawnFloorObstacles(int x, int y)
 {
 	int index = x + (y * SpawnWidth);
@@ -592,7 +647,7 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y)
 			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedLevelArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
 		break;
-	case EFloorObstacle::EnemyTower:
+	case EFloorObstacle::KeyTile:
 		break;
 	case EFloorObstacle::Shop:
 		break;
@@ -639,12 +694,8 @@ void ALevelGenerator::CreateFloor()
 			ISMComp->SetMaterial(0, meshArray[i]->GetMaterial(0));
 		}
 
-		ISMComp->SetFlags(RF_Transactional);
-		this->AddInstanceComponent(ISMComp);
-
-		ISMComp->AddInstances(arrayOfTransformArrays[i], true);
+		ISMComp->AddInstances(arrayOfTransformArrays[i], false, true, true);
 	}
-
 }
 
 void ALevelGenerator::OnRep_FloorValuesArrayChange()
@@ -654,8 +705,6 @@ void ALevelGenerator::OnRep_FloorValuesArrayChange()
 		for (int x = 0; x < SpawnWidth; x++)
 		{
 			CheckFloor(x, y);
-
-			SpawnFloorObstacles(x, y);
 		}
 	}
 	CreateFloor();
