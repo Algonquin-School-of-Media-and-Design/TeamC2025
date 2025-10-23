@@ -97,6 +97,7 @@ public:
         return ItemTypes[FMath::RandRange(0, ItemTypes.Num() - 1)];
     }
 
+
     static UItemObject* CreateItemFromData(const FItemData& ItemData, UObject* Outer)
     {
         if (!Outer)
