@@ -7,12 +7,12 @@ ASpawnPoint::ASpawnPoint()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		m_pMesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
-		SetRootComponent(m_pMesh);
-		m_maxNumOfEnemies = 999;
-		m_radius = 100;
-		m_heightToCheckFrom = 200;
-		m_depthToCheckFrom = 100;
+		Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
+		SetRootComponent(Mesh);
+		MaxNumOfEnemies = 999;
+		Radius = 100;
+		HeightToCheckFrom = 200;
+		DepthToCheckFrom = 100;
 		PrimaryActorTick.bCanEverTick = false;
 	}
 
@@ -20,7 +20,7 @@ ASpawnPoint::ASpawnPoint()
 
 bool ASpawnPoint::IsAtMaxCapacity()
 {
-	return m_pSpawnedEnemies.Num() >= m_maxNumOfEnemies;
+	return SpawnedEnemies.Num() >= MaxNumOfEnemies;
 }
 
 FVector ASpawnPoint::GetRandomPosition()
@@ -43,7 +43,7 @@ FVector ASpawnPoint::GetRandomPosition()
 		vec.Normalize();
 
 		//adjusting it for the radius and adding the spawn points location
-		vec *= rand.FRandRange(0, m_radius);
+		vec *= rand.FRandRange(0, Radius);
 		vec += GetActorLocation();
 
 		//Setting up the collision query parameters for the raycast
@@ -52,14 +52,14 @@ FVector ASpawnPoint::GetRandomPosition()
 		traceParams.bTraceComplex = true;
 
 		//Do the raycast
-		GetWorld()->LineTraceSingleByChannel(hit, vec + FVector(0, 0, m_heightToCheckFrom), vec - FVector(0, 0, m_depthToCheckFrom), ECC_PhysicsBody, traceParams);
+		GetWorld()->LineTraceSingleByChannel(hit, vec + FVector(0, 0, HeightToCheckFrom), vec - FVector(0, 0, DepthToCheckFrom), ECC_PhysicsBody, traceParams);
 
-		//DrawDebugLine(GetWorld(), vec + FVector(0, 0, m_heightToCheckFrom), vec - FVector(0, 0, m_depthToCheckToSpawnFrom), FColor::Red, false, 1, 0, 1.f);
+		//DrawDebugLine(GetWorld(), vec + FVector(0, 0, HeightToCheckFrom), vec - FVector(0, 0, m_depthToCheckToSpawnFrom), FColor::Red, false, 1, 0, 1.f);
 
 		//check to make sure their is enough space between the players and all the enemies
-		for (APawn* player : m_pDirector->GetPlayers())
+		for (APawn* player : Director->GetPlayers())
 		{
-			if (FVector::Dist2D(player->GetActorLocation(), hit.ImpactPoint) <= m_spawnSeparationDistance)
+			if (FVector::Dist2D(player->GetActorLocation(), hit.ImpactPoint) <= SpawnSeparationDistance)
 			{
 				hasFoundHitPoint = false;
 				break;
@@ -82,27 +82,27 @@ void ASpawnPoint::SpawnEnemies()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		if ((m_pSpawnedEnemies.Num() == 0 && !FinishedAllWaves()) || m_currentAllowance > 0)
+		if ((SpawnedEnemies.Num() == 0 && !FinishedAllWaves()) || CurrentAllowance > 0)
 		{
 			//if we have used up all our allowance for this wave then reset it and move to the next wave
-			if (m_currentAllowance <= 0)
+			if (CurrentAllowance <= 0)
 			{
-				m_currentAllowance = m_spawnAllowance;
-				m_CurrentWaves++;
+				CurrentAllowance = SpawnAllowance;
+				CurrentWaves++;
 			}
 
-			//m_pPickableCards copies m_pSpawningCards or m_pDefaultSpawningCards that way we can remove cards from the pool we have to pick from without losing them on the next call
-			if (m_pSpawningCards.Num() > 0)
+			//PickableCards copies SpawningCards or DefaultSpawningCards that way we can remove cards from the pool we have to pick from without losing them on the next call
+			if (SpawningCards.Num() > 0)
 			{
-				m_pPickableCards = m_pSpawningCards;
+				PickableCards = SpawningCards;
 			}
 			else
 			{
-				m_pPickableCards = m_pDirector->GetDefaultSpawnCards();
+				PickableCards = Director->GetDefaultSpawnCards();
 			}
 
 			//loop through until their is no more allowance for spawning enemies
-			while (m_currentAllowance > 0)
+			while (CurrentAllowance > 0)
 			{
 				if (IsAtMaxCapacity())
 				{
@@ -117,68 +117,68 @@ void ASpawnPoint::SpawnEnemies()
 				while (!pickedSuccessful)
 				{
 					//If their are not more cards to pick from then leave the method because we can't spawn any more enemies
-					if (m_pPickableCards.Num() <= 0)
+					if (PickableCards.Num() <= 0)
 					{
-						m_currentAllowance = 0;
+						CurrentAllowance = 0;
 						return;
 					}
 
 					float sumOfWeights = 0;
 
 					//add up all the weights of the enemies to find the max weight
-					for (int i = 0; i < m_pPickableCards.Num(); i++)
+					for (int i = 0; i < PickableCards.Num(); i++)
 					{
-						sumOfWeights += m_pPickableCards[i]->m_spawnWeight;
+						sumOfWeights += PickableCards[i]->SpawnWeight;
 					}
 
 					//pick a random weight 
 					float randomValue = FMath::FRandRange(0, sumOfWeights);
 
 					//loop through and check the weight if the random is less then the weight that our enemy if not subtract the weight from random
-					for (int i = 0; i < m_pPickableCards.Num(); i++)
+					for (int i = 0; i < PickableCards.Num(); i++)
 					{
-						if (randomValue < m_pPickableCards[i]->m_spawnWeight)
+						if (randomValue < PickableCards[i]->SpawnWeight)
 						{
 							//check to make sure it in the budget for spawning
-							if (m_currentAllowance >= m_pPickableCards[i]->m_spawnCost)
+							if (CurrentAllowance >= PickableCards[i]->SpawnCost)
 							{
 								pickedEnemyIndex = i;
-								m_currentAllowance -= m_pPickableCards[i]->m_spawnCost;
+								CurrentAllowance -= PickableCards[i]->SpawnCost;
 								pickedSuccessful = true;
 								break;
 							}
 							//if not remove it from the pool
 							else
 							{
-								m_pPickableCards.RemoveAt(i);
+								PickableCards.RemoveAt(i);
 								break;
 							}
 
 						}
 
-						randomValue -= m_pPickableCards[i]->m_spawnWeight;
+						randomValue -= PickableCards[i]->SpawnWeight;
 					}
 				}
 
-				if (m_currentAllowance < 0)
+				if (CurrentAllowance < 0)
 				{
-					m_currentAllowance = 0;
+					CurrentAllowance = 0;
 				}
 
 				for (int i = 0; i < 10; i++)
 				{
-					APawn* newEnemy = static_cast<APawn*>(GetWorld()->SpawnActor<APawn>(m_pPickableCards[pickedEnemyIndex]->m_enemyType, GetRandomPosition() + FVector(0, 0, 400), FRotator::ZeroRotator));
+					APawn* newEnemy = static_cast<APawn*>(GetWorld()->SpawnActor<APawn>(PickableCards[pickedEnemyIndex]->EnemyClass, GetRandomPosition() + FVector(0, 0, 400), FRotator::ZeroRotator));
 
 					//spawning the enemy and adding it to the array
 					if (newEnemy)
 					{
 						newEnemy->OnDestroyed.AddDynamic(this, &ASpawnPoint::RemoveEnemy);
-						m_pSpawnedEnemies.Add(newEnemy);
+						SpawnedEnemies.Add(newEnemy);
 						break;
 					}
 					else
 					{
-						//m_currentAllowance += m_pPickableCards[pickedEnemyIndex]->m_spawnCost;
+						//CurrentAllowance += PickableCards[pickedEnemyIndex]->SpawnCost;
 						continue;
 					}
 				}
@@ -194,13 +194,13 @@ void ASpawnPoint::RemoveEnemy(AActor* enemy)
 
 	if (enemyPtr)
 	{
-		m_pSpawnedEnemies.Remove(enemyPtr);
+		SpawnedEnemies.Remove(enemyPtr);
 	}
 }
 
 bool ASpawnPoint::FinishedAllWaves()
 {
-	return m_CurrentWaves >= m_numOfWaves;
+	return CurrentWaves >= NumOfWaves;
 }
 
 // Called when the game starts or when spawned
@@ -209,22 +209,22 @@ void ASpawnPoint::BeginPlay()
 	Super::BeginPlay();	
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		m_CurrentWaves = 0;
+		CurrentWaves = 0;
 
-		if (!m_pDirector)
+		if (!Director)
 		{
-			m_pDirector = Cast<ADirector>(UGameplayStatics::GetActorOfClass(GetWorld(), ADirector::StaticClass()));
+			Director = Cast<ADirector>(UGameplayStatics::GetActorOfClass(GetWorld(), ADirector::StaticClass()));
 
-			if (!m_pDirector)
+			if (!Director)
 			{
 				UE_LOG(LogTemp, Error, TEXT("No ADirector found in scene"));
 			}
 		}
 
 		//sort enemies by their weights for the weight sums algorithm used when picking who to spawn
-		m_pSpawningCards.Sort([](const USpawnCard& A, const USpawnCard& B)
+		SpawningCards.Sort([](const USpawnCard& A, const USpawnCard& B)
 			{
-				return A.m_spawnWeight < B.m_spawnWeight;
+				return A.SpawnWeight < B.SpawnWeight;
 			});
 	}
 }

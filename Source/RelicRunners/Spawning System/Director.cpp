@@ -7,8 +7,8 @@
 // Sets default values
 ADirector::ADirector() 
 {  
-	m_maxSpawnPointActivisionDistance = 10000;
-	m_spawnWait = 20;
+	MaxSpawnPointActivisionDistance = 10000;
+	SpawnWait = 20;
 	PrimaryActorTick.bCanEverTick = true;
 	Tags.Add("Director");
 	SetReplicates(true);
@@ -18,25 +18,19 @@ ADirector::ADirector()
 void ADirector::BeginPlay()
 {
 	Super::BeginPlay();
+	//make sure we are the server
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		//sort enemies by their weights for the weight sums algorithm used when picking who to spawn
-		m_pDefaultSpawningCards.Sort([](const USpawnCard& A, const USpawnCard& B)
+		DefaultSpawningCards.Sort([](const USpawnCard& A, const USpawnCard& B)
 			{
-				return A.m_spawnWeight < B.m_spawnWeight;
+				return A.SpawnWeight < B.SpawnWeight;
 			});
 
 		//reseting some varialbes
-		m_spawnTimer = 0;
-
-		//setting the player pointer
-		/*TArray<AActor*> m_pTempArray;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARelicRunnersCharacter::StaticClass(), m_pTempArray);
-		for (int i = 0; i < m_pTempArray.Num(); i++)
-		{
-			m_pPlayers.Add(static_cast<APawn*>(m_pTempArray[i]));
-		}*/
+		SpawnTimer = 0;
 	}
+	//if we are not the server make sure we don't tick
 	else if (GetLocalRole() == ROLE_AutonomousProxy)
 	{
 		PrimaryActorTick.bCanEverTick = false;
@@ -50,7 +44,7 @@ void ADirector::RemoveEnemy(AActor* enemy)
 
 	if (enemyPtr)
 	{
-		m_pEnemiesInWorld.Remove(enemyPtr);
+		EnemiesInWorld.Remove(enemyPtr);
 	}
 }
 
@@ -61,25 +55,26 @@ void ADirector::AddEnemy(AActor* enemy)
 
 	if (enemyPtr)
 	{
-		m_pEnemiesInWorld.Add(enemyPtr);
+		EnemiesInWorld.Add(enemyPtr);
 	}
 }
 
 TArray<USpawnCard*> ADirector::GetDefaultSpawnCards()
 {
-	return m_pDefaultSpawningCards;
+	return DefaultSpawningCards;
 }
 
 TArray<APawn*> ADirector::GetPlayers()
 {
-	return m_pPlayers;
+	return Players;
 }
 
 void ADirector::AddPlayer(APawn* newPlayer)
 {
-	if (!m_pPlayers.Contains(newPlayer))
+	//check to make sure we don't already have the new player and if so add them
+	if (!Players.Contains(newPlayer))
 	{
-		m_pPlayers.Add(newPlayer);
+		Players.Add(newPlayer);
 	}
 }
 
@@ -93,12 +88,13 @@ void ADirector::SpawnCheck()
 
 	for (int i = 0; i < spawnPoints.Num(); i++)
 	{
+		//cast the actor as spawn points
 		ASpawnPoint* point = static_cast<ASpawnPoint*>(spawnPoints[i]);
 
-		for (APawn* player : m_pPlayers)
+		for (APawn* player : Players)
 		{
 			//check to see if the player is close enough and the spawn point is not at max capacity
-			if (FVector::Dist2D(player->GetActorLocation(), point->GetActorLocation()) < m_maxSpawnPointActivisionDistance && !point->IsAtMaxCapacity())
+			if (FVector::Dist2D(player->GetActorLocation(), point->GetActorLocation()) < MaxSpawnPointActivisionDistance && !point->IsAtMaxCapacity())
 			{
 				point->SpawnEnemies();
 			}
@@ -110,21 +106,23 @@ void ADirector::SpawnCheck()
 void ADirector::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	//make sure we are on the server
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		//check to see if it is time for a spawn check
-		if (m_spawnTimer <= 0)
+		if (SpawnTimer <= 0)
 		{
 			SpawnCheck();
-			m_spawnTimer = m_spawnWait;
+			SpawnTimer = SpawnWait;
 		}
 		else
 		{
-			m_spawnTimer -= DeltaTime;
+			SpawnTimer -= DeltaTime;
 
-			if (m_spawnTimer < 0)
+			if (SpawnTimer < 0)
 			{
-				m_spawnTimer = 0;
+				SpawnTimer = 0;
 			}
 		}
 	}
