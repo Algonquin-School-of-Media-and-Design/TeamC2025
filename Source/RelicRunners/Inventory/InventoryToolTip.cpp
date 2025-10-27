@@ -104,7 +104,8 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
         { HoveredItem->ItemData.Strength,     "Strength",     TB_StrengthTooltip,     HB_Strength,     B_Strength,     TB_StrengthTooltip_1,     HB_Strength_1,     B_Strength_1,     TB_StrengthTooltip_2,     HB_Strength_2,      B_Strength_2 },
         { HoveredItem->ItemData.Intelligence, "Intelligence", TB_IntelligenceTooltip, HB_Intelligence, B_Intelligence, TB_IntelligenceTooltip_1, HB_Intelligence_1, B_Intelligence_1, TB_IntelligenceTooltip_2, HB_Intelligence_2,  B_Intelligence_2 },
         { HoveredItem->ItemData.Luck,         "Luck",         TB_LuckTooltip,         HB_Luck,         B_Luck,         TB_LuckTooltip_1,         HB_Luck_1,         B_Luck_1,         TB_LuckTooltip_2,         HB_Luck_2,          B_Luck_2 },
-        { HoveredItem->ItemData.Slots,        "Slots",        TB_SlotsTooltip,        HB_Slots,        B_Slots,        TB_SlotsTooltip_1,        HB_Slots_1,        B_Slots_1,        TB_SlotsTooltip_2,        HB_Slots_2,         B_Slots_2 }
+        { HoveredItem->ItemData.Slots,        "Slots",        TB_SlotsTooltip,        HB_Slots,        B_Slots,        TB_SlotsTooltip_1,        HB_Slots_1,        B_Slots_1,        TB_SlotsTooltip_2,        HB_Slots_2,         B_Slots_2 },
+        { HoveredItem->ItemData.Gold,         "Gold",         TB_GoldTooltip,         HB_Gold,         B_Gold,         TB_GoldTooltip_1,         HB_Gold_1,         B_Gold_1,         TB_GoldTooltip_2,         HB_Gold_2,          B_Gold_2 }
     };
 
     // Set visibility of Equipped and Comparison sections
@@ -126,6 +127,13 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
             Stat.HoveredText->SetText(FText::FromString("+" + FString::FromInt(Stat.Value) + " " + Stat.Label));
             Stat.HoveredText->SetColorAndOpacity(FLinearColor::White);
             Stat.HoveredBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+
+            if (Stat.Label == "Gold")
+            {
+                Stat.HoveredText->SetText(FText::FromString(FString::FromInt(Stat.Value)));
+                Stat.HoveredText->SetColorAndOpacity(FLinearColor(1, 0.5, 0, 1));
+                Stat.HoveredBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+            }
         }
 
         if (bHasEquipped)
@@ -138,6 +146,7 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
             else if (Stat.Label == "Intelligence") EquippedValue = EquippedItem->ItemData.Intelligence;
             else if (Stat.Label == "Luck") EquippedValue = EquippedItem->ItemData.Luck;
             else if (Stat.Label == "Slots") EquippedValue = EquippedItem->ItemData.Slots;
+            else if (Stat.Label == "Gold") EquippedValue = EquippedItem->ItemData.Gold;
 
             const int32 Diff = Stat.Value - EquippedValue;
 
@@ -156,6 +165,13 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
                 Stat.EquippedText->SetText(FText::FromString("+" + FString::FromInt(EquippedValue) + " " + Stat.Label));
                 Stat.EquippedText->SetColorAndOpacity(FLinearColor::White);
                 Stat.EquippedBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+
+                if (Stat.Label == "Gold")
+                {
+                    Stat.EquippedText->SetText(FText::FromString(FString::FromInt(EquippedValue)));
+                    Stat.EquippedText->SetColorAndOpacity(FLinearColor(1,0.5,0,1));
+                    Stat.EquippedBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+                }
             }
 
             // Comparison display

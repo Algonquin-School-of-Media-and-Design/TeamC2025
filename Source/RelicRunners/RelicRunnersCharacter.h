@@ -183,7 +183,7 @@ public:
 
 	class UInventoryComponent* GetInventoryComponent() { return InventoryComponent; };
 	UFUNCTION(BlueprintCallable, Category="Inventory")
-	void SetInventoryComponent(UInventoryComponent* InvComp) { InventoryComponent = InvComp; }
+	void SetInventoryComponent(UInventoryComponent* InvComp);
 
 	// Currency cheats
 	UFUNCTION(Exec) void AddGold(int32 Amount = 10);
@@ -191,6 +191,7 @@ public:
 
 	//Update functions
 	void UpdateItemVisuals(UObject* MeshAsset, const FString& ItemType);
+	UFUNCTION(BlueprintCallable)
 	void UpdateItemVisuals(class UItemObject* Item);
 	void UpdateHUD();
 

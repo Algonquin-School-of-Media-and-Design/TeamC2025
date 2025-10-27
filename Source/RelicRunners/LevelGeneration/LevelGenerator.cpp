@@ -6,6 +6,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "PackedLevelActor/PackedLevelActor.h"
+#include "NavigationSystem.h"
 
 /*
 TODO:
@@ -126,12 +127,27 @@ void ALevelGenerator::PostInitializeComponents()
 		}
 		CreateFloor();
 	}
+
+
+	
+
+
+	
 }
 
 void ALevelGenerator::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	if (NavSys)
+	{
+
+		NavSys->Build();
+	}
+	
 }
+
 
 void ALevelGenerator::GenerateFloor(int x, int y)
 {
@@ -683,7 +699,7 @@ void ALevelGenerator::CreateFloor()
 	for (int i = 0; i < meshArray.Num(); i++)
 	{
 		UInstancedStaticMeshComponent* ISMComp = NewObject<UInstancedStaticMeshComponent>(this);
-		ISMComp->RegisterComponent();
+					
 
 		if (meshArray[i]->GetStaticMesh() != nullptr)
 		{
@@ -695,6 +711,9 @@ void ALevelGenerator::CreateFloor()
 		}
 
 		ISMComp->AddInstances(arrayOfTransformArrays[i], false, true, true);
+
+		ISMComp->RegisterComponent();
+	
 	}
 }
 
