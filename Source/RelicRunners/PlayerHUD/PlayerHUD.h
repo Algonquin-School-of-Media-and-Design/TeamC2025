@@ -34,6 +34,12 @@ public:
 
 	void UpdateHUD(float CurrentHealth, float MaxHealth, float CurrentResource, float MaxResource, int CurrentLevel, float CurrentXP, float XPToLevel);
 
+	void UpdateHUDHealth(float CurrentHealth, float MaxHealth);
+
+	void UpdateHUDResource(float CurrentResource, float MaxResource);
+
+	void UpdateHUDXP(int CurrentLevel, float CurrentXP, float XPToLevel);
+
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Health;
 

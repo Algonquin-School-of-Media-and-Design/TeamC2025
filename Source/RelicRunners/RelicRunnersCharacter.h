@@ -191,6 +191,7 @@ public:
 
 	//Update functions
 	void UpdateItemVisuals(UObject* MeshAsset, const FString& ItemType);
+	UFUNCTION(BlueprintCallable)
 	void UpdateItemVisuals(class UItemObject* Item);
 	void UpdateHUD();
 

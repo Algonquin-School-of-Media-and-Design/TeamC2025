@@ -61,6 +61,9 @@ public:
     int Slots = 0;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    int Gold = 0;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
     UStaticMesh* ItemStaticMesh = nullptr;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere)

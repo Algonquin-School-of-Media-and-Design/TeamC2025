@@ -58,6 +58,16 @@ public:
 	class UTextBlock* TB_LuckTooltip;
 
 	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_GoldTooltip;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_GoldTooltip_1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_GoldTooltip_2;
+
+
+	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_SlotsTooltip;
 
 	UPROPERTY(meta = (BindWidget))
@@ -94,6 +104,15 @@ public:
 	class UBorder* B_Slots;
 
 	UPROPERTY(meta = (BindWidget))
+	class UBorder* B_Gold;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* B_Gold_1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* B_Gold_2;
+
+	UPROPERTY(meta = (BindWidget))
 	class UBorder* B_FromWhere;
 
 	UPROPERTY(meta = (BindWidget))
@@ -116,6 +135,15 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UHorizontalBox* HB_Slots;
+
+	UPROPERTY(meta = (BindWidget))
+	class UHorizontalBox* HB_Gold;
+
+	UPROPERTY(meta = (BindWidget))
+	class UHorizontalBox* HB_Gold_1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UHorizontalBox* HB_Gold_2;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_LevelTooltip_1;

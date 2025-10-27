@@ -56,9 +56,6 @@
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
-//////////////////////////////////////////////////////////////////////////
-// ARelicRunnersCharacter
-
 ARelicRunnersCharacter::ARelicRunnersCharacter()
 {
 	// Set size for collision capsule
@@ -178,9 +175,7 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	PlayerAbilityPoints = 2;
 	PlayerNumInventorySlots = 20;
 
-
-	Tags.Add("Player");
-
+	//Potions
 	HealthPotionCount = 3;
 	HealthGranted = 50;
 
@@ -203,7 +198,6 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerLevel);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
-
 
 	//equipped items
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedArmsMesh);
@@ -479,25 +473,12 @@ void ARelicRunnersCharacter::BeginPlay()
 		ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
 	}
 
-	// === Server-only logic ===
-	if (HasAuthority())
-	{
-		// Setup health regen loop
-		//GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
-	}
-
 	// === Local client UI setup ===
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (PC && PC->IsLocalController())
 	{
 		// Delay UI setup until everything else is ready
 		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::InitLocalUI);
-	}
-
-	if (HasAuthority())
-	{
-		// Generate initial items only once on server
-		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
 	}
 
 	// Attach item mesh components
@@ -514,6 +495,12 @@ void ARelicRunnersCharacter::BeginPlay()
 
 	if (HasAuthority())
 	{
+		// Generate initial items only once on server
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ARelicRunnersCharacter::SpawnStarterItems);
+
+		// Setup health regen loop
+		//GetWorld()->GetTimerManager().SetTimer(HealthRegenTimerHandle, this, &ARelicRunnersCharacter::PassiveHealthRegen, 3.0f, true);
+
 		UWorld* World = GetWorld();
 		APawn* player = static_cast<APawn*>(this);
 
@@ -598,14 +585,13 @@ void ARelicRunnersCharacter::SpawnStarterItems()
 {
 	if (ItemMeshData && InventoryComponent)
 	{
-		for (int i = 0; i < 100; ++i)
+		for (int i = 0; i < 30; ++i)
 		{
 			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateRandomItemData(ItemMeshData), InventoryComponent);
 			InventoryComponent->AddItem(Item);
 		}
 	}
 }
-
 
 void ARelicRunnersCharacter::Tick(float DeltaTime)
 {

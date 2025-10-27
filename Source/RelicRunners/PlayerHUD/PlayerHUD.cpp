@@ -48,3 +48,59 @@ void UPlayerHUD::UpdateHUD(float CurrentHealth, float MaxHealth, float CurrentRe
 	TB_Experience->SetText(FText::FromString(FString::Printf(TEXT("%d / %d XP"), FMath::RoundToInt(CurrentXP), FMath::RoundToInt(XPToLevel))));
 	
 }
+
+void UPlayerHUD::UpdateHUDHealth(float CurrentHealth, float MaxHealth)
+{
+	if (!HealthBar || !TB_Health)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HUD component not initialized properly"));
+		return;
+	}
+
+	// Compute percents
+	float HealthPercent = MaxHealth > 0 ? CurrentHealth / MaxHealth : 0.f;
+
+	// Update bar
+	HealthBar->SetPercent(HealthPercent);
+
+	// Update text
+	TB_Health->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), FMath::RoundToInt(CurrentHealth), FMath::RoundToInt(MaxHealth))));
+}
+
+void UPlayerHUD::UpdateHUDResource(float CurrentResource, float MaxResource)
+{
+	if (!ResourceBar || !TB_Resource)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HUD component not initialized properly"));
+		return;
+	}
+
+	// Compute percents
+	float ResourcePercent = MaxResource > 0 ? CurrentResource / MaxResource : 0.f;
+
+	// Update bars
+	ResourceBar->SetPercent(ResourcePercent);
+
+	// Update text
+	TB_Resource->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), FMath::RoundToInt(CurrentResource), FMath::RoundToInt(MaxResource))));
+}
+
+void UPlayerHUD::UpdateHUDXP(int CurrentLevel, float CurrentXP, float XPToLevel)
+{
+	if (!ExperienceBar || !TB_Level || !TB_Experience)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HUD component not initialized properly"));
+		return;
+	}
+
+	// Compute percents
+	float ExperiencePercent = XPToLevel > 0 ? CurrentXP / XPToLevel : 0.f;
+
+	// Update bars
+	ExperienceBar->SetPercent(ExperiencePercent);
+
+	// Update text
+	TB_Level->SetText(FText::FromString(FString::Printf(TEXT("Level %d"), CurrentLevel)));
+	TB_Experience->SetText(FText::FromString(FString::Printf(TEXT("%d / %d XP"), FMath::RoundToInt(CurrentXP), FMath::RoundToInt(XPToLevel))));
+
+}

@@ -137,17 +137,20 @@ public:
             ItemData.Dexterity = FMath::RoundToInt(FMath::FRandRange(Min * 0.3f, Max * 0.5f));
             ItemData.Strength = FMath::RoundToInt(FMath::FRandRange(Min * 0.3f, Max * 0.5f));
             ItemData.Intelligence = FMath::RoundToInt(FMath::FRandRange(Min * 0.3f, Max * 0.5f));
+            ItemData.Gold = FMath::RoundToInt(FMath::FRandRange(Min * 0.3f, Max * 0.5f));
         }
         else if (WeaponTypes.Contains(ItemData.ItemType))
         {
             ItemData.Dexterity = FMath::RoundToInt(FMath::FRandRange(Min, Max * 1.5f));
             ItemData.Strength = FMath::RoundToInt(FMath::FRandRange(Min, Max * 1.5f));
             ItemData.Intelligence = FMath::RoundToInt(FMath::FRandRange(Min, Max * 1.5f));
+            ItemData.Gold = FMath::RoundToInt(FMath::FRandRange(Min, Max * 1.5f));
         }
         else if (ShieldTypes.Contains(ItemData.ItemType))
         {
             ItemData.Health = FMath::RoundToInt(ItemData.Level + FMath::FRandRange(Min * 1.5f, Max * 2.0f));
             ItemData.Armor = FMath::RoundToInt(ItemData.Level + FMath::FRandRange(Min * 1.5f, Max * 2.0f));
+            ItemData.Gold = FMath::RoundToInt(ItemData.Level + FMath::FRandRange(Min * 1.5f, Max * 2.0f));
         }
         else if (MixedTypes.Contains(ItemData.ItemType))
         {
@@ -155,6 +158,7 @@ public:
             ItemData.Strength = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
             ItemData.Intelligence = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
             ItemData.Luck = FMath::RoundToInt(FMath::FRandRange(Min * 0.5f, Max));
+            ItemData.Gold = FMath::RoundToInt(FMath::FRandRange(Min * 0.5f, Max));
         }
 
         if (MeshData)
