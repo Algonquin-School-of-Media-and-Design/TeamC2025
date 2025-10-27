@@ -975,6 +975,11 @@ void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
 	UpdateHUD();
 }
 
+void  ARelicRunnersCharacter::SetInventoryComponent(UInventoryComponent* InvComp)
+{ 
+	InventoryComponent = InvComp; 
+}
+
 void ARelicRunnersCharacter::Server_DropItem_Implementation(const FItemData& Data)
 {
 	if (!HasAuthority() || !InventoryComponent) return;
