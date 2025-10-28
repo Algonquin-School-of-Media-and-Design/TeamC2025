@@ -26,10 +26,10 @@ ALobbyGameMode::ALobbyGameMode()
     PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
 
     // IMPORTANT: ensure local fogs show up at close range — set the console var to 0 (or small)
-    if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.LocalFogVolume.GlobalStartDistance")))
-    {
-        CVar->Set(0); // default is 2000 (20m). Set to 0 to disable the "start distance" culling.
-    }
+    //if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.LocalFogVolume.GlobalStartDistance")))
+    //{
+    //    CVar->Set(0); // default is 2000 (20m). Set to 0 to disable the "start distance" culling.
+    //}
     bUseSeamlessTravel = true;
     bReplicates = true;
 }
