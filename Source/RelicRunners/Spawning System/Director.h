@@ -43,9 +43,6 @@ protected:
 	TArray<APawn*> EnemiesInWorld;
 	
 public:	
-	// Sets default values for this actor's properties
-	ADirector();
-
 	//A Method that will remove a provided enemy from EnemiesInWorld. It is meant to be called only by APawn when a OnDestroy event happens
 	UFUNCTION(meta = ( ToolTip = "A Method that will remove a provided enemy from EnemiesInWorld. It is meant to be called only by APawn when a OnDestroy event happens", ShortToolTip = "Removes the provided enemy from EnemiesInWorld"))
 	void RemoveEnemy(AActor* enemy);
@@ -61,6 +58,10 @@ public:
 	//A method to add a player to the list of players the director knows of
 	UFUNCTION(meta = (ToolTip = "A method to add a player to the list of players the director knows of", ShortToolTip = "Add the players"))
 	void AddPlayer(APawn* newPlayer);
+
+public:
+	// Sets default values for this actor's properties
+	ADirector();
 
 protected:
 	// Called when the game starts or when spawned

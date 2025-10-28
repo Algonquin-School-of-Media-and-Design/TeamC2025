@@ -16,12 +16,13 @@ UCLASS()
 class RELICRUNNERS_API ASpawnZone : public ASpawnPoint
 {
 	GENERATED_BODY()
-	
-	public:
-		virtual FVector GetRandomPosition() override;
-
 protected:
 	//The nav mesh bounds the spawn zone will use. If not set it will use any nav mesh bounds the spawn zone actor is in
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Point Properties", meta = (AllowPrivateAccess = "true", ToolTip = "The nav mesh bounds the spawn zone will use. If not set it will use any nav mesh bounds the spawn zone actor is in"))
 	ANavMeshBoundsVolume* SpawningBounds;
+
+public:
+	virtual FVector GetRandomPosition() override;
+
+
 };

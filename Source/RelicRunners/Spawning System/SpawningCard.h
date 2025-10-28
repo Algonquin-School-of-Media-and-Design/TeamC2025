@@ -15,10 +15,6 @@ class RELICRUNNERS_API USpawnCard : public UDataAsset
 {
 	GENERATED_BODY()
 public:
-	//the default values
-	USpawnCard();
-
-public:
 	//The cost to spawn the enemy
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", ClampMin = "0.1"))
 	float SpawnCost;
@@ -29,4 +25,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	//The subclass of pawn the card represents
 	TSubclassOf<APawn> EnemyClass;
+public:
+	//the default values
+	USpawnCard();
 };
