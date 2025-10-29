@@ -11,7 +11,8 @@ enum class EAbilityCategory : uint8
     Offensive,
     Defensive,
     Utility,
-    Ultimate
+    Ultimate, 
+    None
 };
 
 UENUM(BlueprintType)

@@ -10,7 +10,7 @@ AAbilityBase::AAbilityBase()
     AreaRadius = 0.f;
     ConeAngle = 0.f;
     AbilityName = NAME_None;
-    AbilityCategory = EAbilityCategory::Offensive;
+    AbilityCategory = EAbilityCategory::None;
     TargetType = EAbilityTargetType::None;
     OwnerActor = nullptr;
 }

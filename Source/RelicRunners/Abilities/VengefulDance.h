@@ -5,7 +5,7 @@
 #include "VengefulDance.generated.h"
 
 UCLASS()
-class RELICRUNNERS_API AVengefulDance : public AAbilityBase
+class RELICRUNNERS_API AVengefulDance : public AAbilityBase 
 {
     GENERATED_BODY()
 
@@ -17,6 +17,9 @@ public:
 	virtual bool CanActivate() const override;
 	virtual FName GetAbilityName() const override { return FName("Vengeful Dance"); }
 
+    // Called every frame
+    virtual void Tick(float DeltaTime) override;
+
 protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VengefulDance")
@@ -26,6 +29,8 @@ protected:
     float KnockbackStrength;
 
 
+    // Called when the game starts or when spawned
+    virtual void BeginPlay() override;
 private:
 
     FTimerHandle DamageTickTimer;
