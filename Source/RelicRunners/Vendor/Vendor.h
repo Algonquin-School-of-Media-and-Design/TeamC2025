@@ -36,6 +36,9 @@ public:
 	TSubclassOf<UUserWidget> VendorWidgetClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Vendor|UI")
+	class UIVendor* VendorWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Vendor|UI")
 	FText InteractPrompt = FText::FromString(TEXT("Press E to Trade"));
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Vendor|Stock")

@@ -863,6 +863,8 @@ void ARelicRunnersCharacter::InventoryUI()
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	if (!PlayerController) return;
 
+	RemoveOtherUI("Inventory", PlayerController);
+
 	if (Inventory->IsVisible())
 	{
 		Inventory->SetVisibility(ESlateVisibility::Hidden);
@@ -891,6 +893,8 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 
 	if (PlayerAbilityPoints >= 1)
 	{
+		RemoveOtherUI("Ability", PlayerController);
+
 		if (AbilitySelection->IsVisible())
 		{
 			AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
@@ -906,8 +910,47 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 			PlayerController->SetShowMouseCursor(true);
 		}
 	}
-
 }
+
+void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* playerController)
+{
+	if (UI != "Ability")
+	{
+		RemoveAbilitySystemUI(playerController);
+	}
+	if (UI != "Inventory")
+	{
+		RemoveInventoryUI(playerController);
+	}
+}
+
+bool ARelicRunnersCharacter::RemoveAbilitySystemUI(APlayerController* playerController)
+{
+	if (AbilitySelection->IsVisible())
+	{
+		AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+		AbilitySelection->SetIsEnabled(false);
+		playerController->SetInputMode(FInputModeGameOnly());
+		playerController->SetShowMouseCursor(false);
+	}
+
+	return AbilitySelection->IsVisible();
+}
+
+bool ARelicRunnersCharacter::RemoveInventoryUI(APlayerController* playerController)
+{
+	if (Inventory->IsVisible())
+	{
+		Inventory->SetVisibility(ESlateVisibility::Hidden);
+		Inventory->SetIsEnabled(false);
+		playerController->SetInputMode(FInputModeGameOnly());
+		playerController->SetShowMouseCursor(false);
+		UInventoryItemOptions::CloseAnyOpenPopup();
+	}
+
+	return Inventory->IsVisible();
+}
+
 void ARelicRunnersCharacter::DamageAbility()
 {
 	AbilityPointCounter->StartDamageCooldown(DamageCooldown);

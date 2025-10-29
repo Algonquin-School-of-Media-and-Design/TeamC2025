@@ -116,7 +116,10 @@ public:
 	void Look(const FInputActionValue& Value);
 	void Interact();
 	void InventoryUI();
+	bool RemoveAbilitySystemUI(APlayerController* playerController);
+	bool RemoveInventoryUI(APlayerController* playerController);
 	void AbilitySystemUI();
+	void RemoveOtherUI(FString UI, APlayerController* playerController);
 	void DamageAbility();
 	void DefenceAbility();
 	void UtilityAbility();
