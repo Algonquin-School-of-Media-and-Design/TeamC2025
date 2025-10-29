@@ -3,12 +3,24 @@
 
 #include "VengefulDance.h"
 
-VengefulDance::VengefulDance()
-{
 
+AVengefulDance::AVengefulDance()
+{
 }
 
-VengefulDance::~VengefulDance()
+void AVengefulDance::ActivateAbility()
 {
+}
 
+void AVengefulDance::EndAbility()
+{
+}
+
+bool AVengefulDance::CanActivate() const
+{
+	return false;
+}
+
+void AVengefulDance::ApplyRingDamage()
+{
 }
