@@ -313,6 +313,15 @@ void URelicRunnersGameInstance::StartSessionGame()
     FString TravelURL = TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap?listen");
     UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] Host starting travel to %s"), *TravelURL);
 
+    TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin();
+
+    FOnlineSessionSettings* CurrentSettings = Sess->GetSessionSettings(NAME_GameSession);
+    if (CurrentSettings)
+    {
+        CurrentSettings->Set(SETTING_MAPNAME, FString(TEXT("Game")), EOnlineDataAdvertisementType::ViaOnlineService);
+        Sess->UpdateSession(NAME_GameSession, *CurrentSettings, true);
+    }
+
     // Tell all clients to prepare for travel
     for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
     {
