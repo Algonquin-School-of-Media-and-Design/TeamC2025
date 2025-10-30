@@ -272,10 +272,16 @@ protected:
 	class UAbilityPointCounter* AbilityPointCounter;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> VengefulDanceClass;
+	TSubclassOf<AAbilityBase> UtilityAbilityClass;
 
 	UPROPERTY()
-	AAbilityBase* VengefulDanceAbility;
+	AAbilityBase* UtilityAbilityInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DamageAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DamageAbilityInstance;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;

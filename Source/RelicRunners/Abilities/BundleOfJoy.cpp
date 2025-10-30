@@ -5,10 +5,14 @@
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Engine/World.h"
 
 ABundleOfJoy::ABundleOfJoy()
 {
     PrimaryActorTick.bCanEverTick = true;
+
+    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
     AttractionRadius = 600.f;
     ExplosionRadius = 400.f;
     AttractionStrength = 1500.f;
@@ -25,15 +29,15 @@ void ABundleOfJoy::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    FVector Center = GetActorLocation();
+    if (bIsActive)
+    {
+        FVector Center = GetActorLocation();
 
-    DrawDebugSphere(GetWorld(), Center, 50.f, 16, FColor::Red, false, -1.f, 0, 5.f);
+        DrawDebugSphere(GetWorld(), Center, 50.f, 16, FColor::Red, false, -1.f, 0, 5.f);
+        DrawDebugCircle(GetWorld(), Center, AttractionRadius, 32, FColor::Purple, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 
-
-    DrawDebugCircle(GetWorld(), Center, AttractionRadius, 32, FColor::Purple, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-
-
-    Attract();
+        Attract();
+    }
 }
 
 bool ABundleOfJoy::CanActivate() const
@@ -47,10 +51,8 @@ void ABundleOfJoy::ActivateAbility()
         return;
 
     bIsActive = true;
-    GetWorld()->GetTimerManager().SetTimer(ExplosionTimer, this, &ABundleOfJoy::Explode, Duration, false);
-    DrawDebugSphere(GetWorld(), GetActorLocation(), AttractionRadius, 32, FColor::Purple, false, Duration);
-    DrawDebugSphere(GetWorld(), GetActorLocation(), 50.f, 16, FColor::Red, false, 5.f, 0, 5.f);
 
+    GetWorld()->GetTimerManager().SetTimer(ExplosionTimer, this, &ABundleOfJoy::Explode, Duration, false);
 }
 
 void ABundleOfJoy::Attract()
@@ -65,20 +67,29 @@ void ABundleOfJoy::Attract()
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
 
-    UKismetSystemLibrary::SphereOverlapActors(World, Center, AttractionRadius, ObjectTypes, ACharacter::StaticClass(), {}, OverlappingActors);
+    UKismetSystemLibrary::SphereOverlapActors(World, Center, AttractionRadius, ObjectTypes, ACharacter::StaticClass(), { OwnerActor }, OverlappingActors);
 
     for (AActor* Actor : OverlappingActors)
     {
         if (!Actor) continue;
 
-        FVector Dir = (Center - Actor->GetActorLocation()).GetSafeNormal();
         if (ACharacter* Char = Cast<ACharacter>(Actor))
         {
-            FVector Force = Dir * AttractionStrength * World->GetDeltaSeconds();
-            Char->LaunchCharacter(FVector(Force.X, Force.Y, 0), true, false);
+            FVector Dir = (Center - Char->GetActorLocation());
+            Dir.Z = 0.f; 
+            Dir.Normalize();
+
+            Char->AddMovementInput(Dir, AttractionStrength * World->GetDeltaSeconds());
+
+            FRotator TargetRot = Dir.Rotation();
+            TargetRot.Pitch = 0.f; 
+            TargetRot.Roll = 0.f;
+            Char->SetActorRotation(TargetRot);
         }
+
     }
 }
+
 
 void ABundleOfJoy::Explode()
 {
@@ -95,7 +106,7 @@ void ABundleOfJoy::Explode()
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
 
-    UKismetSystemLibrary::SphereOverlapActors(World, Center, ExplosionRadius, ObjectTypes, ACharacter::StaticClass(), {}, OverlappingActors);
+    UKismetSystemLibrary::SphereOverlapActors(World, Center, ExplosionRadius, ObjectTypes, ACharacter::StaticClass(), { OwnerActor }, OverlappingActors);
 
     for (AActor* Actor : OverlappingActors)
     {

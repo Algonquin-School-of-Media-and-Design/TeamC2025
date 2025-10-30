@@ -523,21 +523,21 @@ void ARelicRunnersCharacter::BeginPlay()
 
 
 	//VengefulDance format
-    //VengefulDanceClass = AVengefulDance::StaticClass();
+    UtilityAbilityClass = AVengefulDance::StaticClass();
 
-    //if (VengefulDanceClass)
-    //{
-    //    VengefulDanceAbility = GetWorld()->SpawnActor<AAbilityBase>(VengefulDanceClass);
-    //    if (VengefulDanceAbility)
-    //    {
-    //        VengefulDanceAbility->OwnerActor = this;
-    //    }
-    //}
+    if (UtilityAbilityClass)
+    {
+		UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityAbilityClass);
+        if (UtilityAbilityInstance)
+        {
+			UtilityAbilityInstance->OwnerActor = this;
+        }
+    }
 
 	//BundleOfJoy format
-	if (!VengefulDanceClass)
+	if (!DamageAbilityClass)
 	{
-		VengefulDanceClass = ABundleOfJoy::StaticClass();
+		DamageAbilityClass = ABundleOfJoy::StaticClass();
 	}
 	
 }
@@ -937,6 +937,30 @@ void ARelicRunnersCharacter::AbilitySystemUI()
 void ARelicRunnersCharacter::DamageAbility()
 {
 	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+
+	//For BundleOfJoy
+	if (DamageAbilityClass && GetWorld())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 150.f + FVector(0, 0, 100.f);
+		FRotator SpawnRotation = GetActorRotation();
+
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageAbilityClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+		if (DamageAbilityInstance)
+		{
+			DamageAbilityInstance->OwnerActor = this;
+			DamageAbilityInstance->SetActorLocation(SpawnLocation); 
+			DamageAbilityInstance->ActivateAbility();
+
+			UE_LOG(LogTemp, Warning, TEXT("Ability spawned at: %s"), *DamageAbilityInstance->GetActorLocation().ToString());
+		}
+	}
+
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
@@ -948,28 +972,11 @@ void ARelicRunnersCharacter::UtilityAbility()
 {
 	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 
-	//For BundleOfJoy
-	if (!VengefulDanceAbility && VengefulDanceClass && GetWorld())
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = GetInstigator();
-
-		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 100.f) + GetActorForwardVector() * 100.f;
-		FRotator SpawnRotation = FRotator::ZeroRotator;
-
-		VengefulDanceAbility = GetWorld()->SpawnActor<ABundleOfJoy>(VengefulDanceClass, SpawnLocation, SpawnRotation, SpawnParams);
-		if (VengefulDanceAbility)
-		{
-			VengefulDanceAbility->ActivateAbility();
-		}
-	}
-
 	//For VengefulDance
-	//if (VengefulDanceAbility)
-	//{
-	//	VengefulDanceAbility->ActivateAbility();
-	//}
+	if (UtilityAbilityInstance)
+	{
+		UtilityAbilityInstance->ActivateAbility();
+	}
 }
 
 void ARelicRunnersCharacter::UltimateAbility()

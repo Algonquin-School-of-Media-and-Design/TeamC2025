@@ -19,8 +19,7 @@ public:
 	virtual bool CanActivate() const override;
 	virtual FName GetAbilityName() const override { return FName("Bundle Of Joy"); }
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+    virtual void Tick(float DeltaTime) override;
 
     void Explode();
     void Attract();
@@ -35,13 +34,10 @@ public:
     float AttractionStrength;
 
     FTimerHandle ExplosionTimer;
-    FTimerHandle CooldownTimer;
+    FTimerHandle AttractTimer;
+
 
 
 protected:
-
-	virtual void BeginPlay() override;
-
-
-
+    virtual void BeginPlay() override;
 };
