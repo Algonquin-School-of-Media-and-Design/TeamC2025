@@ -522,17 +522,24 @@ void ARelicRunnersCharacter::BeginPlay()
 	}
 
 
+	//VengefulDance format
+    //VengefulDanceClass = AVengefulDance::StaticClass();
 
-    VengefulDanceClass = AVengefulDance::StaticClass();
+    //if (VengefulDanceClass)
+    //{
+    //    VengefulDanceAbility = GetWorld()->SpawnActor<AAbilityBase>(VengefulDanceClass);
+    //    if (VengefulDanceAbility)
+    //    {
+    //        VengefulDanceAbility->OwnerActor = this;
+    //    }
+    //}
 
-    if (VengefulDanceClass)
-    {
-        VengefulDanceAbility = GetWorld()->SpawnActor<AAbilityBase>(VengefulDanceClass);
-        if (VengefulDanceAbility)
-        {
-            VengefulDanceAbility->OwnerActor = this;
-        }
-    }
+	//BundleOfJoy format
+	if (!VengefulDanceClass)
+	{
+		VengefulDanceClass = ABundleOfJoy::StaticClass();
+	}
+	
 }
 
 
@@ -941,10 +948,28 @@ void ARelicRunnersCharacter::UtilityAbility()
 {
 	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 
-	if (VengefulDanceAbility)
+	//For BundleOfJoy
+	if (!VengefulDanceAbility && VengefulDanceClass && GetWorld())
 	{
-		VengefulDanceAbility->ActivateAbility(); 
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+
+		FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 100.f) + GetActorForwardVector() * 100.f;
+		FRotator SpawnRotation = FRotator::ZeroRotator;
+
+		VengefulDanceAbility = GetWorld()->SpawnActor<ABundleOfJoy>(VengefulDanceClass, SpawnLocation, SpawnRotation, SpawnParams);
+		if (VengefulDanceAbility)
+		{
+			VengefulDanceAbility->ActivateAbility();
+		}
 	}
+
+	//For VengefulDance
+	//if (VengefulDanceAbility)
+	//{
+	//	VengefulDanceAbility->ActivateAbility();
+	//}
 }
 
 void ARelicRunnersCharacter::UltimateAbility()

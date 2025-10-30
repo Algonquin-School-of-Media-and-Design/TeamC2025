@@ -22,13 +22,26 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+    void Explode();
+    void Attract();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BundleOfJoy")
+    float AttractionRadius;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BundleOfJoy")
+    float ExplosionRadius;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BundleOfJoy")
+    float AttractionStrength;
+
+    FTimerHandle ExplosionTimer;
+    FTimerHandle CooldownTimer;
+
+
 protected:
 
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-private:
-	void Explode();
-	void Attract();
+
 
 };

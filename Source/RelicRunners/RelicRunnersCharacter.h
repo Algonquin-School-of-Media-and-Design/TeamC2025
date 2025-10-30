@@ -20,6 +20,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystem/AbilityBase.h"
 #include "Abilities/VengefulDance.h"
+#include "Abilities/BundleOfJoy.h"
 #include "Logging/LogMacros.h"
 #include "RelicRunnersCharacter.generated.h"
 
