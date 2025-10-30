@@ -15,6 +15,18 @@
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
+static int32 FindVendorIndexByGuid(const TArray<FVendorCachedEntry>& Cached, const FGuid& Guid)
+{
+	for (const FVendorCachedEntry& CE : Cached)
+	{
+		if (CE.Data.UniqueID == Guid)
+		{
+			return CE.StockIndex;
+		}
+	}
+	return INDEX_NONE;
+}
+
 void UIVendor::Init(AVendor* InVendor, ARelicRunnersCharacter* InPlayer)
 {
 	VendorActor = InVendor;
@@ -23,6 +35,20 @@ void UIVendor::Init(AVendor* InVendor, ARelicRunnersCharacter* InPlayer)
 
 	BindInventoryDelegates();
 	RefreshAll();
+}
+
+void UIVendor::SellByGuid(const FGuid& Guid)
+{
+	if (!VendorActor || !PlayerChar) return;
+
+	UE_LOG(LogTemp, Verbose, TEXT("[VendorUI] SellByGuid -> Server_SellItemByGuid(%s)"), *Guid.ToString());
+	VendorActor->Server_SellItemByGuid(Guid, PlayerChar);
+
+	// local polish
+	RefreshVendorStock();
+	RefreshPlayerInventory();
+	RefreshGold();
+	UpdateButtonStates();
 }
 
 void UIVendor::NativeConstruct()
@@ -370,4 +396,26 @@ void UIVendor::BuySelectedFromVendor()
 void UIVendor::SellSelectedFromPlayer()
 {
 	OnSellClicked();
+}
+
+
+void UIVendor::BuyByGuid(const FGuid& Guid)
+{
+	if (!VendorActor || !PlayerChar) return;
+
+	const int32 Index = FindVendorIndexByGuid(CachedStock, Guid);
+	if (Index == INDEX_NONE)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[VendorUI] BuyByGuid: item %s not found in CachedStock."), *Guid.ToString());
+		return;
+	}
+
+	UE_LOG(LogTemp, Verbose, TEXT("[VendorUI] BuyByGuid -> Server_BuyItemByIndex(%d)"), Index);
+	VendorActor->Server_BuyItemByIndex(Index, PlayerChar);
+
+	// local polish
+	RefreshVendorStock();
+	RefreshPlayerInventory();
+	RefreshGold();
+	UpdateButtonStates();
 }
