@@ -93,7 +93,6 @@ void UInventoryItemOptions::ConfigureButtons(bool bShowEquip, bool bShowUnequip)
     }
 }
 
-
 void UInventoryItemOptions::ClosePopup()
 {
     if (UInventoryItemOptions::CurrentPopup == this)

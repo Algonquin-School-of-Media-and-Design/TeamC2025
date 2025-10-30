@@ -26,13 +26,6 @@ enum class EInventorySorting : uint8
 	SortByItemType,
 	SortByRarity,
 	SortByLevel,
-	SortByHealth,
-	SortByArmor,
-	SortByDexterity,
-	SortByStrength,
-	SortByIntelligence,
-	SortByLuck,
-	SortBySlots
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSortingSelected, EInventorySorting, SortingMethod);
@@ -48,7 +41,7 @@ public:
 	FOnSortingSelected OnSortingSelected;
 
 	static FString GetSortingMethodDisplayName(EInventorySorting Method);
-
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	UPROPERTY(meta = (BindWidget))
 	class UButton* B_SortByType;
 
@@ -58,28 +51,14 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* B_SortByLevel;
 
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_SortByHealth;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_SortByArmor;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_SortByDexterity;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_SortByStrength;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_SortByIntelligence;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_SortByLuck;
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_SortBySlots;
-
 	virtual void NativeConstruct() override;
+
+	static class UInventorySortingOptions* CurrentPopup;
+	FVector2D InitialScreenPosition;
+	void ClosePopup();
+	void Setup();
+
+	static void CloseAnyOpenPopup();
 
 	UFUNCTION()
 	void SortByItemTypeClicked();
@@ -89,25 +68,4 @@ public:
 
 	UFUNCTION()
 	void SortByLevelClicked();
-
-	UFUNCTION()
-	void SortByHealthClicked();
-
-	UFUNCTION()
-	void SortByArmorClicked();
-
-	UFUNCTION()
-	void SortByDexterityClicked();
-
-	UFUNCTION()
-	void SortByStrengthClicked();
-
-	UFUNCTION()
-	void SortByIntelligenceClicked();
-
-	UFUNCTION()
-	void SortByLuckClicked();
-
-	UFUNCTION()
-	void SortBySlotsClicked();
 };

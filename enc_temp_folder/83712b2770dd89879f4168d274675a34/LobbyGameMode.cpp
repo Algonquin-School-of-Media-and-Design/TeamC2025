@@ -74,24 +74,26 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         }
     }
 
+    int32 RepeatCount = 0;
+    FTimerHandle TimerHandle_Update;
+
+    // Create a weak pointer to 'this' so if the GameMode is destroyed, timer won't crash
     TWeakObjectPtr<ALobbyGameMode> WeakThis(this);
-    TSharedRef<int32> RepeatCount = MakeShared<int32>(0);
-    TSharedRef<FTimerHandle> TimerHandle_Update = MakeShared<FTimerHandle>();
 
     GetWorld()->GetTimerManager().SetTimer(
-        *TimerHandle_Update,
-        [WeakThis, TimerHandle_Update, RepeatCount]()
+        TimerHandle_Update,
+        [WeakThis, RepeatCount, TimerHandle_Update]() mutable
         {
-            if (!WeakThis.IsValid()) return;
+            if (!WeakThis.IsValid()) return; // GameMode destroyed or world cleaned up
 
             WeakThis->UpdateSetup();
+            RepeatCount++;
 
-            (*RepeatCount)++;
-            if (*RepeatCount >= 5)
+            if (RepeatCount >= 5)
             {
                 if (UWorld* World = WeakThis->GetWorld())
                 {
-                    World->GetTimerManager().ClearTimer(*TimerHandle_Update);
+                    World->GetTimerManager().ClearTimer(TimerHandle_Update);
                 }
             }
         },

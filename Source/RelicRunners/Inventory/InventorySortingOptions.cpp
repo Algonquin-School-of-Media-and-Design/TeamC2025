@@ -16,6 +16,9 @@
 
 #include "InventorySortingOptions.h"
 #include "Components/Button.h"
+#include <Blueprint/WidgetLayoutLibrary.h>
+
+UInventorySortingOptions* UInventorySortingOptions::CurrentPopup = nullptr;
 
 FString UInventorySortingOptions::GetSortingMethodDisplayName(EInventorySorting Method)
 {
@@ -24,14 +27,56 @@ FString UInventorySortingOptions::GetSortingMethodDisplayName(EInventorySorting 
 	case EInventorySorting::SortByItemType:		return TEXT("Item Type");
 	case EInventorySorting::SortByRarity:		return TEXT("Rarity");
 	case EInventorySorting::SortByLevel:		return TEXT("Level");
-	case EInventorySorting::SortByHealth:		return TEXT("Health");
-	case EInventorySorting::SortByArmor:		return TEXT("Armor");
-	case EInventorySorting::SortByDexterity:    return TEXT("Dexterity");
-	case EInventorySorting::SortByStrength:		return TEXT("Strength");
-	case EInventorySorting::SortByIntelligence: return TEXT("Intelligence");
-	case EInventorySorting::SortByLuck:			return TEXT("Luck");
-	case EInventorySorting::SortBySlots:		return TEXT("Slots");
 	default: return TEXT("Sort");
+	}
+}
+
+void UInventorySortingOptions::Setup()
+{
+	InitialScreenPosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
+	CurrentPopup = this;
+}
+
+void UInventorySortingOptions::ClosePopup()
+{
+	if (UInventorySortingOptions::CurrentPopup == this)
+	{
+		UInventorySortingOptions::CurrentPopup = nullptr;
+	}
+
+	RemoveFromParent();
+}
+
+void UInventorySortingOptions::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	// Close if mouse moved too far
+	FVector2D CurrentMousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
+	float Distance = FVector2D::Distance(CurrentMousePos, InitialScreenPosition);
+
+	if (Distance > 100.f) // Adjust as needed
+	{
+		ClosePopup();
+		return;
+	}
+
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (PC->WasInputKeyJustPressed(EKeys::LeftMouseButton) ||
+			PC->WasInputKeyJustPressed(EKeys::RightMouseButton))
+		{
+			ClosePopup();
+		}
+	}
+}
+
+void UInventorySortingOptions::CloseAnyOpenPopup()
+{
+	if (CurrentPopup && CurrentPopup->IsInViewport())
+	{
+		CurrentPopup->RemoveFromParent();
+		CurrentPopup = nullptr;
 	}
 }
 
@@ -42,13 +87,6 @@ void UInventorySortingOptions::NativeConstruct()
 	B_SortByType->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByItemTypeClicked);
 	B_SortByRarity->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByRarityClicked);
 	B_SortByLevel->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByLevelClicked);
-	B_SortByHealth->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByHealthClicked);
-	B_SortByArmor->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByArmorClicked);
-	B_SortByDexterity->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByDexterityClicked);
-	B_SortByStrength->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByStrengthClicked);
-	B_SortByIntelligence->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByIntelligenceClicked);
-	B_SortByLuck->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByLuckClicked);
-	B_SortBySlots->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortBySlotsClicked);
 }
 
 void UInventorySortingOptions::SortByItemTypeClicked()
@@ -64,39 +102,4 @@ void UInventorySortingOptions::SortByRarityClicked()
 void UInventorySortingOptions::SortByLevelClicked()
 {
 	OnSortingSelected.Broadcast(EInventorySorting::SortByLevel);
-}
-
-void UInventorySortingOptions::SortByHealthClicked()
-{
-	OnSortingSelected.Broadcast(EInventorySorting::SortByHealth);
-}
-
-void UInventorySortingOptions::SortByArmorClicked()
-{
-	OnSortingSelected.Broadcast(EInventorySorting::SortByArmor);
-}
-
-void UInventorySortingOptions::SortByDexterityClicked()
-{
-	OnSortingSelected.Broadcast(EInventorySorting::SortByDexterity);
-}
-
-void UInventorySortingOptions::SortByStrengthClicked()
-{
-	OnSortingSelected.Broadcast(EInventorySorting::SortByStrength);
-}
-
-void UInventorySortingOptions::SortByIntelligenceClicked()
-{
-	OnSortingSelected.Broadcast(EInventorySorting::SortByIntelligence);
-}
-
-void UInventorySortingOptions::SortByLuckClicked()
-{
-	OnSortingSelected.Broadcast(EInventorySorting::SortByLuck);
-}
-
-void UInventorySortingOptions::SortBySlotsClicked()
-{
-	OnSortingSelected.Broadcast(EInventorySorting::SortBySlots);
 }

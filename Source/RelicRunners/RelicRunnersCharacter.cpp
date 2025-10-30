@@ -872,6 +872,7 @@ void ARelicRunnersCharacter::InventoryUI()
 		PlayerController->SetInputMode(FInputModeGameOnly());
 		PlayerController->SetShowMouseCursor(false);
 		UInventoryItemOptions::CloseAnyOpenPopup();
+		UInventorySortingOptions::CloseAnyOpenPopup();
 	}
 	else
 	{
@@ -946,6 +947,7 @@ bool ARelicRunnersCharacter::RemoveInventoryUI(APlayerController* playerControll
 		playerController->SetInputMode(FInputModeGameOnly());
 		playerController->SetShowMouseCursor(false);
 		UInventoryItemOptions::CloseAnyOpenPopup();
+		UInventorySortingOptions::CloseAnyOpenPopup();
 	}
 
 	return Inventory->IsVisible();

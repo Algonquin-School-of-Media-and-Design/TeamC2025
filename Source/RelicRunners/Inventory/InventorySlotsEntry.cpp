@@ -23,6 +23,7 @@
 #include "SlateBasics.h"
 #include "InventoryToolTip.h"
 #include "InventoryItemOptions.h"
+#include "InventorySortingOptions.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "RelicRunners/Item/ItemStats.h"
 #include "RelicRunners/Item/ItemData.h"
@@ -57,17 +58,6 @@ void UInventorySlotsEntry::NativeOnListItemObjectSet(UObject* ListItemObject)
         NewStyle.Hovered.TintColor = FSlateColor(ItemFrameColor);
         NewStyle.Pressed.TintColor = FSlateColor(ItemFrameColor);
         B_ItemFrame->SetStyle(NewStyle);
-
-        //if (TooltipWidgetClass)
-        //{
-        //    UUserWidget* CustomTooltip = CreateWidget<UUserWidget>(GetWorld(), TooltipWidgetClass);
-        //    UInventoryToolTip* ToolTip = Cast<UInventoryToolTip>(CustomTooltip);
-        //    if (ToolTip)
-        //    {
-        //        ToolTip->Setup(Item->ItemData, ItemStats::GetRarityDataMap()[Item->GetRarity()].Color);
-        //        B_ItemFrame->SetToolTip(ToolTip);
-        //    }
-        //}
 
         TB_Level->SetColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1));
 
@@ -121,6 +111,8 @@ void UInventorySlotsEntry::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 void UInventorySlotsEntry::OnEntryButtonClicked()
 {
     UInventoryItemOptions::CloseAnyOpenPopup();
+    UInventorySortingOptions::CloseAnyOpenPopup();
+
     if (InventoryItemOptionsClass && Item)
     {
         UInventoryItemOptions* Popup = CreateWidget<UInventoryItemOptions>(GetWorld(), InventoryItemOptionsClass);

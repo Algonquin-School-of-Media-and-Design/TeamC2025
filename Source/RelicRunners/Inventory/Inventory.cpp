@@ -332,6 +332,7 @@ void UInventory::DropItem(UItemObject* Item)
 FReply UInventory::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
     UInventoryItemOptions::CloseAnyOpenPopup();
+    UInventorySortingOptions::CloseAnyOpenPopup();
     return FReply::Unhandled(); 
 }
 
@@ -386,6 +387,7 @@ void UInventory::SortingTypeClicked()
         {
             InventorySortingOptions->OnSortingSelected.AddDynamic(this, &UInventory::HandleSortSelected);
 
+            InventorySortingOptions->Setup();
             FVector2D ScreenPosition;
             UWidgetLayoutLibrary::GetMousePositionScaledByDPI(GetWorld()->GetFirstPlayerController(), ScreenPosition.X, ScreenPosition.Y);
             InventorySortingOptions->AddToViewport();
@@ -396,6 +398,7 @@ void UInventory::SortingTypeClicked()
 
 void UInventory::OnEquippedSlotClick(UItemObject* EquippedItem)
 {
+    UInventorySortingOptions::CloseAnyOpenPopup();
     UInventoryItemOptions::CloseAnyOpenPopup();
     if (EquippedItem)
     {
