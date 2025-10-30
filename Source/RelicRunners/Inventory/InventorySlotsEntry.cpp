@@ -20,6 +20,7 @@
 #include "Components/Border.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/TextBlock.h"
 #include "SlateBasics.h"
 #include "InventoryToolTip.h"
 #include "InventoryItemOptions.h"
@@ -31,101 +32,132 @@
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
 #include "InventoryComponent.h"
 #include <RelicRunners/RelicRunnersCharacter.h>
+#include <Blueprint/WidgetBlueprintLibrary.h>
 
 void UInventorySlotsEntry::NativeConstruct()
 {
     Super::NativeConstruct();
 
     InventoryItemOptionsClass = LoadClass<UInventoryItemOptions>(nullptr, TEXT("/Game/Inventory/BP_InventoryItemOptions.BP_InventoryItemOptions_C"));
-
-    if (B_ItemFrame)
-    {
-        B_ItemFrame->OnClicked.AddDynamic(this, &UInventorySlotsEntry::OnEntryButtonClicked);
-    }
 }
 
 void UInventorySlotsEntry::NativeOnListItemObjectSet(UObject* ListItemObject)
 {
     Item = Cast<UItemObject>(ListItemObject);
-    if (Item)
+    if (!Item) return;
+
+    TB_Level->SetText(FText::FromString(FString::FromInt(Item->GetLevel())));
+    TB_Level->SetColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1));
+
+    // Set border color by rarity
+    FLinearColor ItemFrameColor = ItemStats::GetRarityDataMap()[Item->GetRarity()].Color;
+    B_Item->SetBrushColor(ItemFrameColor);
+    B_Color->SetBrushColor(ItemFrameColor);
+
+    // Load and assign icon texture
+    FString ImagePath = FString::Printf(TEXT("Texture2D'/Game/ThirdPerson/Icons/%s.%s'"),
+        *Item->GetItemType(), *Item->GetItemType());
+    if (UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *ImagePath)))
     {
-        TB_Level->SetText(FText::FromString(FString::FromInt(Item->GetLevel())));
-
-        FLinearColor ItemFrameColor = ItemStats::GetRarityDataMap()[Item->GetRarity()].Color;
-
-        FButtonStyle NewStyle = B_ItemFrame->GetStyle();
-        NewStyle.Normal.TintColor = FSlateColor(ItemFrameColor);
-        NewStyle.Hovered.TintColor = FSlateColor(ItemFrameColor);
-        NewStyle.Pressed.TintColor = FSlateColor(ItemFrameColor);
-        B_ItemFrame->SetStyle(NewStyle);
-
-        TB_Level->SetColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1));
-
-        FString imagePath = "Texture2D'/Game/ThirdPerson/Icons/" + Item->GetItemType() + "." + Item->GetItemType() + "'";
-        UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *imagePath));
         I_Item->SetBrushFromTexture(Texture);
     }
+}
+
+FReply UInventorySlotsEntry::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+    if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
+    {
+        bIsPressed = true;
+        bIsDragging = false;
+        PressedTime = GetWorld()->GetRealTimeSeconds();
+
+        FEventReply EventReply = UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton);
+        return EventReply.NativeReply;
+    }
+
+    return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+}
+
+FReply UInventorySlotsEntry::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+    if (!bIsPressed) return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
+
+    bIsPressed = false;
+
+    float HeldDuration = GetWorld()->GetRealTimeSeconds() - PressedTime;
+
+    if (!bIsDragging && HeldDuration < 0.25f)
+    {
+        OnEntryClicked();
+    }
+
+    bIsDragging = false;
+    return FReply::Handled();
+}
+
+void UInventorySlotsEntry::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+{
+    if (!Item) return;
+
+    bIsDragging = true;
+
+    UDragDropOperation* DragOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
+    DragOp->Payload = Item;
+    DragOp->DefaultDragVisual = this;
+    DragOp->Pivot = EDragPivot::MouseDown;
+    OutOperation = DragOp;
 }
 
 void UInventorySlotsEntry::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
     Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
-    if (!Item || !TooltipWidgetClass || !B_ItemFrame) return;
+    if (!Item || !TooltipWidgetClass || !B_Item) return;
 
-    // Create a new tooltip each time we hover (so it updates correctly)
     UInventoryToolTip* ToolTip = CreateWidget<UInventoryToolTip>(GetWorld(), TooltipWidgetClass);
     if (!ToolTip) return;
 
     FLinearColor RarityColor = ItemStats::GetRarityDataMap()[Item->GetRarity()].Color;
 
-    // Try to find the equipped item of the same type
+    // Find equipped item of same type
     ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(GetWorld()->GetFirstPlayerController());
     UItemObject* EquippedItem = nullptr;
-
     if (PC && PC->GetPossessedPawn())
     {
-        UInventoryComponent* InventoryComponent = PC->GetPossessedPawn()->GetInventoryComponent();
-        if (InventoryComponent)
+        if (UInventoryComponent* InventoryComponent = PC->GetPossessedPawn()->GetInventoryComponent())
         {
             EquippedItem = InventoryComponent->GetEquippedItemByType(Item->GetItemType());
-
-            // Don't compare to itself
             if (EquippedItem == Item)
-            {
                 EquippedItem = nullptr;
-            }
         }
     }
 
     ToolTip->Setup(Item, RarityColor, EquippedItem);
-    B_ItemFrame->SetToolTip(ToolTip);
+    B_Item->SetToolTip(ToolTip);
 }
 
 void UInventorySlotsEntry::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
     Super::NativeOnMouseLeave(InMouseEvent);
-    B_ItemFrame->SetToolTip(nullptr);
+    B_Item->SetToolTip(nullptr);
 }
 
-void UInventorySlotsEntry::OnEntryButtonClicked()
+void UInventorySlotsEntry::OnEntryClicked()
 {
     UInventoryItemOptions::CloseAnyOpenPopup();
     UInventorySortingOptions::CloseAnyOpenPopup();
 
-    if (InventoryItemOptionsClass && Item)
-    {
-        UInventoryItemOptions* Popup = CreateWidget<UInventoryItemOptions>(GetWorld(), InventoryItemOptionsClass);
-        if (Popup)
-        {
-            Popup->AddToViewport();
-            Popup->Setup(Item);
-            Popup->ConfigureButtons(true, false); // Show Equip, Hide Unequip
+    if (!InventoryItemOptionsClass || !Item) return;
 
-            FVector2D ScreenPosition;
-            UWidgetLayoutLibrary::GetMousePositionScaledByDPI(GetWorld()->GetFirstPlayerController(), ScreenPosition.X, ScreenPosition.Y);
-            Popup->SetPositionInViewport(ScreenPosition, false);
-        }
+    UInventoryItemOptions* Popup = CreateWidget<UInventoryItemOptions>(GetWorld(), InventoryItemOptionsClass);
+    if (Popup)
+    {
+        Popup->AddToViewport();
+        Popup->Setup(Item);
+        Popup->ConfigureButtons(true, false);
+
+        FVector2D ScreenPosition;
+        UWidgetLayoutLibrary::GetMousePositionScaledByDPI(GetWorld()->GetFirstPlayerController(), ScreenPosition.X, ScreenPosition.Y);
+        Popup->SetPositionInViewport(ScreenPosition, false);
     }
 }
-

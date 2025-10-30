@@ -36,6 +36,7 @@
 #include "RelicRunners/Item/ItemStats.h"
 #include "RelicRunners/Item/ItemData.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "Blueprint/DragDropOperation.h"
 #include "RelicRunners/PlayerPreview/PlayerPreview.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
@@ -416,6 +417,16 @@ void UInventory::OnEquippedSlotClick(UItemObject* EquippedItem)
             Popup->SetPositionInViewport(ScreenPosition, false);
         }
     }
+}
+
+bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+    UItemObject* DraggedItem = Cast<UItemObject>(InOperation ? InOperation->Payload : nullptr);
+    if (!DraggedItem || !InventoryComponent) return false;
+
+    EquipItem(DraggedItem);
+
+    return true;
 }
 
 void UInventory::OnEquippedStatsUpdated(const FEquippedStatsSummary& Stats)

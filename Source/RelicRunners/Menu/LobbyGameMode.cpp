@@ -38,7 +38,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    if (!HasAuthority()) return; // Only the server should do spawn logic
+    if (!HasAuthority()) return; 
 
     if (!NewPlayer || !LobbyPreviewClass) return;
 
@@ -68,7 +68,6 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
             }
             else
             {
-                // No player state (shouldn't happen), destroy preview
                 SpawnedPreview->Destroy();
             }
         }

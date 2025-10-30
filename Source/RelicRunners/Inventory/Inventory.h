@@ -194,6 +194,7 @@ public:
 	void OnEquippedStatsUpdated(const struct FEquippedStatsSummary& Stats);
 
 	virtual void NativeConstruct() override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
 	UFUNCTION()
 	void HandleSortSelected(EInventorySorting Method);

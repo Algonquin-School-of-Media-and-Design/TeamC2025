@@ -55,7 +55,7 @@ void UInventorySortingOptions::NativeTick(const FGeometry& MyGeometry, float InD
 	FVector2D CurrentMousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
 	float Distance = FVector2D::Distance(CurrentMousePos, InitialScreenPosition);
 
-	if (Distance > 100.f) // Adjust as needed
+	if (Distance > 250.0f) // Adjust as needed
 	{
 		ClosePopup();
 		return;

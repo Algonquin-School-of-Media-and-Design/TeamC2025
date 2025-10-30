@@ -329,6 +329,21 @@ void UInventoryComponent::UpdateTotalEquippedStats(ARelicRunnersCharacter* Char)
     OnStatsChanged.Broadcast(Stats); // Works only on server/UI
 }
 
+void UInventoryComponent::SwapItems(UItemObject* ItemA, UItemObject* ItemB)
+{
+    if (!ItemA || !ItemB)
+        return;
+
+    int32 IndexA = InventoryItems.IndexOfByKey(ItemA);
+    int32 IndexB = InventoryItems.IndexOfByKey(ItemB);
+
+    if (IndexA != INDEX_NONE && IndexB != INDEX_NONE)
+    {
+        InventoryItems.Swap(IndexA, IndexB);
+        OnInventoryChanged.Broadcast();
+    }
+}
+
 void UInventoryComponent::UpdateTotalEquippedStats(AEnemyCharacterAI* Char)
 {
     if (!Char) return;
