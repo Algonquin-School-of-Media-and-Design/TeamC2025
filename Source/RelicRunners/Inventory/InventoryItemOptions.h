@@ -20,6 +20,8 @@
 #include "Blueprint/UserWidget.h"
 #include "InventoryItemOptions.generated.h"
 
+class UIVendor;
+
 UCLASS()
 class RELICRUNNERS_API UInventoryItemOptions : public UUserWidget
 {
@@ -36,7 +38,7 @@ public:
     void ClosePopup();
     static void CloseAnyOpenPopup();
 protected:
-  
+
     UFUNCTION()
     void OnEquipClicked();
 
@@ -54,6 +56,18 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     class UButton* DropButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* BuyButton = nullptr;           
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* SellButton = nullptr;          
+
+    UPROPERTY(Transient, BlueprintReadWrite, Category = "Vendor", meta = (AllowPrivateAccess = "true"))
+    UIVendor* VendorWidgetRef = nullptr;    
+
+    UFUNCTION() void OnBuyClicked_Buy();
+    UFUNCTION() void OnSellClicked_Sell();
 
 private:
     FVector2D InitialScreenPosition;

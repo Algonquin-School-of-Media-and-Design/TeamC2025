@@ -6,25 +6,20 @@
 #include "Components/Image.h"
 
 #include "RelicRunners/RelicRunnersCharacter.h"
-#include "RelicRunners/PlayerController/RelicRunnersPlayerController.h"
 #include "RelicRunners/Inventory/InventoryComponent.h"
-#include "RelicRunners/Inventory/InventorySlotsEntry.h"
-#include "RelicRunners/Inventory/InventoryToolTip.h"
 #include "RelicRunners/Item/ItemData.h"
 #include "RelicRunners/Item/ItemStats.h"
-#include "RelicRunners/Item/ItemMeshData.h"
 #include "RelicRunners/Vendor/Vendor.h"
 
 #include "Engine/TextureRenderTarget2D.h"
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "Widgets/Views/STableViewBase.h" 
 
 void UIVendor::Init(AVendor* InVendor, ARelicRunnersCharacter* InPlayer)
 {
 	VendorActor = InVendor;
-	PlayerChar = InPlayer;
-	PlayerInv = (PlayerChar ? PlayerChar->GetInventoryComponent() : nullptr);
+	PlayerChar  = InPlayer;
+	PlayerInv   = (PlayerChar ? PlayerChar->GetInventoryComponent() : nullptr);
 
 	BindInventoryDelegates();
 	RefreshAll();
@@ -46,12 +41,13 @@ void UIVendor::NativeConstruct()
 	if (B_Sell)  B_Sell->OnClicked.AddDynamic(this, &UIVendor::OnSellClicked);
 	if (B_Close) B_Close->OnClicked.AddDynamic(this, &UIVendor::OnCloseClicked);
 
+	// Late resolve player refs if needed
 	if (!PlayerChar)
 	{
 		if (APlayerController* PC = GetOwningPlayer())
 		{
 			PlayerChar = Cast<ARelicRunnersCharacter>(PC->GetPawn());
-			PlayerInv = PlayerChar ? PlayerChar->GetInventoryComponent() : nullptr;
+			PlayerInv  = PlayerChar ? PlayerChar->GetInventoryComponent() : nullptr;
 		}
 	}
 
@@ -107,7 +103,6 @@ void UIVendor::OnEquipmentChanged()
 {
 	// If you want preview updates, call SetPreviewActorImage() from your PC as in inventory UI.
 }
-
 
 void UIVendor::HandleVendorItemClicked(UObject* ClickedItem)
 {
@@ -177,7 +172,6 @@ void UIVendor::RefreshVendorStock()
 	}
 
 	UpdateButtonStates();
-	TryAnnotateVendorTooltipsWithPrice();
 }
 
 void UIVendor::RefreshPlayerInventory()
@@ -367,7 +361,13 @@ void UIVendor::SetPreviewActorImage(UTextureRenderTarget2D* RenderTarget)
 	I_PlayerPreview->SetBrushFromMaterial(DynMat);
 }
 
-void UIVendor::TryAnnotateVendorTooltipsWithPrice()
+// Called from popup buttons
+void UIVendor::BuySelectedFromVendor()
 {
-	
+	OnBuyClicked();
+}
+
+void UIVendor::SellSelectedFromPlayer()
+{
+	OnSellClicked();
 }

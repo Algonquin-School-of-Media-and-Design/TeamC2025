@@ -21,9 +21,9 @@ struct FVendorCachedEntry
 {
 	GENERATED_BODY()
 
-	int32     StockIndex = INDEX_NONE;  
-	FItemData Data;                     
-	int32     Price = 0;                
+	int32     StockIndex = INDEX_NONE;
+	FItemData Data;
+	int32     Price = 0;
 
 	FVendorCachedEntry() {}
 	FVendorCachedEntry(int32 InIndex, const FItemData& InData, int32 InPrice)
@@ -36,12 +36,25 @@ class RELICRUNNERS_API UIVendor : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	// Called by AVendor::Interact(...)
+
 	UFUNCTION(BlueprintCallable, Category = "Vendor")
 	void Init(AVendor* InVendor, ARelicRunnersCharacter* InPlayer);
 
 	UFUNCTION(BlueprintCallable, Category = "Vendor")
 	void SetPreviewActorImage(UTextureRenderTarget2D* RenderTarget);
+
+	UFUNCTION(BlueprintCallable, Category = "Vendor")
+	void BuySelectedFromVendor();
+
+	UFUNCTION(BlueprintCallable, Category = "Vendor")
+	void SellSelectedFromPlayer();
+	
+	UFUNCTION(BlueprintCallable, Category = "Vendor")
+	void BuyByGuid(const FGuid& Guid);
+
+	UFUNCTION(BlueprintCallable, Category = "Vendor")
+	void SellByGuid(const FGuid& Guid);
+
 
 protected:
 	virtual void NativeConstruct() override;
