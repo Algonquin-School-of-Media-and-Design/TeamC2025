@@ -53,6 +53,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* InventoryAction;
 
+	/** Pause Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* PauseAction;
+
 	/** AbilitySelection Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* AbilitySelectionAction;
@@ -160,7 +164,6 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_UpdateLobbyUI();
 
-
 	UFUNCTION(Client, Reliable)
 	void ClientTravelToGame();
 
@@ -187,6 +190,7 @@ protected:
 	void Jump(const struct FInputActionValue& Value);
 	void StopJumping(const struct FInputActionValue& Value);
 	void InventoryUI();
+	void PauseUI();
 	void AbilitySystemUI();
 	void DamageAbility();
 	void DefenceAbility();

@@ -22,6 +22,7 @@
 #include "Components/Button.h"
 #include "Components/Border.h"
 #include "Components/Image.h"
+#include "Components/CanvasPanel.h"
 #include "InventoryToolTip.h"
 #include "InventorySortingOptions.h"
 #include "InventoryComponent.h"
@@ -421,10 +422,33 @@ void UInventory::OnEquippedSlotClick(UItemObject* EquippedItem)
 
 bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
-    UItemObject* DraggedItem = Cast<UItemObject>(InOperation ? InOperation->Payload : nullptr);
-    if (!DraggedItem || !InventoryComponent) return false;
+    Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 
-    EquipItem(DraggedItem);
+    if (!InOperation)
+        return false;
+
+    UItemObject* DraggedItem = Cast<UItemObject>(InOperation->Payload);
+    if (!DraggedItem)
+        return false;
+
+    FVector2D DropPosition = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    FGeometry EquippedGeometry = EquippedCanvas->GetCachedGeometry();
+
+    const FVector2D EquippedLocal = EquippedGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D EquippedSize = EquippedGeometry.GetLocalSize();
+
+    const bool bInsideEquipped =
+        EquippedLocal.X >= 0.f && EquippedLocal.Y >= 0.f &&
+        EquippedLocal.X <= EquippedSize.X && EquippedLocal.Y <= EquippedSize.Y;
+
+    if (bInsideEquipped)
+    {
+        EquipItem(DraggedItem);
+    }
+    else
+    {
+        DropItem(DraggedItem);
+    }
 
     return true;
 }

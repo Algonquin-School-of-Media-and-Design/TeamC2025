@@ -67,8 +67,9 @@ public:
     TSharedPtr<class FOnlineSessionSearch> SessionSearch;
     UPROPERTY()
     TMap<FUniqueNetIdRepl, FPendingClientTravel> PendingClientTravels;
-private:
     TWeakPtr<class IOnlineSession, ESPMode::ThreadSafe> SessionInterface;
+private:
+
     TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
 
     int32 PendingHostAfterLeave = 0;

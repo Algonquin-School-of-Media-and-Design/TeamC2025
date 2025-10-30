@@ -136,6 +136,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* I_Offhand;
 
+	UPROPERTY(meta = (BindWidget))
+	class UCanvasPanel* EquippedCanvas;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Popup")
 	TSubclassOf<class UInventoryItemOptions> InventoryItemOptionsClass;
 
