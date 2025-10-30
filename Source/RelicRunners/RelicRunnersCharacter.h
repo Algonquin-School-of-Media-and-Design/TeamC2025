@@ -18,6 +18,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystem/AbilityBase.h"
+#include "Abilities/VengefulDance.h"
 #include "Logging/LogMacros.h"
 #include "RelicRunnersCharacter.generated.h"
 
@@ -267,6 +269,12 @@ protected:
 
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> VengefulDanceClass;
+
+	UPROPERTY()
+	AAbilityBase* VengefulDanceAbility;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;

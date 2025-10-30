@@ -38,6 +38,7 @@
 #include "Item/ItemActor.h"
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
+
 #include "AbilitySystem/AbilityPointCounter.h"
 #include "AbilitySystem/AbilitySelection.h"
 #include "AbilitySystem/HealthPotion.h"
@@ -184,6 +185,7 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	SetReplicateMovement(true);
 
 	Tags.Add("Player");
+
 }
 
 void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -518,7 +520,22 @@ void ARelicRunnersCharacter::BeginPlay()
 			}
 		});
 	}
+
+
+
+    VengefulDanceClass = AVengefulDance::StaticClass();
+
+    if (VengefulDanceClass)
+    {
+        VengefulDanceAbility = GetWorld()->SpawnActor<AAbilityBase>(VengefulDanceClass);
+        if (VengefulDanceAbility)
+        {
+            VengefulDanceAbility->OwnerActor = this;
+        }
+    }
 }
+
+
 
 void ARelicRunnersCharacter::InitLocalUI()
 {
@@ -578,6 +595,8 @@ void ARelicRunnersCharacter::InitLocalUI()
 			}
 		}
 	}
+
+
 	TryBindInventoryDelegates();
 }
 
@@ -921,6 +940,11 @@ void ARelicRunnersCharacter::DefenceAbility()
 void ARelicRunnersCharacter::UtilityAbility()
 {
 	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+
+	if (VengefulDanceAbility)
+	{
+		VengefulDanceAbility->ActivateAbility(); 
+	}
 }
 
 void ARelicRunnersCharacter::UltimateAbility()
