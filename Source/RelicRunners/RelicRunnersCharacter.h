@@ -126,7 +126,16 @@ public:
 	void UltimateAbility();
 	void HealthPotions();
 
-	void SpendAbilityPoints();
+	UFUNCTION(Server, Reliable)
+	void Server_SpendAbilityPoints();
+
+	UFUNCTION(Client, Reliable)
+	void Client_OnAbilityPointsUpdated(int32 NewAbilityPoints);
+
+	UFUNCTION(Server, Reliable)
+	void Server_UseHealthPotion(int NewHealth, int NewPotionCount);
+
+
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
@@ -336,7 +345,7 @@ protected:
 	int PlayerXPToLevel;
 	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerLevel;
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerAbilityPoints;
 	UPROPERTY()
 	int PlayerArmor;
@@ -366,7 +375,7 @@ protected:
 	UPROPERTY()
 	int HealthPotionCount;   
 	UPROPERTY()
-	int HealthGranted;         
+	float HealthGranted;         
 
 	float DamageCooldown = 5.f;
 	float DefenceCooldown = 5.f;

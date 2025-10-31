@@ -178,7 +178,7 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 
 	//Potions
 	HealthPotionCount = 3;
-	HealthGranted = 50;
+	HealthGranted = 0.5;
 
 	bAlwaysRelevant = true;
 	SetReplicates(true);
@@ -200,6 +200,7 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerLevel);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerAbilityPoints);
 
 	//equipped items
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedArmsMesh);
@@ -353,6 +354,7 @@ void ARelicRunnersCharacter::OnRep_HUD()
 {
 	UpdateHUD();
 }
+
 
 void ARelicRunnersCharacter::AddExperience(int Amount)
 {
@@ -986,30 +988,63 @@ void ARelicRunnersCharacter::UltimateAbility()
 
 void ARelicRunnersCharacter::HealthPotions()
 {
-
-	HealthPotion->OnHealthPotionClicked(PlayerHealth, PlayerMaxHealth, HealthPotionCount, HealthGranted);
-	UpdateHUD();
-}
-
-void ARelicRunnersCharacter::SpendAbilityPoints()
-{
-	APlayerController* PlayerController = Cast<APlayerController>(Controller);
-
-	if (PlayerAbilityPoints >= 1)
+	if (HealthPotion)
 	{
-		PlayerAbilityPoints--;
+		int OldHealth = PlayerHealth;
+		int OldPotionCount = HealthPotionCount;
 
-		if(PlayerAbilityPoints == 0)
+		HealthPotion->OnHealthPotionClicked(PlayerHealth, PlayerMaxHealth, HealthPotionCount, HealthGranted);
+
+		if (PlayerHealth != OldHealth || HealthPotionCount != OldPotionCount)
 		{
-			AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
-			AbilitySelection->SetIsEnabled(false);
-			PlayerController->SetInputMode(FInputModeGameOnly());
-			PlayerController->SetShowMouseCursor(false);
+			Server_UseHealthPotion(PlayerHealth, HealthPotionCount);
 		}
+
 		UpdateHUD();
 	}
 }
 
+
+
+void ARelicRunnersCharacter::Server_UseHealthPotion_Implementation(int NewHealth, int NewPotionCount)
+{
+	PlayerHealth = FMath::Clamp(NewHealth, 0, PlayerMaxHealth);
+	HealthPotionCount = FMath::Max(NewPotionCount, 0);
+
+	UpdateHUD();
+}
+
+
+void ARelicRunnersCharacter::Server_SpendAbilityPoints_Implementation()
+{
+	if (!HasAuthority())
+		return;
+
+	if (PlayerAbilityPoints > 0)
+	{
+		PlayerAbilityPoints--;
+
+		Client_OnAbilityPointsUpdated(PlayerAbilityPoints);
+
+		UpdateHUD();
+	}
+}
+
+void ARelicRunnersCharacter::Client_OnAbilityPointsUpdated_Implementation(int32 NewAbilityPoints)
+{
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	if (!PlayerController)
+		return;
+
+	// Update UI locally on the client
+	if (NewAbilityPoints == 0 && AbilitySelection)
+	{
+		AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+		AbilitySelection->SetIsEnabled(false);
+		PlayerController->SetInputMode(FInputModeGameOnly());
+		PlayerController->SetShowMouseCursor(false);
+	}
+}
 
 void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
 {
