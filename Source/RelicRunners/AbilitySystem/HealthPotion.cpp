@@ -9,13 +9,13 @@ void UHealthPotion::NativeConstruct()
 	Super::NativeConstruct();
 }
 
-void UHealthPotion::OnHealthPotionClicked(int& PlayerHealth, int MaxHealth, int& HealthPotionAmount, int HealthGranted)
+void UHealthPotion::OnHealthPotionClicked(int& PlayerHealth, int MaxHealth, int& HealthPotionAmount, float HealthPercent)
 {
     if (HealthPotionAmount > 0 && PlayerHealth < MaxHealth)
     {
-        PlayerHealth += HealthGranted;
+        int HealthToGrant = FMath::RoundToInt(MaxHealth * HealthPercent);
+        PlayerHealth += HealthToGrant;
         HealthPotionAmount--;
-
 
         if (PlayerHealth > MaxHealth)
         {

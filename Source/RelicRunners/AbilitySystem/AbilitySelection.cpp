@@ -31,28 +31,28 @@ void UAbilitySelection::NativeConstruct()
 
 void UAbilitySelection::Upgrade1Clicked()
 {
-    OwningCharacter->SpendAbilityPoints();
+    OwningCharacter->Server_SpendAbilityPoints();
     BuffStatValue(Buff1);
     RefreshUpgrades();
 }
 
 void UAbilitySelection::Upgrade2Clicked()
 {
-    OwningCharacter->SpendAbilityPoints();
+    OwningCharacter->Server_SpendAbilityPoints();
     BuffStatValue(Buff2);
     RefreshUpgrades();
 }
 
 void UAbilitySelection::Upgrade3Clicked()
 {
-    OwningCharacter->SpendAbilityPoints();
+    OwningCharacter->Server_SpendAbilityPoints();
     BuffStatValue(Buff3);
     RefreshUpgrades();
 }
 
 void UAbilitySelection::Upgrade4Clicked()
 {
-    OwningCharacter->SpendAbilityPoints();
+    OwningCharacter->Server_SpendAbilityPoints();
     BuffStatValue(Buff4);
     RefreshUpgrades();
 }

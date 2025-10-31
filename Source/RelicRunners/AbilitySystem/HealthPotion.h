@@ -14,15 +14,14 @@ class RELICRUNNERS_API UHealthPotion : public UUserWidget
 {
 	GENERATED_BODY()
 
-protected:
+public:
 
 	virtual void NativeConstruct() override;
+
+	void OnHealthPotionClicked(int& PlayerHealth, int MaxHealth, int& HealthPotionAmount, float HealthPercent);
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_HealthPotion;
 
-public:
 
-	void OnHealthPotionClicked(int& PlayerHealth, int MaxHealth, int& HealthPotionAmount, int HealthGranted);
-	
 };

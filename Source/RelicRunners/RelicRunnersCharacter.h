@@ -18,6 +18,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystem/AbilityBase.h"
+#include "Abilities/VengefulDance.h"
+#include "Abilities/BundleOfJoy.h"
 #include "Logging/LogMacros.h"
 #include "RelicRunnersCharacter.generated.h"
 
@@ -127,7 +130,16 @@ public:
 	void UltimateAbility();
 	void HealthPotions();
 
-	void SpendAbilityPoints();
+	UFUNCTION(Server, Reliable)
+	void Server_SpendAbilityPoints();
+
+	UFUNCTION(Client, Reliable)
+	void Client_OnAbilityPointsUpdated(int32 NewAbilityPoints);
+
+	UFUNCTION(Server, Reliable)
+	void Server_UseHealthPotion(int NewHealth, int NewPotionCount);
+
+
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
@@ -276,6 +288,18 @@ protected:
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> UtilityAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* UtilityAbilityInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DamageAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DamageAbilityInstance;
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;
 
@@ -329,7 +353,7 @@ protected:
 	int PlayerXPToLevel;
 	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerLevel;
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerAbilityPoints;
 	UPROPERTY()
 	int PlayerArmor;
@@ -359,7 +383,7 @@ protected:
 	UPROPERTY()
 	int HealthPotionCount;   
 	UPROPERTY()
-	int HealthGranted;         
+	float HealthGranted;         
 
 	float DamageCooldown = 5.f;
 	float DefenceCooldown = 5.f;
