@@ -155,7 +155,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<class UMainMenuWidget> MainMenuWidgetClass = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	class UMainMenuWidget* MainMenuWidget = nullptr;
 
 	UFUNCTION(Client, Reliable)
