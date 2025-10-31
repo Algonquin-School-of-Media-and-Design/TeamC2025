@@ -19,45 +19,51 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/IUserObjectListEntry.h"
-#include "Components/TextBlock.h"
-#include "Components/Image.h"
-#include "Components/Button.h"
 #include "InventorySlotsEntry.generated.h"
 
 UCLASS()
 class RELICRUNNERS_API UInventorySlotsEntry : public UUserWidget, public IUserObjectListEntry
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	virtual void NativeConstruct() override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tooltip")
+    TSubclassOf<UUserWidget> TooltipWidgetClass;
 
-	virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Popup")
+    TSubclassOf<class UInventoryItemOptions> InventoryItemOptionsClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tooltip")
-	TSubclassOf<UUserWidget> TooltipWidgetClass;
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* TB_Level;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Popup")
-	TSubclassOf<class UInventoryItemOptions> InventoryItemOptionsClass;
+    UPROPERTY(meta = (BindWidget))
+    class UBorder* B_Item;
 
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_Level;
+    UPROPERTY(meta = (BindWidget))
+    class UBorder* B_Color;
 
-	UPROPERTY(meta = (BindWidget))
-	class UButton* B_ItemFrame;
+    UPROPERTY(meta = (BindWidget))
+    class UImage* I_Item;
 
-	UFUNCTION()
-	void OnEntryButtonClicked();
+    UPROPERTY()
+    class UItemObject* Item;
 
-	UPROPERTY(meta = (BindWidget))
-	class UImage* I_Item;
+    virtual void NativeConstruct() override;
+    virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
 
-	UPROPERTY()
-	class UItemObject* Item;
+    // Mouse & drag events
+    virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+    virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+    virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 
-	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+    virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+    virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 
-	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
+protected:
+    UFUNCTION()
+    void OnEntryClicked();
 
+    bool bIsPressed = false;
+    bool bIsDragging = false;
+    float PressedTime = 0.0f;
 };
-

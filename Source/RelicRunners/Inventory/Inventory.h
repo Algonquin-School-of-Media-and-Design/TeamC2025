@@ -136,6 +136,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* I_Offhand;
 
+	UPROPERTY(meta = (BindWidget))
+	class UCanvasPanel* EquippedCanvas;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Popup")
 	TSubclassOf<class UInventoryItemOptions> InventoryItemOptionsClass;
 
@@ -194,6 +197,7 @@ public:
 	void OnEquippedStatsUpdated(const struct FEquippedStatsSummary& Stats);
 
 	virtual void NativeConstruct() override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
 	UFUNCTION()
 	void HandleSortSelected(EInventorySorting Method);

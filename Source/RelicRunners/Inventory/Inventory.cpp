@@ -22,6 +22,7 @@
 #include "Components/Button.h"
 #include "Components/Border.h"
 #include "Components/Image.h"
+#include "Components/CanvasPanel.h"
 #include "InventoryToolTip.h"
 #include "InventorySortingOptions.h"
 #include "InventoryComponent.h"
@@ -36,6 +37,7 @@
 #include "RelicRunners/Item/ItemStats.h"
 #include "RelicRunners/Item/ItemData.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "Blueprint/DragDropOperation.h"
 #include "RelicRunners/PlayerPreview/PlayerPreview.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
@@ -332,6 +334,7 @@ void UInventory::DropItem(UItemObject* Item)
 FReply UInventory::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
     UInventoryItemOptions::CloseAnyOpenPopup();
+    UInventorySortingOptions::CloseAnyOpenPopup();
     return FReply::Unhandled(); 
 }
 
@@ -386,6 +389,7 @@ void UInventory::SortingTypeClicked()
         {
             InventorySortingOptions->OnSortingSelected.AddDynamic(this, &UInventory::HandleSortSelected);
 
+            InventorySortingOptions->Setup();
             FVector2D ScreenPosition;
             UWidgetLayoutLibrary::GetMousePositionScaledByDPI(GetWorld()->GetFirstPlayerController(), ScreenPosition.X, ScreenPosition.Y);
             InventorySortingOptions->AddToViewport();
@@ -396,6 +400,7 @@ void UInventory::SortingTypeClicked()
 
 void UInventory::OnEquippedSlotClick(UItemObject* EquippedItem)
 {
+    UInventorySortingOptions::CloseAnyOpenPopup();
     UInventoryItemOptions::CloseAnyOpenPopup();
     if (EquippedItem)
     {
@@ -413,6 +418,39 @@ void UInventory::OnEquippedSlotClick(UItemObject* EquippedItem)
             Popup->SetPositionInViewport(ScreenPosition, false);
         }
     }
+}
+
+bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+    Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
+
+    if (!InOperation)
+        return false;
+
+    UItemObject* DraggedItem = Cast<UItemObject>(InOperation->Payload);
+    if (!DraggedItem)
+        return false;
+
+    FVector2D DropPosition = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    FGeometry EquippedGeometry = EquippedCanvas->GetCachedGeometry();
+
+    const FVector2D EquippedLocal = EquippedGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D EquippedSize = EquippedGeometry.GetLocalSize();
+
+    const bool bInsideEquipped =
+        EquippedLocal.X >= 0.f && EquippedLocal.Y >= 0.f &&
+        EquippedLocal.X <= EquippedSize.X && EquippedLocal.Y <= EquippedSize.Y;
+
+    if (bInsideEquipped)
+    {
+        EquipItem(DraggedItem);
+    }
+    else
+    {
+        DropItem(DraggedItem);
+    }
+
+    return true;
 }
 
 void UInventory::OnEquippedStatsUpdated(const FEquippedStatsSummary& Stats)

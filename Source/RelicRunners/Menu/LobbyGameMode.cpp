@@ -25,11 +25,6 @@ ALobbyGameMode::ALobbyGameMode()
 
     PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
 
-    // IMPORTANT: ensure local fogs show up at close range — set the console var to 0 (or small)
-    //if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.LocalFogVolume.GlobalStartDistance")))
-    //{
-    //    CVar->Set(0); // default is 2000 (20m). Set to 0 to disable the "start distance" culling.
-    //}
     bUseSeamlessTravel = true;
     bReplicates = true;
 }
@@ -43,7 +38,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    if (!HasAuthority()) return; // Only the server should do spawn logic
+    if (!HasAuthority()) return; 
 
     if (!NewPlayer || !LobbyPreviewClass) return;
 
@@ -73,13 +68,36 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
             }
             else
             {
-                // No player state (shouldn't happen), destroy preview
                 SpawnedPreview->Destroy();
             }
         }
     }
-    FTimerHandle timer;
-    GetWorld()->GetTimerManager().SetTimer(timer, this, &ALobbyGameMode::UpdateSetup, 1.0f, true, 1.0f);
+
+    TWeakObjectPtr<ALobbyGameMode> WeakThis(this);
+    TSharedRef<int32> RepeatCount = MakeShared<int32>(0);
+    TSharedRef<FTimerHandle> TimerHandle_Update = MakeShared<FTimerHandle>();
+
+    GetWorld()->GetTimerManager().SetTimer(
+        *TimerHandle_Update,
+        [WeakThis, TimerHandle_Update, RepeatCount]()
+        {
+            if (!WeakThis.IsValid()) return;
+
+            WeakThis->UpdateSetup();
+
+            (*RepeatCount)++;
+            if (*RepeatCount >= 5)
+            {
+                if (UWorld* World = WeakThis->GetWorld())
+                {
+                    World->GetTimerManager().ClearTimer(*TimerHandle_Update);
+                }
+            }
+        },
+        0.5f,
+        true
+    );
+
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)

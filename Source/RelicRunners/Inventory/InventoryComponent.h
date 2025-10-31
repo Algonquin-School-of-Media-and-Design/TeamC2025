@@ -78,6 +78,9 @@ public:
 
     void SortInventoryByCurrentMethod();
 
+    UFUNCTION(BlueprintCallable)
+    void SwapItems(UItemObject* ItemA, UItemObject* ItemB);
+
     UFUNCTION(Server, Reliable)
     void Server_SortInventory(EInventorySorting NewMethod);
 

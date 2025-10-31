@@ -195,119 +195,6 @@ void UInventoryComponent::HandleSortingNow()
                 return A.ItemData.ItemType < B.ItemData.ItemType;
             });
         break;
-
-    case EInventorySorting::SortByHealth:
-        Items.Sort([&RarityRank](UItemObject& A, UItemObject& B)
-            {
-                if (A.ItemData.Health != B.ItemData.Health)
-                    return A.ItemData.Health > B.ItemData.Health;
-
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
-
-                if (ARank != BRank)
-                    return ARank > BRank;
-
-                return A.ItemData.ItemType < B.ItemData.ItemType;
-            });
-        break;
-
-    case EInventorySorting::SortByArmor:
-        Items.Sort([&RarityRank](UItemObject& A, UItemObject& B)
-            {
-                if (A.ItemData.Armor != B.ItemData.Armor)
-                    return A.ItemData.Armor > B.ItemData.Armor;
-
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
-
-                if (ARank != BRank)
-                    return ARank > BRank;
-
-                return A.ItemData.ItemType < B.ItemData.ItemType;
-            });
-        break;
-
-    case EInventorySorting::SortByDexterity:
-        Items.Sort([&RarityRank](UItemObject& A, UItemObject& B)
-            {
-                if (A.ItemData.Dexterity != B.ItemData.Dexterity)
-                    return A.ItemData.Dexterity > B.ItemData.Dexterity;
-
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
-
-                if (ARank != BRank)
-                    return ARank > BRank;
-
-                return A.ItemData.ItemType < B.ItemData.ItemType;
-            });
-        break;
-
-    case EInventorySorting::SortByStrength:
-        Items.Sort([&RarityRank](UItemObject& A, UItemObject& B)
-            {
-                if (A.ItemData.Strength != B.ItemData.Strength)
-                    return A.ItemData.Strength > B.ItemData.Strength;
-
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
-
-                if (ARank != BRank)
-                    return ARank > BRank;
-
-                return A.ItemData.ItemType < B.ItemData.ItemType;
-            });
-        break;
-
-    case EInventorySorting::SortByIntelligence:
-        Items.Sort([&RarityRank](UItemObject& A, UItemObject& B)
-            {
-                if (A.ItemData.Intelligence != B.ItemData.Intelligence)
-                    return A.ItemData.Intelligence > B.ItemData.Intelligence;
-
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
-
-                if (ARank != BRank)
-                    return ARank > BRank;
-
-                return A.ItemData.ItemType < B.ItemData.ItemType;
-            });
-        break;
-
-    case EInventorySorting::SortByLuck:
-        Items.Sort([&RarityRank](UItemObject& A, UItemObject& B)
-            {
-                if (A.ItemData.Luck != B.ItemData.Luck)
-                    return A.ItemData.Luck > B.ItemData.Luck;
-
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
-
-                if (ARank != BRank)
-                    return ARank > BRank;
-
-                return A.ItemData.ItemType < B.ItemData.ItemType;
-            });
-        break;
-
-    case EInventorySorting::SortBySlots:
-        Items.Sort([&RarityRank](UItemObject& A, UItemObject& B)
-            {
-                if (A.ItemData.Slots != B.ItemData.Slots)
-                    return A.ItemData.Slots > B.ItemData.Slots;
-
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
-
-                if (ARank != BRank)
-                    return ARank > BRank;
-
-                return A.ItemData.ItemType < B.ItemData.ItemType;
-            });
-        break;
-
     default:
         break;
     }
@@ -440,6 +327,21 @@ void UInventoryComponent::UpdateTotalEquippedStats(ARelicRunnersCharacter* Char)
     // Store for local access/UI
     CachedEquippedStats = Stats;
     OnStatsChanged.Broadcast(Stats); // Works only on server/UI
+}
+
+void UInventoryComponent::SwapItems(UItemObject* ItemA, UItemObject* ItemB)
+{
+    if (!ItemA || !ItemB)
+        return;
+
+    int32 IndexA = InventoryItems.IndexOfByKey(ItemA);
+    int32 IndexB = InventoryItems.IndexOfByKey(ItemB);
+
+    if (IndexA != INDEX_NONE && IndexB != INDEX_NONE)
+    {
+        InventoryItems.Swap(IndexA, IndexB);
+        OnInventoryChanged.Broadcast();
+    }
 }
 
 void UInventoryComponent::UpdateTotalEquippedStats(AEnemyCharacterAI* Char)

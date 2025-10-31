@@ -11,6 +11,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "Engine/Engine.h"
 #include <RelicRunners/Menu/LobbyGameMode.h>
+#include <RelicRunners/RelicRunnersGameMode.h>
 
 void URelicRunnersGameInstance::Init()
 {
