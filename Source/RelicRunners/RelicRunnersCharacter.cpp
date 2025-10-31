@@ -980,7 +980,7 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 {
 	if (UI != "Ability") HideUI(AbilitySelection, playerController);
 	if (UI != "Inventory") HideUI(Inventory, playerController, true);
-	if (UI != "Pause") HideUI(PauseMenu, playerController);
+	//if (UI != "Pause") HideUI(PauseMenu, playerController);
 }
 
 void ARelicRunnersCharacter::DamageAbility()

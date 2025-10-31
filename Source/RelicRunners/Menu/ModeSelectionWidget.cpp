@@ -45,21 +45,21 @@ void UModeSelectionWidget::NativeConstruct()
 	MaxCharacterLimit = 12;
 }
 
-void UModeSelectionWidget::SetSaveFileName(int index, FString Name)
-{
-	switch (index)
-	{
-	case 0:
-		SavefileName0->SetText(FText::FromString(Name));
-		break;
-	case 1:
-		SavefileName1->SetText(FText::FromString(Name));
-		break;
-	case 2:
-		SavefileName2->SetText(FText::FromString(Name));
-		break;
-	}
-}
+//void UModeSelectionWidget::SetSaveFileName(int index, FString Name)
+//{
+//	switch (index)
+//	{
+//	case 0:
+//		SavefileName0->SetText(FText::FromString(Name));
+//		break;
+//	case 1:
+//		SavefileName1->SetText(FText::FromString(Name));
+//		break;
+//	case 2:
+//		SavefileName2->SetText(FText::FromString(Name));
+//		break;
+//	}
+//}
 
 void UModeSelectionWidget::SetParentMenu(UMainMenuWidget* InParentMenu)
 {
