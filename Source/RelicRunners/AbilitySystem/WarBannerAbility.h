@@ -17,7 +17,8 @@ class RELICRUNNERS_API AWarBannerAbility : public AAbilityBase
 public:
 	AWarBannerAbility();
 
-	void Initialize(AActor* newOwner);
+	UFUNCTION(Server, Reliable)
+	void Server_Initialize(AActor* newOwner);
 
 	virtual void ActivateAbility() override;
 	virtual void EndAbility() override;
@@ -26,7 +27,8 @@ public:
 
 	void CancelAbility();
 
-	void SpawnBanner();
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnBanner();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	class UStaticMeshComponent* BannerSilhouetteMesh;

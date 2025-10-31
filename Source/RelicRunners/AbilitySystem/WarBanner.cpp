@@ -2,6 +2,7 @@
 
 
 #include "WarBanner.h"
+#include "WarBannerAbility.h"
 #include "Net/UnrealNetwork.h"
 
 AWarBanner::AWarBanner()
@@ -12,6 +13,8 @@ AWarBanner::AWarBanner()
 
 	BannerMesh = CreateDefaultSubobject<UStaticMeshComponent>("Banner");
 	BannerMesh->SetupAttachment(RootComponent);
+
+	SetReplicates(true);
 
 }
 
@@ -39,6 +42,16 @@ void AWarBanner::BeginPlay()
 void AWarBanner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (IsAlive)
+	{
+		DrawDebugSphere(GetWorld(), GetActorLocation(), Radius, 32, FColor::White);
+	}
+}
+
+void AWarBanner::Initialize(AActor* newOwner)
+{
+	Owner = newOwner;
 }
 
 void AWarBanner::UpdateTimelineComp(float Output)
@@ -47,7 +60,7 @@ void AWarBanner::UpdateTimelineComp(float Output)
 	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, FString::Printf(TEXT("Banner LifeTime: %f"), LifeTime));
 }
 
-void AWarBanner::Server_Spawn_Implementation(FVector position, float duration, float damageAmount, float areaRadius)
+void AWarBanner::Server_Spawn_Implementation(float duration, float damageAmount, float areaRadius)
 {
 	SetActorTickEnabled(true);
 	BannerMesh->SetVisibility(true);
@@ -58,7 +71,6 @@ void AWarBanner::Server_Spawn_Implementation(FVector position, float duration, f
 	LifeTime = duration;
 	Damage = damageAmount;
 	Radius = areaRadius;
-	SetActorLocation(position);
 }
 
 void AWarBanner::Server_Despawn_Implementation()
@@ -66,8 +78,14 @@ void AWarBanner::Server_Despawn_Implementation()
 	IsAlive = false;
 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Timeline Ended")));
 
+	AWarBannerAbility* ownerAbility = Cast<AWarBannerAbility>(Owner);
+	if (ownerAbility != nullptr)
+	{
+		ownerAbility->EndAbility();
+	}
+
 	SetActorTickEnabled(false);
-	BannerMesh->SetVisibility(true);
+	BannerMesh->SetVisibility(false);
 }
 
 void AWarBanner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

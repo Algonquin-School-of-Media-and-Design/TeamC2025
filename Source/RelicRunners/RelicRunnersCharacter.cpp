@@ -525,7 +525,7 @@ void ARelicRunnersCharacter::BeginPlay()
 	if (WarBannerAbilityTemplate != nullptr)
 	{
 		WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
-		WarBannerAbility->Initialize(this);
+		WarBannerAbility->Server_Initialize(this);
 	}
 }
 
@@ -639,6 +639,12 @@ void ARelicRunnersCharacter::TraceForInteractables()
 	}
 
 	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	if (WarBannerAbility == nullptr)
+		return;
+
+	if (!WarBannerAbility->CanActivate())
+		return;
+
 	if (IsWarBannerActive)
 	{
 		FHitResult HitResult;
@@ -651,27 +657,13 @@ void ARelicRunnersCharacter::TraceForInteractables()
 			ECC_Visibility,
 			TraceParams);
 
-		DrawDebugLine(GetWorld(), PlayerLocation, PlayerLocation + (PlayerForward * 500.0f), FColor::Yellow);
+		FVector targetPosition = bHit ? HitResult.Location : PlayerLocation + (PlayerForward * 1000.0f);
 
-		if (bHit)
-		{
-			DrawDebugLine(GetWorld(), PlayerLocation, HitResult.Location, FColor::Blue);
-
-			if (WarBannerAbility != nullptr)
-			{
-				WarBannerAbility->SetActorLocation(HitResult.Location);
-				WarBannerAbility->SetActorRotation(FRotator(0.0f, GetControlRotation().Yaw, 0.0f));
-			}
-		}
-		else
-		{
-			if (WarBannerAbility != nullptr)
-			{
-				WarBannerAbility->SetActorLocation(PlayerLocation + (PlayerForward * 1000.0f));
-				WarBannerAbility->SetActorRotation(FRotator(0.0f, GetControlRotation().Yaw, 0.0f));
-			}
-		}
+		DrawDebugLine(GetWorld(), PlayerLocation, targetPosition, FColor::Blue);
+		WarBannerAbility->SetActorLocation(targetPosition);
+		WarBannerAbility->SetActorRotation(FRotator(0.0f, GetControlRotation().Yaw, 0.0f));
 	}
+	//War Banner Ability Section End
 }
 
 void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
@@ -801,6 +793,11 @@ void ARelicRunnersCharacter::BasicAttack()
 			// Play as dynamic montage
 			AnimInstance->PlaySlotAnimationAsDynamicMontage(SelectedSequence, FName("DefaultSlot"));
 		}
+	}
+
+	if (IsWarBannerActive && WarBannerAbility != nullptr)
+	{
+		WarBannerAbility->Server_SpawnBanner();
 	}
 }
 

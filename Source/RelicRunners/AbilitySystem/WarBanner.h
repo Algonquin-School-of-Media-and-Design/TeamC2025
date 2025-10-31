@@ -18,8 +18,10 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
+	void Initialize(AActor* newOwner);
+
 	UFUNCTION(Server, Reliable)
-	void Server_Spawn(FVector position, float Duration, float DamageAmount, float AreaRadius);
+	void Server_Spawn(float Duration, float DamageAmount, float AreaRadius);
 
 	UFUNCTION(Server, Reliable)
 	void Server_Despawn();
@@ -47,7 +49,6 @@ public:
 
 
 private:
-
 	UFUNCTION()
 	void UpdateTimelineComp(float Output);
 };

@@ -10,8 +10,6 @@
 
 /*
 TODO:
-Create "Key tiles" that create paths from the start tile like how it works with the ending tile
-Make the navmesh work with the level generation
 Teleport every player to the starting point when the level starts
 */
 
@@ -108,13 +106,6 @@ void ALevelGenerator::PostInitializeComponents()
 				FindStartToEndPath(startingIndex, keyTileIndex);
 			}
 		}
-
-		/*
-		TODO: 
-		Make a for loop that takes the key tiles array and sets the indexes of the specific FloorValuesArray and
-		overrides whatever's there with the special tile like how the starting and ending tiles are done.
-		Also - Create a path from the starting tile to the specific tile based on the index in the for loop.
-		*/
 
 		for (int y = 0; y < SpawnDepth; y++)
 		{

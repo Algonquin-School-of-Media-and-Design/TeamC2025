@@ -3,15 +3,17 @@
 
 #include "WarBannerAbility.h"
 #include "WarBanner.h"
+#include "Net/UnrealNetwork.h"
+#include "../RelicRunnersCharacter.h"
 
 AWarBannerAbility::AWarBannerAbility()
 {
     bIsOnCooldown = false;
     bCanBeInterrupted = false;
     Cooldown = 0.f;
-    Duration = 0.f;
+    Duration = 10.f;
     DamageAmount = 0.f;
-    AreaRadius = 0.f;
+    AreaRadius = 500.f;
     ConeAngle = 0.f;
     AbilityName = "War Banner";
     AbilityCategory = EAbilityCategory::Utility;
@@ -24,9 +26,10 @@ AWarBannerAbility::AWarBannerAbility()
     BannerSilhouetteMesh = CreateDefaultSubobject<UStaticMeshComponent>("BannerSilhoetteMesh");
     RootComponent = BannerSilhouetteMesh;
 
+    SetReplicates(true);
 }
 
-void AWarBannerAbility::Initialize(AActor* newOwner)
+void AWarBannerAbility::Server_Initialize_Implementation(AActor* newOwner)
 {
     OwnerActor = newOwner;
 
@@ -34,6 +37,9 @@ void AWarBannerAbility::Initialize(AActor* newOwner)
         return;
 
     BannerSilhouetteMesh->SetVisibility(false);
+
+    WarBanner = GetWorld()->SpawnActor<AWarBanner>(WarBannerTemplate, GetActorLocation(), GetActorRotation());
+    WarBanner->Initialize(this);
 }
 
 void AWarBannerAbility::ActivateAbility()
@@ -70,6 +76,12 @@ void AWarBannerAbility::ActivateAbility()
 
 void AWarBannerAbility::EndAbility()
 {
+    ARelicRunnersCharacter* character = Cast<ARelicRunnersCharacter>(OwnerActor);
+
+    if (character == nullptr)
+        return;
+
+    bIsOnCooldown = false;
 }
 
 bool AWarBannerAbility::CanActivate() const
@@ -90,19 +102,17 @@ void AWarBannerAbility::CancelAbility()
     BannerSilhouetteMesh->SetVisibility(false);
 }
 
-void AWarBannerAbility::SpawnBanner()
+void AWarBannerAbility::Server_SpawnBanner_Implementation()
 {
+    bIsOnCooldown = true;
+
     if (WarBanner == nullptr)
-    {
-        WarBanner = GetWorld()->SpawnActor<AWarBanner>(WarBannerTemplate, GetActorLocation(), GetActorRotation());
-    }
+        return;
+
+    WarBanner->Server_Spawn(Duration, DamageAmount, AreaRadius);
 
     WarBanner->SetActorLocation(GetActorLocation());
     WarBanner->SetActorRotation(GetActorRotation());
 
-    if (BannerSilhouetteMesh == nullptr)
-        return;
-
-    BannerSilhouetteMesh->SetVisibility(false);
-
+    CancelAbility();
 }
