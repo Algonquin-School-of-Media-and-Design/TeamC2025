@@ -127,12 +127,6 @@ void ALevelGenerator::PostInitializeComponents()
 		}
 		CreateFloor();
 	}
-
-
-	
-
-
-	
 }
 
 void ALevelGenerator::BeginPlay()
@@ -145,7 +139,6 @@ void ALevelGenerator::BeginPlay()
 
 		NavSys->Build();
 	}
-	
 }
 
 
