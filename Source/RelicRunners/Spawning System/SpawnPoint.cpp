@@ -200,7 +200,7 @@ void ASpawnPoint::RemoveEnemy(AActor* enemy)
 
 bool ASpawnPoint::FinishedAllWaves()
 {
-	return m_CurrentWaves >= m_numOfWaves;
+	return m_CurrentWaves >= m_numOfWaves && m_pSpawnedEnemies.Num() <= 0;
 }
 
 // Called when the game starts or when spawned

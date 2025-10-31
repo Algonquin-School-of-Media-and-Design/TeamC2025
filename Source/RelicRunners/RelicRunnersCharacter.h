@@ -115,8 +115,12 @@ public:
 	void Run(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Interact();
+	void ToggleUI(UUserWidget* UIWidget, bool bClosePopups);
 	void InventoryUI();
+	void PauseUI();
 	void AbilitySystemUI();
+	void HideUI(UUserWidget* UIWidget, APlayerController* PlayerController, bool bClosePopups);
+	void RemoveOtherUI(FString UI, APlayerController* playerController);
 	void DamageAbility();
 	void DefenceAbility();
 	void UtilityAbility();
@@ -140,27 +144,6 @@ public:
 	int GetPlayerAbilityPoints() { return PlayerAbilityPoints; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
-	int GetPlayerStartingMaxHealth() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
-	int GetPlayerNumInventorySlots() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
-	int GetPlayerStartingArmor() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
-	int GetPlayerStartingDexterity() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
-	int GetPlayerStartingStrength() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
-	int GetPlayerStartingIntelligence() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
-	int GetPlayerStartingLuck() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
 	void SetPlayerStartingArmor(int StartingArmor) { PlayerStartingArmor =  StartingArmor; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
@@ -178,6 +161,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stats")
 	void SetPlayerStartingStrength(int StartingStrength) { PlayerStartingStrength = StartingStrength; }
 
+	UFUNCTION()
+	int GetPlayerStartingMaxHealth() const { return PlayerStartingMaxHealth; }
+
+	UFUNCTION()
+	int GetPlayerNumInventorySlots() const { return PlayerNumInventorySlots; }
+
+	UFUNCTION()
+	int GetPlayerStartingArmor() const { return PlayerStartingArmor; }
+
+	UFUNCTION()
+	int GetPlayerStartingDexterity() const { return PlayerStartingDexterity; }
+
+	UFUNCTION()
+	int GetPlayerStartingStrength() const { return PlayerStartingStrength; }
+
+	UFUNCTION()
+	int GetPlayerStartingIntelligence() const { return PlayerStartingIntelligence; }
+
+	UFUNCTION()
+	int GetPlayerStartingLuck() const { return PlayerStartingLuck; }
 
 	class UInventory* GetInventory() { return Inventory; };
 
@@ -256,6 +259,11 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UInventory> InventoryClass;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UPauseMenu> PauseMenuClass;
+	UPROPERTY()
+	class UPauseMenu* PauseMenu;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UPlayerHUD> PlayerHUDClass;

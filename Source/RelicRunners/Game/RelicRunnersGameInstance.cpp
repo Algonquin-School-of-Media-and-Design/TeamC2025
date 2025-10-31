@@ -11,6 +11,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "Engine/Engine.h"
 #include <RelicRunners/Menu/LobbyGameMode.h>
+#include <RelicRunners/RelicRunnersGameMode.h>
 
 void URelicRunnersGameInstance::Init()
 {
@@ -313,6 +314,15 @@ void URelicRunnersGameInstance::StartSessionGame()
     //FString TravelURL = TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap?listen");
     FString TravelURL = TEXT("/Game/ThirdPerson/Maps/GenerateLevelTest?listen");
     UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] Host starting travel to %s"), *TravelURL);
+
+    TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin();
+
+    FOnlineSessionSettings* CurrentSettings = Sess->GetSessionSettings(NAME_GameSession);
+    if (CurrentSettings)
+    {
+        CurrentSettings->Set(SETTING_MAPNAME, FString(TEXT("Game")), EOnlineDataAdvertisementType::ViaOnlineService);
+        Sess->UpdateSession(NAME_GameSession, *CurrentSettings, true);
+    }
 
     // Tell all clients to prepare for travel
     for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)

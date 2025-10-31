@@ -71,7 +71,7 @@ public:
 	UFUNCTION()
 	void RemoveEnemy(AActor* enemy);
 	//A method to check if the spawn point has finished all its waves
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	bool FinishedAllWaves();
 
 protected:

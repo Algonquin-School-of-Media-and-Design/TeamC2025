@@ -38,6 +38,7 @@
 #include "Item/ItemActor.h"
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
+#include "Menu/PauseMenu.h"
 #include "AbilitySystem/AbilityPointCounter.h"
 #include "AbilitySystem/AbilitySelection.h"
 #include "AbilitySystem/HealthPotion.h"
@@ -218,7 +219,7 @@ EInventorySorting ARelicRunnersCharacter::GetCurrentSortingMethod() const
 		return InventoryComponent->CurrentSortingMethod;
 	}
 
-	return EInventorySorting::SortByRarity; // Fallback
+	return EInventorySorting::SortByRarity;
 }
 
 void ARelicRunnersCharacter::Server_EquipItemByID_Implementation(FGuid ID)
@@ -438,7 +439,6 @@ void ARelicRunnersCharacter::OnRep_PlayerState()
 	}
 }
 
-
 void ARelicRunnersCharacter::OnRep_MeshUpdate(UObject* MeshAsset, const FString& ItemType)
 {
 	SetReplicatedMeshByItemType(MeshAsset, ItemType);
@@ -574,6 +574,17 @@ void ARelicRunnersCharacter::InitLocalUI()
 			Inventory->SetIsEnabled(false);
 		}
 	}
+	// === Pause Widget ===
+	if (!PauseMenu && PauseMenuClass)
+	{
+		PauseMenu = CreateWidget<UPauseMenu>(PC, PauseMenuClass);
+		if (PauseMenu)
+		{
+			PauseMenu->AddToViewport();
+			PauseMenu->SetVisibility(ESlateVisibility::Hidden);
+			PauseMenu->SetIsEnabled(false);
+		}
+	}
 	// === Ability Selection HUD Widget ===
 	if (!AbilitySelection && AbilitySelectionClass)
 	{
@@ -594,7 +605,7 @@ void ARelicRunnersCharacter::SpawnStarterItems()
 {
 	if (ItemMeshData && InventoryComponent)
 	{
-		for (int i = 0; i < 30; ++i)
+		for (int i = 0; i < 50; ++i)
 		{
 			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateRandomItemData(ItemMeshData), InventoryComponent);
 			InventoryComponent->AddItem(Item);
@@ -617,7 +628,7 @@ void ARelicRunnersCharacter::TraceForInteractables()
 	const FVector PlayerLocation = FollowCamera->GetComponentLocation();
 	const FVector PlayerForward = FollowCamera->GetForwardVector();
 
-	const float MaxDistance = 1000.f;
+	const float MaxDistance = 800.f;
 	const float MinFacingDot = 0.f; // 1 = perfectly facing, 0 = 90 degrees off
 
 	for (TActorIterator<AItemActor> It(GetWorld()); It; ++It)
@@ -895,60 +906,83 @@ void ARelicRunnersCharacter::Interact()
 	}
 }
 
-void ARelicRunnersCharacter::InventoryUI()
+void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget, bool bClosePopups = false)
 {
-	if (!IsLocallyControlled()) return;
-
-	if (!Inventory) return;
+	if (!IsLocallyControlled() || !UIWidget) return;
 
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	if (!PlayerController) return;
 
-	if (Inventory->IsVisible())
+	bool bIsVisible = UIWidget->IsVisible();
+	ESlateVisibility Visibility = bIsVisible ? ESlateVisibility::Hidden : ESlateVisibility::Visible;
+	bool bEnable = !bIsVisible;
+
+	UIWidget->SetVisibility(Visibility);
+	UIWidget->SetIsEnabled(bEnable);
+	if (bEnable)
 	{
-		Inventory->SetVisibility(ESlateVisibility::Hidden);
-		Inventory->SetIsEnabled(false);
-		PlayerController->SetInputMode(FInputModeGameOnly());
-		PlayerController->SetShowMouseCursor(false);
-		UInventoryItemOptions::CloseAnyOpenPopup();
+		FInputModeGameAndUI InputMode;
+		PlayerController->SetInputMode(InputMode);
 	}
 	else
 	{
-		Inventory->SetVisibility(ESlateVisibility::Visible);
-		Inventory->SetIsEnabled(true);
-		PlayerController->SetInputMode(FInputModeGameAndUI());
-		PlayerController->SetShowMouseCursor(true);
+		FInputModeGameOnly InputMode;
+		PlayerController->SetInputMode(InputMode);
 	}
+	PlayerController->SetShowMouseCursor(bEnable);
+
+	if (bClosePopups && UIWidget == Inventory)
+	{
+		UInventoryItemOptions::CloseAnyOpenPopup();
+		UInventorySortingOptions::CloseAnyOpenPopup();
+	}
+}
+
+void ARelicRunnersCharacter::InventoryUI()
+{
+	if (!Inventory) return;
+	RemoveOtherUI("Inventory", Cast<APlayerController>(Controller));
+	ToggleUI(Inventory, true);
+}
+
+void ARelicRunnersCharacter::PauseUI()
+{
+	if (!PauseMenu) return;
+	RemoveOtherUI("Pause", Cast<APlayerController>(Controller));
+	ToggleUI(PauseMenu);
 }
 
 void ARelicRunnersCharacter::AbilitySystemUI()
 {
-	if (!IsLocallyControlled()) return;
+	if (!AbilitySelection || PlayerAbilityPoints < 1) return;
+	RemoveOtherUI("Ability", Cast<APlayerController>(Controller));
+	ToggleUI(AbilitySelection);
+}
 
-	if (AbilitySelection == nullptr) return;
-
-	APlayerController* PlayerController = Cast<APlayerController>(Controller);
-	if (!PlayerController) return;
-
-	if (PlayerAbilityPoints >= 1)
+void ARelicRunnersCharacter::HideUI(UUserWidget* UIWidget, APlayerController* PlayerController, bool bClosePopups = false)
+{
+	if (UIWidget->IsVisible())
 	{
-		if (AbilitySelection->IsVisible())
+		UIWidget->SetVisibility(ESlateVisibility::Hidden);
+		UIWidget->SetIsEnabled(false);
+		PlayerController->SetInputMode(FInputModeGameOnly());
+		PlayerController->SetShowMouseCursor(false);
+
+		if (bClosePopups && UIWidget == Inventory)
 		{
-			AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
-			AbilitySelection->SetIsEnabled(false);
-			PlayerController->SetInputMode(FInputModeGameOnly());
-			PlayerController->SetShowMouseCursor(false);
-		}
-		else
-		{
-			AbilitySelection->SetVisibility(ESlateVisibility::Visible);
-			AbilitySelection->SetIsEnabled(true);
-			PlayerController->SetInputMode(FInputModeGameAndUI());
-			PlayerController->SetShowMouseCursor(true);
+			UInventoryItemOptions::CloseAnyOpenPopup();
+			UInventorySortingOptions::CloseAnyOpenPopup();
 		}
 	}
-
 }
+
+void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* playerController)
+{
+	if (UI != "Ability") HideUI(AbilitySelection, playerController);
+	if (UI != "Inventory") HideUI(Inventory, playerController, true);
+	if (UI != "Pause") HideUI(PauseMenu, playerController);
+}
+
 void ARelicRunnersCharacter::DamageAbility()
 {
 	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
@@ -1009,7 +1043,6 @@ void ARelicRunnersCharacter::SpendAbilityPoints()
 		UpdateHUD();
 	}
 }
-
 
 void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
 {
@@ -1141,7 +1174,6 @@ void ARelicRunnersCharacter::Server_PickupItem_Implementation(AItemActor* Target
 	}
 }
 
-
 void ARelicRunnersCharacter::UpdateItemVisuals(UObject* MeshAsset, const FString& ItemType)
 {
 	if (ItemType == "Sword" || ItemType == "Shield")
@@ -1241,41 +1273,6 @@ UStaticMeshComponent* ARelicRunnersCharacter::GetStaticMeshComponentByItemType(c
 	if (ItemType == "Sword") return MainhandItemMesh;
 	if (ItemType == "Shield") return OffhandItemMesh;
 	return nullptr;
-}
-
-int ARelicRunnersCharacter::GetPlayerStartingMaxHealth() const
-{
-	return PlayerStartingMaxHealth;
-}
-
-int ARelicRunnersCharacter::GetPlayerNumInventorySlots() const
-{
-	return PlayerNumInventorySlots;
-}
-
-int ARelicRunnersCharacter::GetPlayerStartingArmor() const
-{
-	return PlayerStartingArmor;
-}
-
-int ARelicRunnersCharacter::GetPlayerStartingDexterity() const
-{
-	return PlayerStartingDexterity;
-}
-
-int ARelicRunnersCharacter::GetPlayerStartingStrength() const
-{
-	return PlayerStartingStrength;
-}
-
-int ARelicRunnersCharacter::GetPlayerStartingIntelligence() const
-{
-	return PlayerStartingIntelligence;
-}
-
-int ARelicRunnersCharacter::GetPlayerStartingLuck() const
-{
-	return PlayerStartingLuck;
 }
 
 void ARelicRunnersCharacter::AddGold(int32 Amount)

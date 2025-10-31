@@ -44,6 +44,8 @@ void AVendor::BeginPlay()
 	{
 		GenerateStock();
 	}
+
+	VendorWidget = CreateWidget<UIVendor>(GetWorld(), VendorWidgetClass);
 }
 
 void AVendor::GenerateStock()
@@ -173,23 +175,25 @@ void AVendor::Interact_Implementation(ARelicRunnersCharacter* Char)
 	{
 		if (VendorWidgetClass)
 		{
-			if (UUserWidget* CreatedWidget = CreateWidget<UUserWidget>(PC, VendorWidgetClass))
+			if (VendorWidget->IsVisible())
 			{
-				if (UIVendor* VendorUI = Cast<UIVendor>(CreatedWidget))
-				{
-					// Initialize the vendor UI with this vendor and the interacting player
-					VendorUI->Init(this, Char);
+				VendorWidget->SetVisibility(ESlateVisibility::Hidden);
+				VendorWidget->SetIsEnabled(false);
+				PC->SetInputMode(FInputModeGameOnly());
+				PC->SetShowMouseCursor(false);
+			}
+			else
+			{
+				// Initialize the vendor UI with this vendor and the interacting player
+				VendorWidget->Init(this, Char);
 
-					// Add UI to viewport
-					VendorUI->AddToViewport();
+				// Add UI to viewport
+				VendorWidget->AddToViewport();
 
-					// Switch input to game+UI (cursor visible)
-					FInputModeGameAndUI InputMode;
-					InputMode.SetHideCursorDuringCapture(false);
-					InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-					PC->SetInputMode(InputMode);
-					PC->SetShowMouseCursor(true);
-				}
+				VendorWidget->SetVisibility(ESlateVisibility::Visible);
+				VendorWidget->SetIsEnabled(true);
+				PC->SetInputMode(FInputModeGameAndUI());
+				PC->SetShowMouseCursor(true);
 			}
 		}
 	}

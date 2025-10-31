@@ -1,6 +1,7 @@
 #include "ModeSelectionWidget.h"
 #include "MainMenuWidget.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "RelicRunners/Game/RelicRunnersGameInstance.h"
 #include "Components/EditableTextBox.h"
@@ -42,6 +43,22 @@ void UModeSelectionWidget::NativeConstruct()
 	}
 
 	MaxCharacterLimit = 12;
+}
+
+void UModeSelectionWidget::SetSaveFileName(int index, FString Name)
+{
+	switch (index)
+	{
+	case 0:
+		SavefileName0->SetText(FText::FromString(Name));
+		break;
+	case 1:
+		SavefileName1->SetText(FText::FromString(Name));
+		break;
+	case 2:
+		SavefileName2->SetText(FText::FromString(Name));
+		break;
+	}
 }
 
 void UModeSelectionWidget::SetParentMenu(UMainMenuWidget* InParentMenu)

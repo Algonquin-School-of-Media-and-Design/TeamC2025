@@ -28,8 +28,21 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* CreditsButton = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	class UEditableTextBox* NameTextBox = nullptr;
+
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* SavefileName0 = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* SavefileName1 = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* SavefileName2 = nullptr;
+
+	UFUNCTION(BlueprintCallable)
+	void SetSaveFileName(int index, FString Name);
 
 	void SetParentMenu(class UMainMenuWidget* InParentMenu);
 

@@ -61,14 +61,18 @@ public:
     void LeaveSession(bool bQueueHost = false);
     void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
+    UFUNCTION(BlueprintCallable)
     void SetCharacterName(const FString& NewName) { PlayerName = NewName; }
+
+    UFUNCTION(BlueprintCallable)
     FString GetCharacterName() const { return PlayerName; }
 
     TSharedPtr<class FOnlineSessionSearch> SessionSearch;
     UPROPERTY()
     TMap<FUniqueNetIdRepl, FPendingClientTravel> PendingClientTravels;
-private:
     TWeakPtr<class IOnlineSession, ESPMode::ThreadSafe> SessionInterface;
+private:
+
     TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
 
     int32 PendingHostAfterLeave = 0;
