@@ -3,6 +3,7 @@
 
 #include "SoldierController.h"
 #include <NavigationSystem.h>
+#include <Perception/AIPerceptionComponent.h>
 
 ASoldierController::ASoldierController()
 {
@@ -10,6 +11,7 @@ ASoldierController::ASoldierController()
 	IsInCombat = false;
 	CentarePatrolZone = FVector::ZeroVector;
 	CurrentPatrolPoint = FVector::ZeroVector;
+	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComp"));
 }
 
 void ASoldierController::Tick(float DeltaTime)
@@ -58,4 +60,5 @@ FVector ASoldierController::GetCurrentPatrolPoint() const
 
 void ASoldierController::BeginPlay()
 {
+	Super::BeginPlay();
 }
