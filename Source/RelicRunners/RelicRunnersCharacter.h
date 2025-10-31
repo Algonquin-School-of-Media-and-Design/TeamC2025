@@ -252,7 +252,7 @@ public:
 	void OnLevelUp();
 
 protected:
-	
+
 	//Other Classes
 	UPROPERTY(EditDefaultsOnly, Category = "ItemActor")
 	TSubclassOf<class AItemActor> ItemActorClass;
@@ -365,6 +365,13 @@ protected:
 	float DefenceCooldown = 5.f;
 	float UtilityCooldown = 5.f;
 	float UltimateCooldown = 10.f;
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AWarBannerAbility> WarBannerAbilityTemplate;
+	class AWarBannerAbility* WarBannerAbility;
+
+	bool IsWarBannerActive = false;
 
 	//Setup
 	virtual void BeginPlay();

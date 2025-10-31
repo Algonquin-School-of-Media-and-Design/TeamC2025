@@ -55,6 +55,8 @@
 #include "Spawning System/Director.h"
 #include "Engine/Engine.h"
 
+#include "AbilitySystem/WarBannerAbility.h"
+
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 ARelicRunnersCharacter::ARelicRunnersCharacter()
@@ -518,6 +520,13 @@ void ARelicRunnersCharacter::BeginPlay()
 			}
 		});
 	}
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	if (WarBannerAbilityTemplate != nullptr)
+	{
+		WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
+		WarBannerAbility->Server_Initialize(this);
+	}
 }
 
 void ARelicRunnersCharacter::InitLocalUI()
@@ -639,6 +648,33 @@ void ARelicRunnersCharacter::TraceForInteractables()
 		bool bShouldShow = bWithinDistance && bFacingItem;
 		IInteractInterface::Execute_ShowTooltip(Item, bShouldShow);
 	}
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	if (WarBannerAbility == nullptr)
+		return;
+
+	if (!WarBannerAbility->CanActivate())
+		return;
+
+	if (IsWarBannerActive)
+	{
+		FHitResult HitResult;
+		FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true, this);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			PlayerLocation,
+			PlayerLocation + (PlayerForward * 1000.0f),
+			ECC_Visibility,
+			TraceParams);
+
+		FVector targetPosition = bHit ? HitResult.Location : PlayerLocation + (PlayerForward * 1000.0f);
+
+		DrawDebugLine(GetWorld(), PlayerLocation, targetPosition, FColor::Blue);
+		WarBannerAbility->SetActorLocation(targetPosition);
+		WarBannerAbility->SetActorRotation(FRotator(0.0f, GetControlRotation().Yaw, 0.0f));
+	}
+	//War Banner Ability Section End
 }
 
 void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
@@ -768,6 +804,11 @@ void ARelicRunnersCharacter::BasicAttack()
 			// Play as dynamic montage
 			AnimInstance->PlaySlotAnimationAsDynamicMontage(SelectedSequence, FName("DefaultSlot"));
 		}
+	}
+
+	if (IsWarBannerActive && WarBannerAbility != nullptr)
+	{
+		WarBannerAbility->Server_SpawnBanner();
 	}
 }
 
@@ -955,6 +996,21 @@ void ARelicRunnersCharacter::DefenceAbility()
 void ARelicRunnersCharacter::UtilityAbility()
 {
 	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	IsWarBannerActive = !IsWarBannerActive;
+
+	if (WarBannerAbility == nullptr)
+		return;
+
+	if (IsWarBannerActive)
+	{
+		WarBannerAbility->ActivateAbility();
+	}
+	else
+	{
+		WarBannerAbility->CancelAbility();
+	}
 }
 
 void ARelicRunnersCharacter::UltimateAbility()
