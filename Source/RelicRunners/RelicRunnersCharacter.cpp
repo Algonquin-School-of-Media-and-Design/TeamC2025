@@ -1095,6 +1095,10 @@ void ARelicRunnersCharacter::HealthPotions()
 
 void ARelicRunnersCharacter::Server_UseHealthPotion_Implementation(int NewHealth, int NewPotionCount)
 {
+
+	if (!HasAuthority())
+		return;
+
 	PlayerHealth = FMath::Clamp(NewHealth, 0, PlayerMaxHealth);
 	HealthPotionCount = FMath::Max(NewPotionCount, 0);
 
