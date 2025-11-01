@@ -11,7 +11,8 @@ enum class EAbilityCategory : uint8
     Offensive,
     Defensive,
     Utility,
-    Ultimate
+    Ultimate, 
+    None
 };
 
 UENUM(BlueprintType)
@@ -37,7 +38,7 @@ public:
     virtual bool CanActivate() const override;
     virtual FName GetAbilityName() const override;
 
-protected:
+public:
     UPROPERTY(BlueprintReadWrite, Category = "Ability|State")
     bool bIsOnCooldown;
 
@@ -59,6 +60,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Combat")
     float ConeAngle;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability State")
+    bool bIsActive;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Info")
     FName AbilityName;
 
@@ -67,6 +71,8 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Info")
     EAbilityTargetType TargetType;
+
+    FTimerHandle CooldownTimer;
 
     UPROPERTY(BlueprintReadWrite, Category = "Ability|Owner")
     AActor* OwnerActor;

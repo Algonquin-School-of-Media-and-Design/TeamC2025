@@ -18,6 +18,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystem/AbilityBase.h"
+#include "Abilities/VengefulDance.h"
+#include "Abilities/BundleOfJoy.h"
 #include "Logging/LogMacros.h"
 #include "RelicRunnersCharacter.generated.h"
 
@@ -127,7 +130,16 @@ public:
 	void UltimateAbility();
 	void HealthPotions();
 
-	void SpendAbilityPoints();
+	UFUNCTION(Server, Reliable)
+	void Server_SpendAbilityPoints();
+
+	UFUNCTION(Client, Reliable)
+	void Client_OnAbilityPointsUpdated(int32 NewAbilityPoints);
+
+	UFUNCTION(Server, Reliable)
+	void Server_UseHealthPotion(int NewHealth, int NewPotionCount);
+
+
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
@@ -252,7 +264,7 @@ public:
 	void OnLevelUp();
 
 protected:
-	
+
 	//Other Classes
 	UPROPERTY(EditDefaultsOnly, Category = "ItemActor")
 	TSubclassOf<class AItemActor> ItemActorClass;
@@ -275,6 +287,18 @@ protected:
 
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> UtilityAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* UtilityAbilityInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DamageAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DamageAbilityInstance;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;
@@ -329,7 +353,7 @@ protected:
 	int PlayerXPToLevel;
 	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerLevel;
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerAbilityPoints;
 	UPROPERTY()
 	int PlayerArmor;
@@ -359,12 +383,19 @@ protected:
 	UPROPERTY()
 	int HealthPotionCount;   
 	UPROPERTY()
-	int HealthGranted;         
+	float HealthGranted;         
 
 	float DamageCooldown = 5.f;
 	float DefenceCooldown = 5.f;
 	float UtilityCooldown = 5.f;
 	float UltimateCooldown = 10.f;
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AWarBannerAbility> WarBannerAbilityTemplate;
+	class AWarBannerAbility* WarBannerAbility;
+
+	bool IsWarBannerActive = false;
 
 	//Setup
 	virtual void BeginPlay();

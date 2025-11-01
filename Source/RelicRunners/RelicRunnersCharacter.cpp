@@ -39,6 +39,7 @@
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
 #include "Menu/PauseMenu.h"
+
 #include "AbilitySystem/AbilityPointCounter.h"
 #include "AbilitySystem/AbilitySelection.h"
 #include "AbilitySystem/HealthPotion.h"
@@ -54,6 +55,8 @@
 #include "Game/RelicRunnersGameInstance.h"
 #include "Spawning System/Director.h"
 #include "Engine/Engine.h"
+
+#include "AbilitySystem/WarBannerAbility.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -178,13 +181,14 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 
 	//Potions
 	HealthPotionCount = 3;
-	HealthGranted = 50;
+	HealthGranted = 0.5;
 
 	bAlwaysRelevant = true;
 	SetReplicates(true);
 	SetReplicateMovement(true);
 
 	Tags.Add("Player");
+
 }
 
 void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -199,6 +203,7 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerLevel);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerAbilityPoints);
 
 	//equipped items
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedArmsMesh);
@@ -352,6 +357,7 @@ void ARelicRunnersCharacter::OnRep_HUD()
 {
 	UpdateHUD();
 }
+
 
 void ARelicRunnersCharacter::AddExperience(int Amount)
 {
@@ -518,7 +524,35 @@ void ARelicRunnersCharacter::BeginPlay()
 			}
 		});
 	}
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	if (WarBannerAbilityTemplate != nullptr)
+	{
+		WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
+		WarBannerAbility->Server_Initialize(this);
+	}
+
+	//VengefulDance format
+    UtilityAbilityClass = AVengefulDance::StaticClass();
+
+    if (UtilityAbilityClass)
+    {
+		UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityAbilityClass);
+        if (UtilityAbilityInstance)
+        {
+			UtilityAbilityInstance->OwnerActor = this;
+        }
+    }
+
+	//BundleOfJoy format
+	if (!DamageAbilityClass)
+	{
+		DamageAbilityClass = ABundleOfJoy::StaticClass();
+	}
+	
 }
+
+
 
 void ARelicRunnersCharacter::InitLocalUI()
 {
@@ -589,6 +623,8 @@ void ARelicRunnersCharacter::InitLocalUI()
 			}
 		}
 	}
+
+
 	TryBindInventoryDelegates();
 }
 
@@ -639,6 +675,33 @@ void ARelicRunnersCharacter::TraceForInteractables()
 		bool bShouldShow = bWithinDistance && bFacingItem;
 		IInteractInterface::Execute_ShowTooltip(Item, bShouldShow);
 	}
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	if (WarBannerAbility == nullptr)
+		return;
+
+	if (!WarBannerAbility->CanActivate())
+		return;
+
+	if (IsWarBannerActive)
+	{
+		FHitResult HitResult;
+		FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true, this);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			PlayerLocation,
+			PlayerLocation + (PlayerForward * 1000.0f),
+			ECC_Visibility,
+			TraceParams);
+
+		FVector targetPosition = bHit ? HitResult.Location : PlayerLocation + (PlayerForward * 1000.0f);
+
+		DrawDebugLine(GetWorld(), PlayerLocation, targetPosition, FColor::Blue);
+		WarBannerAbility->SetActorLocation(targetPosition);
+		WarBannerAbility->SetActorRotation(FRotator(0.0f, GetControlRotation().Yaw, 0.0f));
+	}
+	//War Banner Ability Section End
 }
 
 void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
@@ -768,6 +831,11 @@ void ARelicRunnersCharacter::BasicAttack()
 			// Play as dynamic montage
 			AnimInstance->PlaySlotAnimationAsDynamicMontage(SelectedSequence, FName("DefaultSlot"));
 		}
+	}
+
+	if (IsWarBannerActive && WarBannerAbility != nullptr)
+	{
+		WarBannerAbility->Server_SpawnBanner();
 	}
 }
 
@@ -939,12 +1007,36 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 {
 	if (UI != "Ability") HideUI(AbilitySelection, playerController);
 	if (UI != "Inventory") HideUI(Inventory, playerController, true);
-	if (UI != "Pause") HideUI(PauseMenu, playerController);
+	//if (UI != "Pause") HideUI(PauseMenu, playerController);
 }
 
 void ARelicRunnersCharacter::DamageAbility()
 {
 	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+
+	//For BundleOfJoy
+	if (DamageAbilityClass && GetWorld())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 150.f + FVector(0, 0, 100.f);
+		FRotator SpawnRotation = GetActorRotation();
+
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageAbilityClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+		if (DamageAbilityInstance)
+		{
+			DamageAbilityInstance->OwnerActor = this;
+			DamageAbilityInstance->SetActorLocation(SpawnLocation); 
+			DamageAbilityInstance->ActivateAbility();
+
+			UE_LOG(LogTemp, Warning, TEXT("Ability spawned at: %s"), *DamageAbilityInstance->GetActorLocation().ToString());
+		}
+	}
+
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
@@ -955,6 +1047,27 @@ void ARelicRunnersCharacter::DefenceAbility()
 void ARelicRunnersCharacter::UtilityAbility()
 {
 	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	IsWarBannerActive = !IsWarBannerActive;
+
+	if (WarBannerAbility == nullptr)
+		return;
+
+	if (IsWarBannerActive)
+	{
+		WarBannerAbility->ActivateAbility();
+	}
+	else
+	{
+		WarBannerAbility->CancelAbility();
+	}
+
+	//For VengefulDance
+	if (UtilityAbilityInstance)
+	{
+		UtilityAbilityInstance->ActivateAbility();
+	}
 }
 
 void ARelicRunnersCharacter::UltimateAbility()
@@ -964,27 +1077,59 @@ void ARelicRunnersCharacter::UltimateAbility()
 
 void ARelicRunnersCharacter::HealthPotions()
 {
+	if (HealthPotion)
+	{
+		int OldHealth = PlayerHealth;
+		int OldPotionCount = HealthPotionCount;
 
-	HealthPotion->OnHealthPotionClicked(PlayerHealth, PlayerMaxHealth, HealthPotionCount, HealthGranted);
+		HealthPotion->OnHealthPotionClicked(PlayerHealth, PlayerMaxHealth, HealthPotionCount, HealthGranted);
+
+		if (PlayerHealth != OldHealth || HealthPotionCount != OldPotionCount)
+		{
+			Server_UseHealthPotion(PlayerHealth, HealthPotionCount);
+		}
+
+		UpdateHUD();
+	}
+}
+
+void ARelicRunnersCharacter::Server_UseHealthPotion_Implementation(int NewHealth, int NewPotionCount)
+{
+	PlayerHealth = FMath::Clamp(NewHealth, 0, PlayerMaxHealth);
+	HealthPotionCount = FMath::Max(NewPotionCount, 0);
+
 	UpdateHUD();
 }
 
-void ARelicRunnersCharacter::SpendAbilityPoints()
-{
-	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 
-	if (PlayerAbilityPoints >= 1)
+void ARelicRunnersCharacter::Server_SpendAbilityPoints_Implementation()
+{
+	if (!HasAuthority())
+		return;
+
+	if (PlayerAbilityPoints > 0)
 	{
 		PlayerAbilityPoints--;
 
-		if(PlayerAbilityPoints == 0)
-		{
-			AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
-			AbilitySelection->SetIsEnabled(false);
-			PlayerController->SetInputMode(FInputModeGameOnly());
-			PlayerController->SetShowMouseCursor(false);
-		}
+		Client_OnAbilityPointsUpdated(PlayerAbilityPoints);
+
 		UpdateHUD();
+	}
+}
+
+void ARelicRunnersCharacter::Client_OnAbilityPointsUpdated_Implementation(int32 NewAbilityPoints)
+{
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	if (!PlayerController)
+		return;
+
+	// Update UI locally on the client
+	if (NewAbilityPoints == 0 && AbilitySelection)
+	{
+		AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
+		AbilitySelection->SetIsEnabled(false);
+		PlayerController->SetInputMode(FInputModeGameOnly());
+		PlayerController->SetShowMouseCursor(false);
 	}
 }
 
