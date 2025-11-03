@@ -316,6 +316,11 @@ void URelicRunnersGameInstance::StartSessionGame()
     UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] Host starting travel to %s"), *TravelURL);
 
     TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin();
+    if (!Sess.IsValid())
+    {
+        UE_LOG(LogTemp, Error, TEXT("SessionInterface is null in StartSessionGame!"));
+        return;
+    }
 
     FOnlineSessionSettings* CurrentSettings = Sess->GetSessionSettings(NAME_GameSession);
     if (CurrentSettings)
@@ -334,6 +339,5 @@ void URelicRunnersGameInstance::StartSessionGame()
         }
     }
 
-    // Host starts seamless travel
     World->SeamlessTravel(TravelURL);
 }

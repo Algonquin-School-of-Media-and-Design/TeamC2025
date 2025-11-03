@@ -433,14 +433,8 @@ void ARelicRunnersCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	FString MapName = GetWorld()->GetMapName();
-	MapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
-	
-	if (MapName.Contains("ThirdPersonMap"))
-	{
-		InitLocalUI();
-		UpdateHUD();
-	}
+	InitLocalUI();
+	UpdateHUD();
 }
 
 void ARelicRunnersCharacter::OnRep_MeshUpdate(UObject* MeshAsset, const FString& ItemType)
@@ -551,8 +545,6 @@ void ARelicRunnersCharacter::BeginPlay()
 	}
 	
 }
-
-
 
 void ARelicRunnersCharacter::InitLocalUI()
 {

@@ -71,6 +71,8 @@ public:
     UPROPERTY()
     TMap<FUniqueNetIdRepl, FPendingClientTravel> PendingClientTravels;
     TWeakPtr<class IOnlineSession, ESPMode::ThreadSafe> SessionInterface;
+
+    FString PlayerName;
 private:
 
     TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
@@ -78,7 +80,6 @@ private:
     int32 PendingHostAfterLeave = 0;
     int32 PendingJoinIndex = -1;
     FString PendingTravelTargetMap;
-    FString PlayerName;
 
 
 

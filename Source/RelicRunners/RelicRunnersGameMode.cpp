@@ -107,8 +107,12 @@ void ARelicRunnersGameMode::PostSeamlessTravel()
             }
         }
 
-        // Spawn preview actor (same as before)
-        if (PlayerPreviewClass)
+        if (!PlayerPreviewClass)
+        {
+            UE_LOG(LogTemp, Error, TEXT("PlayerPreviewClass is null!"));
+            return;
+        }
+        else
         {
             const FVector SpawnLocation = FVector(-1000000 * PlayerIndex, 0, -1000);
             const FRotator SpawnRotation = FRotator::ZeroRotator;
