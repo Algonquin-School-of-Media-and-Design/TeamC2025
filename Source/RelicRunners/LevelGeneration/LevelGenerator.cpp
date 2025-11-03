@@ -20,6 +20,7 @@ ALevelGenerator::ALevelGenerator() :
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
 	ConvexCornerPiece(nullptr),
+	LevelTexture(nullptr),
 	SpawnWidth(2),
 	SpawnDepth(2),
 	FullPercentage(75.0f),
@@ -57,66 +58,110 @@ void ALevelGenerator::PostInitializeComponents()
 
 	if (HasAuthority())
 	{
-		int startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
-		int endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
-
-		while (startingIndex == endingIndex)
+		if (LevelTexture && LevelTexture->GetPlatformData())
 		{
-			startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
-			endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
-		}
+			LevelTexture->CompressionSettings = TC_VectorDisplacementmap;
+			FTexture2DMipMap& MipMap = LevelTexture->GetPlatformData()->Mips[0];
+			void* Data = MipMap.BulkData.Lock(LOCK_READ_ONLY);
 
-		for (int y = 0; y < SpawnDepth; y++)
-		{
-			for (int x = 0; x < SpawnWidth; x++)
+			FColor* FormattedImageData = static_cast<FColor*>(Data);
+			int32 textureWidth = MipMap.SizeX;
+			int32 textureDepth = MipMap.SizeY;
+
+			for (int y = 0; y < textureDepth; y++)
 			{
-				GenerateFloor(x, y);
-			}
-		}
-
-		if (SpawnDepth * SpawnWidth > 1)
-		{
-			SetStartingAndEndingPoints(startingIndex, endingIndex);
-
-			FindStartToEndPath(startingIndex, endingIndex);
-		}
-
-		for (int i = 0; i < MaxKeyTileAmount; i++)
-		{
-			int keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
-
-			int whileLoopLimit = 0;
-
-			while (FloorValuesArray[keyTileIndex].FloorObstacle > EFloorObstacle::Basic)
-			{
-				keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
-
-				whileLoopLimit++;
-
-				if (whileLoopLimit >= 10)
+				for (int x = 0; x < textureWidth; x++)
 				{
-					break;
+					FColor PixelColor = FormattedImageData[y * textureWidth + x];
+					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Value: %i, HEX: "), y * textureWidth + x) + PixelColor.ToHex());
+
+					FSFloorValues newFloorValues;
+					newFloorValues.IsFullTile = (PixelColor.ToHex() != FString("ffffffff")); //"ffffffff" -> Hex code for the colour white
+
+					InitializeModularObstacle(newFloorValues);
+
+					FloorValuesArray.Add(newFloorValues);
 				}
 			}
 
-			if (whileLoopLimit < 10)
+			for (int y = 0; y < textureDepth; y++)
 			{
-				SetKeyTile(keyTileIndex);
+				for (int x = 0; x < textureWidth; x++)
+				{
+					CheckFloor(x, y, textureWidth, textureDepth);
 
-				FindStartToEndPath(startingIndex, keyTileIndex);
+					FColor PixelColor = FormattedImageData[y * textureWidth + x];
+					Server_SpawnFloorObstaclesByColour(x, y, textureWidth, PixelColor);
+				}
 			}
-		}
+			CreateFloor();
 
-		for (int y = 0; y < SpawnDepth; y++)
+			MipMap.BulkData.Unlock();
+		}
+		else
 		{
-			for (int x = 0; x < SpawnWidth; x++)
-			{
-				CheckFloor(x, y);
 
-				Server_SpawnFloorObstacles(x, y);
+			int startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+			int endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
+			while (startingIndex == endingIndex)
+			{
+				startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+				endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 			}
+
+			for (int y = 0; y < SpawnDepth; y++)
+			{
+				for (int x = 0; x < SpawnWidth; x++)
+				{
+					GenerateFloor(x, y);
+				}
+			}
+
+			if (SpawnDepth * SpawnWidth > 1)
+			{
+				SetStartingAndEndingPoints(startingIndex, endingIndex);
+
+				FindStartToEndPath(startingIndex, endingIndex, SpawnWidth);
+			}
+
+			for (int i = 0; i < MaxKeyTileAmount; i++)
+			{
+				int keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
+				int whileLoopLimit = 0;
+
+				while (FloorValuesArray[keyTileIndex].FloorObstacle > EFloorObstacle::Basic)
+				{
+					keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
+					whileLoopLimit++;
+
+					if (whileLoopLimit >= 10)
+					{
+						break;
+					}
+				}
+
+				if (whileLoopLimit < 10)
+				{
+					SetKeyTile(keyTileIndex);
+
+					FindStartToEndPath(startingIndex, keyTileIndex, SpawnWidth);
+				}
+			}
+
+			for (int y = 0; y < SpawnDepth; y++)
+			{
+				for (int x = 0; x < SpawnWidth; x++)
+				{
+					CheckFloor(x, y, SpawnWidth, SpawnDepth);
+
+					Server_SpawnFloorObstacles(x, y, SpawnWidth);
+				}
+			}
+			CreateFloor();
 		}
-		CreateFloor();
 	}
 }
 
@@ -144,7 +189,7 @@ void ALevelGenerator::GenerateFloor(int x, int y)
 			if (((x - CenterForceFull) >= 0 && (x + CenterForceFull) <= SpawnWidth - 1)
 				&& (y - CenterForceFull) >= 0 && (y + CenterForceFull) <= SpawnDepth - 1)
 			{
-				ForceFloorBool(true, x, y);
+				ForceFloorBool(true, x, y, SpawnWidth);
 			}
 		}
 
@@ -154,7 +199,7 @@ void ALevelGenerator::GenerateFloor(int x, int y)
 				|| (y - BorderForceFull) < 0 || (y + BorderForceFull) > SpawnDepth - 1)
 
 			{
-				ForceFloorBool(true, x, y);
+				ForceFloorBool(true, x, y, SpawnWidth);
 			}
 		}
 	}
@@ -162,7 +207,7 @@ void ALevelGenerator::GenerateFloor(int x, int y)
 
 void ALevelGenerator::InitializeFloor()
 {
-	FloorValues newFloorValues;
+	FSFloorValues newFloorValues;
 	float randomFloor = FMath::RandRange(0.1f, 100.0f);
 
 	if (randomFloor > FullPercentage)
@@ -178,7 +223,7 @@ void ALevelGenerator::InitializeFloor()
 	FloorValuesArray.Add(newFloorValues);
 }
 
-void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y)
+void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y, int width)
 {
 	int index = x + (y * SpawnWidth);
 
@@ -216,13 +261,13 @@ void ALevelGenerator::SetKeyTile(int index)
 
 }
 
-void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex)
+void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex, int width)
 {
-	int currentX = startingIndex % SpawnWidth;
-	int currentY = startingIndex / SpawnWidth;
+	int currentX = startingIndex % width;
+	int currentY = startingIndex / width;
 
-	int targetX = targetIndex % SpawnWidth;
-	int targetY = targetIndex / SpawnWidth;
+	int targetX = targetIndex % width;
+	int targetY = targetIndex / width;
 
 	bool bReachEndX = currentX == targetX;
 
@@ -254,14 +299,14 @@ void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex)
 				currentY++;
 			}
 		}
-		ForceFloorBool(true, currentX, currentY);
+		ForceFloorBool(true, currentX, currentY, width);
 
 		bReachEndX = currentX == targetX;
 		bReachEndY = currentY == targetY;
 	}
 }
 
-void ALevelGenerator::InitializeModularObstacle(FloorValues& floorValue)
+void ALevelGenerator::InitializeModularObstacle(FSFloorValues& floorValue)
 {
 	float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
 	if (randomObstaclePerc < BasicObstaclePercentage)
@@ -274,34 +319,34 @@ void ALevelGenerator::InitializeModularObstacle(FloorValues& floorValue)
 	}
 }
 
-void ALevelGenerator::CheckFloor(int x, int y)
+void ALevelGenerator::CheckFloor(int x, int y, int width, int depth)
 {
-	bool checkLeft = x > 0.0f;
-	bool checkRight = x < SpawnWidth - 1;
+	bool checkLeft = x > 0;
+	bool checkRight = x < width - 1;
 
-	bool checkUp = y > 0.0f;
-	bool checkDown = y < SpawnDepth - 1;
+	bool checkUp = y > 0;
+	bool checkDown = y < depth - 1;
 
 	if (checkUp)
 	{
-		FloorCheckTopNeighbours(checkLeft, checkRight, -SpawnWidth, x, y);
+		FloorCheckTopNeighbours(checkLeft, checkRight, -width, x, y, width);
 	}
 
-	FloorCheckMiddleNeighbours(checkLeft, checkRight, 0, x, y);
+	FloorCheckMiddleNeighbours(checkLeft, checkRight, 0, x, y, width);
 
 	if (checkDown)
 	{
-		FloorCheckBottomNeighbours(checkLeft, checkRight, SpawnWidth, x, y);
+		FloorCheckBottomNeighbours(checkLeft, checkRight, width, x, y, width);
 	}
 
-	SetFloorShape(x, y);
+	SetFloorShape(x, y, width);
 
 }
 
-void ALevelGenerator::FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y)
+void ALevelGenerator::FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, int width)
 {
-	int indexToCheck = x + (y * SpawnWidth) + indexOffset;
-	int index = x + (y * SpawnWidth);
+	int indexToCheck = x + (y * width) + indexOffset;
+	int index = x + (y * width);
 
 	if (checkLeft)
 	{
@@ -337,10 +382,10 @@ void ALevelGenerator::FloorCheckTopNeighbours(bool checkLeft, bool checkRight, i
 	}
 }
 
-void ALevelGenerator::FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y)
+void ALevelGenerator::FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, int width)
 {
-	int indexToCheck = x + (y * SpawnWidth) + indexOffset;
-	int index = x + (y * SpawnWidth);
+	int indexToCheck = x + (y * width) + indexOffset;
+	int index = x + (y * width);
 
 	if (checkLeft)
 	{
@@ -368,10 +413,10 @@ void ALevelGenerator::FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight
 
 }
 
-void ALevelGenerator::FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y)
+void ALevelGenerator::FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, int width)
 {
-	int indexToCheck = x + (y * SpawnWidth) + indexOffset;
-	int index = x + (y * SpawnWidth);
+	int indexToCheck = x + (y * width) + indexOffset;
+	int index = x + (y * width);
 
 	if (checkLeft)
 	{
@@ -407,17 +452,17 @@ void ALevelGenerator::FloorCheckBottomNeighbours(bool checkLeft, bool checkRight
 	}
 }
 
-void ALevelGenerator::SetFloorShape(int x, int y)
+void ALevelGenerator::SetFloorShape(int x, int y, int width)
 {
-	SetTopLeftFloorShape(x, y);
-	SetTopRightFloorShape(x, y);
-	SetBottomLeftFloorShape(x, y);
-	SetBottomRightFloorShape(x, y);
+	SetTopLeftFloorShape(x, y, width);
+	SetTopRightFloorShape(x, y, width);
+	SetBottomLeftFloorShape(x, y, width);
+	SetBottomRightFloorShape(x, y, width);
 }
 
-void ALevelGenerator::SetTopLeftFloorShape(int x, int y)
+void ALevelGenerator::SetTopLeftFloorShape(int x, int y, int width)
 {
-	int index = x + (y * SpawnWidth);
+	int index = x + (y * width);
 	FVector posOffset = FVector((x * 2), (y * 2), 0.0f) * (TileScale * 2);
 	FRotator rotationOffset = FRotator(0.0f, 0.0f, 0.0f);
 	FTransform newTransform;
@@ -464,9 +509,9 @@ void ALevelGenerator::SetTopLeftFloorShape(int x, int y)
 	}
 }
 
-void ALevelGenerator::SetTopRightFloorShape(int x, int y)
+void ALevelGenerator::SetTopRightFloorShape(int x, int y, int width)
 {
-	int index = x + (y * SpawnWidth);
+	int index = x + (y * width);
 	FVector posOffset = FVector((x * 2) + 1.0f, (y * 2), 0.0f) * (TileScale * 2);
 	FRotator rotationOffset = FRotator(0.0f, 0.0f, 0.0f);
 	FTransform newTransform;
@@ -519,9 +564,9 @@ void ALevelGenerator::SetTopRightFloorShape(int x, int y)
 	}
 }
 
-void ALevelGenerator::SetBottomLeftFloorShape(int x, int y)
+void ALevelGenerator::SetBottomLeftFloorShape(int x, int y, int width)
 {
-	int index = x + (y * SpawnWidth);
+	int index = x + (y * width);
 	FVector posOffset = FVector((x * 2), (y * 2) + 1.0f, 0.0f) * (TileScale * 2);
 	FRotator rotationOffset = FRotator(0.0f, 0.0f, 0.0f);
 	FTransform newTransform;
@@ -573,9 +618,9 @@ void ALevelGenerator::SetBottomLeftFloorShape(int x, int y)
 	}
 }
 
-void ALevelGenerator::SetBottomRightFloorShape(int x, int y)
+void ALevelGenerator::SetBottomRightFloorShape(int x, int y, int width)
 {
-	int index = x + (y * SpawnWidth);
+	int index = x + (y * width);
 	FVector posOffset = FVector((x * 2) + 1.0f, (y * 2) + 1.0f, 0.0f) * (TileScale * 2);
 	FRotator rotationOffset = FRotator(0.0f, 0.0f, 0.0f);
 	FTransform newTransform;
@@ -627,14 +672,14 @@ void ALevelGenerator::SetBottomRightFloorShape(int x, int y)
 	}
 }
 
-void ALevelGenerator::Server_SpawnFloorObstacles_Implementation(int x, int y)
+void ALevelGenerator::Server_SpawnFloorObstacles_Implementation(int x, int y, int width)
 {
-	SpawnFloorObstacles(x, y);
+	SpawnFloorObstacles(x, y, width);
 }
 
-void ALevelGenerator::SpawnFloorObstacles(int x, int y)
+void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 {
-	int index = x + (y * SpawnWidth);
+	int index = x + (y * width);
 
 	float yaw = FloorValuesArray[index].obstacleYaw;
 	FVector posOffset = FVector((TileScale * x * 4) + TileScale, (TileScale * y * 4) + TileScale, TileScale);
@@ -663,6 +708,21 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y)
 			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelEndPackedLevel, posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
 		break;
+	}
+}
+
+void ALevelGenerator::Server_SpawnFloorObstaclesByColour_Implementation(int x, int y, int width, FColor colour)
+{
+	SpawnFloorObstaclesByColour(x,y,width,colour);
+}
+
+void ALevelGenerator::SpawnFloorObstaclesByColour(int x, int y, int width, FColor colour)
+{
+	FVector posOffset = FVector((TileScale * x * 4) + TileScale, (TileScale * y * 4) + TileScale, TileScale);
+
+	if (TileColourToPackedActor.Find(colour) != nullptr)
+	{
+		APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(TileColourToPackedActor.Find(colour)->ObstacleActor, posOffset, FRotator(0.0f, TileColourToPackedActor.Find(colour)->ObstacleYaw * 90, 0.0f));
 	}
 }
 
@@ -707,7 +767,7 @@ void ALevelGenerator::OnRep_FloorValuesArrayChange()
 	{
 		for (int x = 0; x < SpawnWidth; x++)
 		{
-			CheckFloor(x, y);
+			CheckFloor(x, y, SpawnWidth, SpawnDepth);
 		}
 	}
 	CreateFloor();

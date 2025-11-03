@@ -56,7 +56,7 @@
 #include "Spawning System/Director.h"
 #include "Engine/Engine.h"
 
-#include "AbilitySystem/WarBannerAbility.h"
+#include "Abilities/WarBannerAbility.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
