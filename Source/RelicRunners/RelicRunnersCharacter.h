@@ -279,7 +279,7 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UPlayerHUD> PlayerHUDClass;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	class UPlayerHUD* PlayerHUD;
 
 	UPROPERTY(EditAnywhere)
