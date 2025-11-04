@@ -142,12 +142,21 @@ void AItemActor::SetupVisuals()
     StaticMeshComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
     StaticMeshComponent->SetMobility(EComponentMobility::Stationary);
     StaticMeshComponent->CastShadow = false;
+    
+    UMaterialInterface* OutlineOverlay = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Shader/M_Outline"));
+    
+    if (OutlineOverlay)
+    {
+        StaticMeshComponent->SetOverlayMaterial(OutlineOverlay);
+        StaticMeshComponent->SetForceDisableNanite(true);
+        UE_LOG(LogTemp, Warning, TEXT("DropOutlineApplied"));
+    }
 
     static const TMap<FString, FVector> ItemScaleMap = {
-        { "Lower", FVector(1.25f) }, { "Upper", FVector(1.5f) },
+        { "Lower", FVector(1.50f) }, { "Upper", FVector(1.75f) },
         { "Shield", FVector(0.4f) }, { "Sword", FVector(2.0f) }, 
-        { "Helmet", FVector(1.6f) }, { "Arms", FVector(1.25f) }, 
-        { "Necklace", FVector(4.0f) },
+        { "Helmet", FVector(2.5f) }, { "Arms", FVector(3.0f) }, 
+        { "Necklace", FVector(3.5f) },
     };
 
     if (const FVector* Scale = ItemScaleMap.Find(ItemData.ItemType))
