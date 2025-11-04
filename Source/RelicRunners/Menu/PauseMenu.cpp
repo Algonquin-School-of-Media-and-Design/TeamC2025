@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Components/Button.h"
 #include "PauseMenu.h"
+#include "Components/Button.h"
 #include <RelicRunners/RelicRunnersCharacter.h>
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
