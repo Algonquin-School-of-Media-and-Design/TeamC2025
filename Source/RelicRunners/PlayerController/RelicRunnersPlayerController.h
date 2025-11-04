@@ -37,13 +37,22 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
-	/** Move Input Action */
+	/** Move Forward Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* WalkAction;
+	UInputAction* MoveForwardAction;
 
-	/** Move Input Action */
+	/** Move Backward Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* RunAction;
+	UInputAction* MoveBackwardAction;
+
+	/** Move Left Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* MoveLeftAction;
+
+	/** Move Right Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* MoveRightAction;
+
 
 	/** Interact Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -92,6 +101,9 @@ protected:
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnPossess(APawn* aPawn) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	UInputMappingContext* GetInputMappingContext() const { return InputMappingContext; }
 
 	virtual void ClientRestart_Implementation(APawn* NewPawn) override;
 
@@ -183,7 +195,14 @@ protected:
 
 	virtual void SetupInputComponent() override;
 
-	void Walk(const struct FInputActionValue& Value);
+	void MoveForward(const struct FInputActionValue& Value);
+
+	void MoveBackward(const struct FInputActionValue& Value);
+
+	void MoveLeft(const struct FInputActionValue& Value);
+
+	void MoveRight(const struct FInputActionValue& Value);
+
 	void Run(const struct FInputActionValue& Value);
 	void Look(const struct FInputActionValue& Value);
 	void Interact();

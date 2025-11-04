@@ -114,8 +114,7 @@ public:
 
 	//Inputs
 	void BasicAttack();
-	void Walk(const FInputActionValue& Value);
-	void Run(const FInputActionValue& Value);
+	void MoveInDirection(EAxis::Type Axis, float Value);
 	void Look(const FInputActionValue& Value);
 	void Interact();
 	void ToggleUI(UUserWidget* UIWidget, bool bClosePopups);

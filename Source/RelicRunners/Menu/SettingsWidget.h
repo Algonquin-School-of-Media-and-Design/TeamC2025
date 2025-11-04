@@ -31,4 +31,5 @@ protected:
 	UFUNCTION()
 	void BackButtonClicked();
 	void InitializeDefaultKeybindings();
+	void ApplyKeybindings();
 };

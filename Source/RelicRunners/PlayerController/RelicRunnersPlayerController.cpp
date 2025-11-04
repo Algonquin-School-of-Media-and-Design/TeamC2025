@@ -427,8 +427,10 @@ void ARelicRunnersPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ARelicRunnersPlayerController::StopJumping);
 
 		// Moving
-		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Triggered, this, &ARelicRunnersPlayerController::Walk);
-		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ARelicRunnersPlayerController::Run);
+		EnhancedInputComponent->BindAction(MoveForwardAction, ETriggerEvent::Triggered, this, &ARelicRunnersPlayerController::MoveForward);
+		EnhancedInputComponent->BindAction(MoveBackwardAction, ETriggerEvent::Triggered, this, &ARelicRunnersPlayerController::MoveBackward);
+		EnhancedInputComponent->BindAction(MoveLeftAction, ETriggerEvent::Triggered, this, &ARelicRunnersPlayerController::MoveLeft);
+		EnhancedInputComponent->BindAction(MoveRightAction, ETriggerEvent::Triggered, this, &ARelicRunnersPlayerController::MoveRight);
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ARelicRunnersPlayerController::Look);
@@ -463,19 +465,35 @@ void ARelicRunnersPlayerController::SetupInputComponent()
 	}
 }
 
-void ARelicRunnersPlayerController::Walk(const FInputActionValue& Value)
+void ARelicRunnersPlayerController::MoveForward(const FInputActionValue& Value)
 {
 	if (PossessedPawn)
 	{
-		PossessedPawn->Walk(Value);
+		PossessedPawn->MoveInDirection(EAxis::X, +1.0f);
 	}
 }
 
-void ARelicRunnersPlayerController::Run(const FInputActionValue& Value)
+void ARelicRunnersPlayerController::MoveBackward(const FInputActionValue& Value)
 {
 	if (PossessedPawn)
 	{
-		PossessedPawn->Run(Value);
+		PossessedPawn->MoveInDirection(EAxis::X, -1.0f);
+	}
+}
+
+void ARelicRunnersPlayerController::MoveLeft(const FInputActionValue& Value)
+{
+	if (PossessedPawn)
+	{
+		PossessedPawn->MoveInDirection(EAxis::Y, -1.0f);
+	}
+}
+
+void ARelicRunnersPlayerController::MoveRight(const FInputActionValue& Value)
+{
+	if (PossessedPawn)
+	{
+		PossessedPawn->MoveInDirection(EAxis::Y, +1.0f);
 	}
 }
 

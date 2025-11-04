@@ -98,38 +98,6 @@ void USettingsWidget::ApplyKeybindings()
 
 	MappingContext->UnmapAll();
 
-	// Restore Look
-	UInputAction* LookAction = LoadObject<UInputAction>(
-		nullptr,
-		TEXT("/Game/ThirdPerson/Input/Actions/IA_Look.IA_Look")
-	);
-
-	if (LookAction)
-	{
-		MappingContext->MapKey(LookAction, EKeys::Mouse2D);
-		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: restored Look bindings (Mouse2D)"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: couldn't find IA_Look asset!"));
-	}
-
-	// Restore Jump
-	UInputAction* JumpAction = LoadObject<UInputAction>(
-		nullptr,
-		TEXT("/Game/ThirdPerson/Input/Actions/IA_Jump.IA_Jump")
-	);
-
-	if (JumpAction)
-	{
-		MappingContext->MapKey(JumpAction, EKeys::SpaceBar);
-		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: restored Jump binding (SpaceBar)"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: couldn't find IA_Jump asset!"));
-	}
-
 	for (UKeybindingsListData* Binding : DefaultKeybindings)
 	{
 		if (!Binding) continue;
