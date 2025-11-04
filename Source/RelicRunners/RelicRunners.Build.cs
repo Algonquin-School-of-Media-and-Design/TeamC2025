@@ -8,7 +8,24 @@ public class RelicRunners : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "AIModule", "NavigationSystem", "OnlineSubsystem", "OnlineSubsystemUtils", "AdvancedSessions", "AdvancedSteamSessions" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore", 
+			"EnhancedInput", 
+			"UMG", 
+			"Slate", 
+			"SlateCore",
+			"AIModule", 
+			"NavigationSystem", 
+			"OnlineSubsystem", 
+			"OnlineSubsystemUtils", 
+			"AdvancedSessions", 
+			"AdvancedSteamSessions",
+			"GameplayAbilities",    
+			"GameplayTasks",        
+			"GameplayTags"   
+		});
 
 	}
 }

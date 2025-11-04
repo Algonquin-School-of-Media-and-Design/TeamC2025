@@ -23,6 +23,7 @@ void ARelicRunnersPlayerState::SetSelectedClass(FName NewClass)
     {
         SelectedClass = NewClass;
         OnRep_SelectedClass(); // update immediately on server too
+        
     }
 }
 

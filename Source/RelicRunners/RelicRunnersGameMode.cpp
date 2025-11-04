@@ -36,6 +36,7 @@ ARelicRunnersGameMode::ARelicRunnersGameMode()
 		UE_LOG(LogTemp, Warning, TEXT("[GameMode] Assigned PlayerPreviewClass from constructor."));
 	}
 
+
     bUseSeamlessTravel = true;
     bReplicates = true;
 }
@@ -48,6 +49,7 @@ void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
     if (ARelicRunnersPlayerState* PS = NewPlayer->GetPlayerState<ARelicRunnersPlayerState>())
     {
         PS->SetPlayerName("Player" + FString::FromInt(PlayerIndex++));
+
     }
 
     // Skip the host player (listen server’s own controller)
@@ -135,3 +137,22 @@ void ARelicRunnersGameMode::PostSeamlessTravel()
         }
     }
 }
+
+//ACharacter* ARelicRunnersGameMode::SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot)
+//{
+//    ARelicRunnersPlayerState* PS = NewPlayer->GetPlayerState<ARelicRunnersPlayerState>();
+//    if (PS && PS->SelectedClass)
+//    {
+//        FActorSpawnParameters Params;
+//        Params.Owner = NewPlayer;
+//        Params.Instigator = GetInstigator();
+//
+//        FVector SpawnLoc = StartSpot->GetActorLocation();
+//        FRotator SpawnRot = StartSpot->GetActorRotation();
+//
+//        return GetWorld()->SpawnActor<ACharacter>(PS->SelectedCharacterClass, SpawnLoc, SpawnRot, Params);
+//    }
+//
+//    // Fallback to default pawn
+//    return Super::SpawnDefaultPawnFor_Implementation(NewPlayer, StartSpot);
+//}

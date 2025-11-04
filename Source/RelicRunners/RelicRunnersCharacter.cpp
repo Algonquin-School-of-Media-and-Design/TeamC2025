@@ -39,7 +39,6 @@
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
 #include "Menu/PauseMenu.h"
-
 #include "AbilitySystem/AbilityPointCounter.h"
 #include "AbilitySystem/AbilitySelection.h"
 #include "AbilitySystem/HealthPotion.h"
@@ -544,6 +543,15 @@ void ARelicRunnersCharacter::BeginPlay()
 		DamageAbilityClass = ABundleOfJoy::StaticClass();
 	}
 	
+	if (HasAuthority())
+	{
+		GiveInitialAbilities();
+	}
+
+}
+
+void ARelicRunnersCharacter::GiveInitialAbilities()
+{
 }
 
 void ARelicRunnersCharacter::InitLocalUI()
@@ -736,6 +744,8 @@ void ARelicRunnersCharacter::PassiveHealthRegen()
 	}
 	UpdateHUD();
 }
+
+
 
 void ARelicRunnersCharacter::Client_UpdateEquippedStats_Implementation(const FEquippedStatsSummary& NewStats)
 {

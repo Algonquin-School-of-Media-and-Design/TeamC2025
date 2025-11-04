@@ -18,10 +18,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Logging/LogMacros.h"
 #include "AbilitySystem/AbilityBase.h"
 #include "Abilities/VengefulDance.h"
 #include "Abilities/BundleOfJoy.h"
-#include "Logging/LogMacros.h"
+
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
+#include "AttributeSet.h"
+
 #include "RelicRunnersCharacter.generated.h"
 
 enum class EInventorySorting : uint8;
@@ -35,7 +40,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class ARelicRunnersCharacter : public ACharacter
+class ARelicRunnersCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -385,6 +390,8 @@ protected:
 	UPROPERTY()
 	float HealthGranted;         
 
+
+
 	float DamageCooldown = 5.f;
 	float DefenceCooldown = 5.f;
 	float UtilityCooldown = 5.f;
@@ -401,15 +408,30 @@ protected:
 	virtual void BeginPlay();
 	void InitLocalUI();
 
+
 	void SpawnStarterItems();
 
 	//Ticking
 	void Tick(float DeltaTime);
+
+
+
 	UFUNCTION()
 	void PassiveHealthRegen();
+
 	FTimerHandle HealthRegenTimerHandle;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	UAbilitySystemComponent* AbilitySystem;
+
+	UPROPERTY()
+	UAttributeSet* Attributes;
+
+	virtual void GiveInitialAbilities();
+
 public:
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
+
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/

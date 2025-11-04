@@ -29,8 +29,10 @@ public:
 	ARelicRunnersGameMode();
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void PostSeamlessTravel() override;
+	ACharacter* SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot);
 	UPROPERTY(EditDefaultsOnly, Category = "Preview")
 	TSubclassOf<class APlayerPreview> PlayerPreviewClass;
+
 };
 
 
