@@ -806,23 +806,23 @@ void ARelicRunnersCharacter::BasicAttack()
 	}
 	if (InventoryComponent->GetEquippedItemByType("Sword") && InventoryComponent)
 	{
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (!AnimInstance) return;
+		//UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		//if (!AnimInstance) return;
 
-		TArray<UAnimSequence*> SwordAttacks;
-		if (SwordBasicAttack0) SwordAttacks.Add(SwordBasicAttack0);
-		if (SwordBasicAttack1) SwordAttacks.Add(SwordBasicAttack1);
-		if (SwordBasicAttack2) SwordAttacks.Add(SwordBasicAttack2);
-		if (SwordBasicAttack3) SwordAttacks.Add(SwordBasicAttack3);
+		//TArray<UAnimSequence*> SwordAttacks;
+		//if (SwordBasicAttack0) SwordAttacks.Add(SwordBasicAttack0);
+		//if (SwordBasicAttack1) SwordAttacks.Add(SwordBasicAttack1);
+		//if (SwordBasicAttack2) SwordAttacks.Add(SwordBasicAttack2);
+		//if (SwordBasicAttack3) SwordAttacks.Add(SwordBasicAttack3);
 
-		if (SwordAttacks.Num() > 0)
-		{
-			int32 Index = FMath::RandRange(0, SwordAttacks.Num() - 1);
-			UAnimSequence* SelectedSequence = SwordAttacks[Index];
+		//if (SwordAttacks.Num() > 0)
+		//{
+		//	int32 Index = FMath::RandRange(0, SwordAttacks.Num() - 1);
+		//	UAnimSequence* SelectedSequence = SwordAttacks[Index];
 
-			// Play as dynamic montage
-			AnimInstance->PlaySlotAnimationAsDynamicMontage(SelectedSequence, FName("DefaultSlot"));
-		}
+		//	// Play as dynamic montage
+		//	AnimInstance->PlaySlotAnimationAsDynamicMontage(SelectedSequence, FName("DefaultSlot"));
+		//}
 	}
 
 	if (IsWarBannerActive && WarBannerAbility != nullptr)
