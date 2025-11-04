@@ -9,28 +9,39 @@ void ANemesisCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	APlayerState* PS = GetPlayerState();
-
-	if (!PS) return;
-
-	ARelicRunnersPlayerState* RPS = Cast<ARelicRunnersPlayerState>(PS);
-
-	if (!RPS) return;
-
-	if (RPS->SelectedClass == FName("Nemesis") && !bHasGivenInitialAbilities)
-	{
-		GiveInitialAbilities();
-		bHasGivenInitialAbilities = true;
-	}
 }
 
-void ANemesisCharacter::GiveInitialAbilities()
+void ANemesisCharacter::GiveDamageAbilities()
 {
-	Super::GiveInitialAbilities();
+	Super::GiveDamageAbilities();
+
+}
+
+void ANemesisCharacter::GiveDefenceAbilities()
+{
+	Super::GiveDefenceAbilities();
+}
+
+void ANemesisCharacter::GiveUtilityAbilities()
+{
+	Super::GiveUtilityAbilities();
 
 	if (AbilitySystem)
 	{
 		AbilitySystem->GiveAbility(FGameplayAbilitySpec(AVengefulDance::StaticClass(), 1, 0));
+
+		if (UtilityAbilityInstance)
+		{
+			UtilityAbilityInstance->ActivateAbility();
+		}
+
 	}
+}
+
+void ANemesisCharacter::GiveUltimateAbilities()
+{
+	Super::GiveUltimateAbilities();
+
 
 }
+

@@ -20,6 +20,10 @@
 #include "UObject/ConstructorHelpers.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "Characters/AphroditeCharacter.h"
+#include "Characters/ArtemisCharacter.h"
+#include "Characters/AresCharacter.h"
+#include "Characters/NemesisCharacter.h"
 #include "GameFramework/PlayerController.h"
 #include "PlayerPreview/PlayerPreview.h"
 #include "PlayerController/RelicRunnersPlayerController.h"
@@ -138,21 +142,49 @@ void ARelicRunnersGameMode::PostSeamlessTravel()
     }
 }
 
-//ACharacter* ARelicRunnersGameMode::SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot)
-//{
-//    ARelicRunnersPlayerState* PS = NewPlayer->GetPlayerState<ARelicRunnersPlayerState>();
-//    if (PS && PS->SelectedClass)
-//    {
-//        FActorSpawnParameters Params;
-//        Params.Owner = NewPlayer;
-//        Params.Instigator = GetInstigator();
-//
-//        FVector SpawnLoc = StartSpot->GetActorLocation();
-//        FRotator SpawnRot = StartSpot->GetActorRotation();
-//
-//        return GetWorld()->SpawnActor<ACharacter>(PS->SelectedCharacterClass, SpawnLoc, SpawnRot, Params);
-//    }
-//
-//    // Fallback to default pawn
-//    return Super::SpawnDefaultPawnFor_Implementation(NewPlayer, StartSpot);
-//}
+APawn* ARelicRunnersGameMode::SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot)
+{
+    ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(NewPlayer);
+
+    ARelicRunnersPlayerState* RRPS = RRPC->GetPlayerState<ARelicRunnersPlayerState>();
+    if (!RRPS)
+    {
+        return Cast<ARelicRunnersCharacter>(Super::SpawnDefaultPawnFor_Implementation(RRPC, StartSpot));
+    }
+
+    TSubclassOf<ARelicRunnersCharacter> CharacterToSpawn = nullptr;
+
+    if (RRPS->SelectedClass == FName("Nemesis"))
+    {
+        CharacterToSpawn = NemesisCharacterClass;
+    }
+    else if (RRPS->SelectedClass == FName("Aphrodite"))
+    {
+        CharacterToSpawn = AphroditeCharacterClass;
+    }
+    else if (RRPS->SelectedClass == FName("Artemis"))
+    {
+        CharacterToSpawn = ArtemisCharacterClass;
+    }
+    else if (RRPS->SelectedClass == FName("Ares"))
+    {
+        CharacterToSpawn = AresCharacterClass;
+    }
+
+    if (CharacterToSpawn)
+    {
+        FActorSpawnParameters Params;
+        Params.Owner = RRPC;
+        Params.Instigator = nullptr; 
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+        FVector SpawnLoc = StartSpot->GetActorLocation();
+        FRotator SpawnRot = StartSpot->GetActorRotation();
+
+        ARelicRunnersCharacter* SpawnedCharacter = GetWorld()->SpawnActor<ARelicRunnersCharacter>(CharacterToSpawn,SpawnLoc,SpawnRot,Params);
+
+        return SpawnedCharacter;
+    }
+
+    return Cast<ARelicRunnersCharacter>(Super::SpawnDefaultPawnFor_Implementation(RRPC, StartSpot));
+}

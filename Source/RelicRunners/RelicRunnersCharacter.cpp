@@ -543,16 +543,10 @@ void ARelicRunnersCharacter::BeginPlay()
 		DamageAbilityClass = ABundleOfJoy::StaticClass();
 	}
 	
-	if (HasAuthority())
-	{
-		GiveInitialAbilities();
-	}
 
 }
 
-void ARelicRunnersCharacter::GiveInitialAbilities()
-{
-}
+
 
 void ARelicRunnersCharacter::InitLocalUI()
 {
@@ -744,6 +738,7 @@ void ARelicRunnersCharacter::PassiveHealthRegen()
 	}
 	UpdateHUD();
 }
+
 
 
 
@@ -1017,65 +1012,89 @@ void ARelicRunnersCharacter::DamageAbility()
 	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 
 	//For BundleOfJoy
-	if (DamageAbilityClass && GetWorld())
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = GetInstigator();
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	//if (DamageAbilityClass && GetWorld())
+	//{
+	//	FActorSpawnParameters SpawnParams;
+	//	SpawnParams.Owner = this;
+	//	SpawnParams.Instigator = GetInstigator();
+	//	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 150.f + FVector(0, 0, 100.f);
-		FRotator SpawnRotation = GetActorRotation();
+	//	FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 150.f + FVector(0, 0, 100.f);
+	//	FRotator SpawnRotation = GetActorRotation();
 
-		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageAbilityClass, SpawnLocation, SpawnRotation, SpawnParams);
+	//	DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageAbilityClass, SpawnLocation, SpawnRotation, SpawnParams);
 
-		if (DamageAbilityInstance)
-		{
-			DamageAbilityInstance->OwnerActor = this;
-			DamageAbilityInstance->SetActorLocation(SpawnLocation); 
-			DamageAbilityInstance->ActivateAbility();
+	//	if (DamageAbilityInstance)
+	//	{
+	//		DamageAbilityInstance->OwnerActor = this;
+	//		DamageAbilityInstance->SetActorLocation(SpawnLocation); 
+	//		DamageAbilityInstance->ActivateAbility();
 
-			UE_LOG(LogTemp, Warning, TEXT("Ability spawned at: %s"), *DamageAbilityInstance->GetActorLocation().ToString());
-		}
-	}
-
+	//		UE_LOG(LogTemp, Warning, TEXT("Ability spawned at: %s"), *DamageAbilityInstance->GetActorLocation().ToString());
+	//	}
+	//}
+	GiveDamageAbilities();
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
 {
 	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+	GiveDefenceAbilities();
 }
 
 void ARelicRunnersCharacter::UtilityAbility()
 {
 	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	IsWarBannerActive = !IsWarBannerActive;
+	////War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	//IsWarBannerActive = !IsWarBannerActive;
 
-	if (WarBannerAbility == nullptr)
-		return;
+	//if (WarBannerAbility == nullptr)
+	//	return;
 
-	if (IsWarBannerActive)
-	{
-		WarBannerAbility->ActivateAbility();
-	}
-	else
-	{
-		WarBannerAbility->CancelAbility();
-	}
+	//if (IsWarBannerActive)
+	//{
+	//	WarBannerAbility->ActivateAbility();
+	//}
+	//else
+	//{
+	//	WarBannerAbility->CancelAbility();
+	//}
 
-	//For VengefulDance
-	if (UtilityAbilityInstance)
-	{
-		UtilityAbilityInstance->ActivateAbility();
-	}
+	////For VengefulDance
+	//if (UtilityAbilityInstance)
+	//{
+	//	UtilityAbilityInstance->ActivateAbility();
+	//}
+	GiveUtilityAbilities();
 }
 
 void ARelicRunnersCharacter::UltimateAbility()
 {
 	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+	GiveUltimateAbilities();
 }
+
+void ARelicRunnersCharacter::GiveDamageAbilities()
+{
+
+}
+
+void ARelicRunnersCharacter::GiveDefenceAbilities()
+{
+
+}
+
+void ARelicRunnersCharacter::GiveUtilityAbilities()
+{
+
+}
+
+void ARelicRunnersCharacter::GiveUltimateAbilities()
+{
+
+}
+
 
 void ARelicRunnersCharacter::HealthPotions()
 {

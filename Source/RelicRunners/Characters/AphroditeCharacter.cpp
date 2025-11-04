@@ -14,21 +14,27 @@ void AAphroditeCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
-	APlayerState* PS = GetPlayerState();
-
-	if (!PS) return;
-
-	ARelicRunnersPlayerState* RPS = Cast<ARelicRunnersPlayerState>(PS);
-
-	if (!RPS) return;
-
 
 }
 
-void AAphroditeCharacter::GiveInitialAbilities()
+void AAphroditeCharacter::GiveDamageAbilities()
 {
-	Super::GiveInitialAbilities();
-
-	AbilitySystem->GiveAbility(FGameplayAbilitySpec(ABundleOfJoy::StaticClass(), 1, 0));
+	Super::GiveDamageAbilities();
 }
+
+void AAphroditeCharacter::GiveDefenceAbilities()
+{
+	Super::GiveDefenceAbilities();
+}
+
+void AAphroditeCharacter::GiveUtilityAbilities()
+{
+	Super::GiveUtilityAbilities();
+}
+
+void AAphroditeCharacter::GiveUltimateAbilities()
+{
+	Super::GiveUltimateAbilities();
+}
+
+

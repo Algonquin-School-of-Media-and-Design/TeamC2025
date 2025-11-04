@@ -420,14 +420,17 @@ protected:
 	void PassiveHealthRegen();
 
 	FTimerHandle HealthRegenTimerHandle;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	UAbilitySystemComponent* AbilitySystem;
 
 	UPROPERTY()
 	UAttributeSet* Attributes;
 
-	virtual void GiveInitialAbilities();
+	virtual void GiveDamageAbilities();
+	virtual void GiveDefenceAbilities();
+	virtual void GiveUtilityAbilities();
+	virtual void GiveUltimateAbilities();
 
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }

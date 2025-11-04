@@ -12,22 +12,28 @@ void AAresCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-
-	APlayerState* PS = GetPlayerState();
-
-	if (!PS) return;
-
-	ARelicRunnersPlayerState* RPS = Cast<ARelicRunnersPlayerState>(PS);
-
-	if (!RPS) return;
 }
 
-void AAresCharacter::GiveInitialAbilities()
+void AAresCharacter::GiveDamageAbilities()
 {
-	Super::GiveInitialAbilities();
-
-	//AbilitySystem->GiveAbility(FGameplayAbilitySpec(AWarBannerAbility::StaticClass(), 1, 0));
-
+	Super::GiveDamageAbilities();
 }
+
+void AAresCharacter::GiveDefenceAbilities()
+{
+	Super::GiveDefenceAbilities();
+}
+
+void AAresCharacter::GiveUtilityAbilities()
+{
+	Super::GiveUtilityAbilities();
+}
+
+void AAresCharacter::GiveUltimateAbilities()
+{
+	Super::GiveUltimateAbilities();
+}
+
+
 
 

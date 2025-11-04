@@ -12,19 +12,25 @@ void AArtemisCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-
-	APlayerState* PS = GetPlayerState();
-
-	if (!PS) return;
-
-	ARelicRunnersPlayerState* RPS = Cast<ARelicRunnersPlayerState>(PS);
-
-	if (!RPS) return;
 }
 
-void AArtemisCharacter::GiveInitialAbilities()
+void AArtemisCharacter::GiveDamageAbilities()
 {
-    Super::GiveInitialAbilities();
-
-    //AbilitySystem->GiveAbility(FGameplayAbilitySpec(::StaticClass(), 1, 0));
+	Super::GiveDamageAbilities();
 }
+
+void AArtemisCharacter::GiveDefenceAbilities()
+{
+	Super::GiveDefenceAbilities();
+}
+
+void AArtemisCharacter::GiveUtilityAbilities()
+{
+	Super::GiveUtilityAbilities();
+}
+
+void AArtemisCharacter::GiveUltimateAbilities()
+{
+	Super::GiveUltimateAbilities();
+}
+

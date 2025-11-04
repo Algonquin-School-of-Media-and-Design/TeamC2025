@@ -21,5 +21,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	virtual void GiveInitialAbilities() override;
+	virtual void GiveDamageAbilities() override;
+	virtual void GiveDefenceAbilities() override;
+	virtual void GiveUtilityAbilities() override;
+	virtual void GiveUltimateAbilities() override;
+
 };
