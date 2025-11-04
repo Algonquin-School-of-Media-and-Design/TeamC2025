@@ -20,7 +20,15 @@ public:
 	class UButton* BackButton = nullptr;
 	UPROPERTY()
 	class UMainMenuWidget* ParentMenu;
+
+	UPROPERTY(meta = (BindWidget))
+
+	class UTileView* KeybindingsTileView;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings|Keybindings")
+	TArray<class UKeybindingsListData*> DefaultKeybindings;
 protected:
 	UFUNCTION()
 	void BackButtonClicked();
+	void InitializeDefaultKeybindings();
 };

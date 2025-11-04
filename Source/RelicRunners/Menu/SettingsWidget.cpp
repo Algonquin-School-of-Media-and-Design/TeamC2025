@@ -4,6 +4,8 @@
 #include "SettingsWidget.h"
 #include "MainMenuWidget.h"
 #include "Components/Button.h"
+#include "Components/TileView.h"
+#include "KeybindingsListData.h"
 
 void USettingsWidget::NativeConstruct()
 {
@@ -12,6 +14,19 @@ void USettingsWidget::NativeConstruct()
 	if (BackButton)
 	{
 		BackButton->OnClicked.AddDynamic(this, &USettingsWidget::BackButtonClicked);
+	}
+
+	// Initialize and populate keybindings
+	InitializeDefaultKeybindings();
+
+	if (KeybindingsTileView)
+	{
+		KeybindingsTileView->ClearListItems();
+
+		for (UKeybindingsListData* Binding : DefaultKeybindings)
+		{
+			KeybindingsTileView->AddItem(Binding);
+		}
 	}
 }
 
@@ -26,4 +41,34 @@ void USettingsWidget::BackButtonClicked()
 	{
 		ParentMenu->ShowModeSelectionWidget();
 	}
+}
+
+void USettingsWidget::InitializeDefaultKeybindings()
+{
+	DefaultKeybindings.Empty();
+
+	auto AddBinding = [&](const FString& ActionName, const FKey& Key)
+		{
+			UKeybindingsListData* NewEntry = NewObject<UKeybindingsListData>(this);
+			NewEntry->Name = ActionName;
+			NewEntry->Keybind = Key.GetDisplayName().ToString();
+			DefaultKeybindings.Add(NewEntry);
+		};
+
+	AddBinding("Walk Forward", EKeys::W);
+	AddBinding("Walk Left", EKeys::A);
+	AddBinding("Walk Backward", EKeys::S);
+	AddBinding("Walk Right", EKeys::D);
+	AddBinding("Inventory", EKeys::I);
+	AddBinding("Upgrades", EKeys::U);
+	AddBinding("Interact", EKeys::E);
+	AddBinding("Map", EKeys::M);
+	AddBinding("Pause", EKeys::Escape);
+	AddBinding("Ping", EKeys::MiddleMouseButton);
+	AddBinding("Ability 1", EKeys::Q);
+	AddBinding("Ability 2", EKeys::R);
+	AddBinding("Ability 3", EKeys::T);
+	AddBinding("Ability 4", EKeys::F);
+	AddBinding("Health Potion", EKeys::H);
+
 }
