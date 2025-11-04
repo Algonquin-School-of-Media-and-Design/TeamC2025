@@ -15,5 +15,5 @@ class RELICRUNNERS_API UKeybindingsListData : public UObject
 	GENERATED_BODY()
 public:
 	FString Name;
-	FString Keybind;
+	FKey Keybind;
 };

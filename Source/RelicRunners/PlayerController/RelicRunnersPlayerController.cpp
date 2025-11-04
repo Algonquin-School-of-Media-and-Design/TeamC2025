@@ -33,6 +33,7 @@
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
 #include "RelicRunners/Menu/MainMenuWidget.h"
 #include "RelicRunners/Menu/JoinUserWidget.h"
+#include "RelicRunners/Menu/Keybinds.h"
 
 ARelicRunnersPlayerController::ARelicRunnersPlayerController()
 {
@@ -458,6 +459,8 @@ void ARelicRunnersPlayerController::SetupInputComponent()
 
 		// Health Potion
 		EnhancedInputComponent->BindAction(HealthPotionAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::HealthPotion);
+	
+		Keys = new Keybinds();
 	}
 	else
 	{

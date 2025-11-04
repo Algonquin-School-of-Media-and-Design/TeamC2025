@@ -217,7 +217,7 @@ public:
 	void OnRep_MeshUpdate(UObject* MeshAsset, const FString& ItemType);
 
 	void TryBindInventoryDelegates();
-	
+
 	//Animations
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimSequence* SwordBasicAttack0;

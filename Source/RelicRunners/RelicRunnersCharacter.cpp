@@ -543,7 +543,6 @@ void ARelicRunnersCharacter::BeginPlay()
 	{
 		DamageAbilityClass = ABundleOfJoy::StaticClass();
 	}
-	
 }
 
 void ARelicRunnersCharacter::InitLocalUI()
@@ -841,12 +840,12 @@ void ARelicRunnersCharacter::MoveInDirection(EAxis::Type Axis, float Value)
 		if (Axis == EAxis::X)
 		{
 			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-			AddMovementInput(Direction, Value / 1.75f);
+			AddMovementInput(Direction, Value);
 		}
 		else if (Axis == EAxis::Y)
 		{
 			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-			AddMovementInput(Direction, Value / 1.75f);
+			AddMovementInput(Direction, Value);
 		}
 	}
 }

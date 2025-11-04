@@ -27,6 +27,6 @@ void UKeybindingsListWidget::Setup(UKeybindingsListData* InData)
     if (KeybindData)
     {
         TB_Name->SetText(FText::FromString(KeybindData->Name));
-        TB_Bind->SetText(FText::FromString(KeybindData->Keybind));
+        TB_Bind->SetText(FText::FromString(KeybindData->Keybind.GetFName().ToString()));
     }
 }

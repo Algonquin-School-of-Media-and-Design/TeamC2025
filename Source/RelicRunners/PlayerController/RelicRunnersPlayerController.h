@@ -102,6 +102,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnPossess(APawn* aPawn) override;
 
+	class Keybinds* Keys;
+
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	UInputMappingContext* GetInputMappingContext() const { return InputMappingContext; }
 

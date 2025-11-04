@@ -8,6 +8,7 @@
 #include "KeybindingsListData.h"
 #include <InputMappingContext.h>
 #include <EnhancedInputSubsystems.h>
+#include "Keybinds.h"
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
 
 void USettingsWidget::NativeConstruct()
@@ -53,25 +54,15 @@ void USettingsWidget::InitializeDefaultKeybindings()
 		{
 			UKeybindingsListData* NewEntry = NewObject<UKeybindingsListData>(this);
 			NewEntry->Name = ActionName;
-			NewEntry->Keybind = Key.GetFName().ToString();
+			NewEntry->Keybind = Key;
 			DefaultKeybindings.Add(NewEntry);
 		};
 
-	AddBinding("Walk Forward", EKeys::W);
-	AddBinding("Walk Left", EKeys::A);
-	AddBinding("Walk Backward", EKeys::S);
-	AddBinding("Walk Right", EKeys::D);
-	AddBinding("Inventory", EKeys::I);
-	AddBinding("Ability Selection", EKeys::U);
-	AddBinding("Interact", EKeys::E);
-	AddBinding("Map", EKeys::M);
-	AddBinding("Pause", EKeys::Escape);
-	AddBinding("Ping", EKeys::MiddleMouseButton);
-	AddBinding("Damage Ability", EKeys::Q);
-	AddBinding("Utility Ability", EKeys::R);
-	AddBinding("Defence Ability", EKeys::T);
-	AddBinding("Ultimate Ability", EKeys::F);
-	AddBinding("Health Potion", EKeys::H);
+	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(GetOwningLocalPlayer());
+	for (auto Binds : RPC->Keys->KeyBinds)
+	{
+		AddBinding(Binds.Name, Binds.Bind);
+	}
 
 	ApplyKeybindings();
 }
@@ -106,28 +97,24 @@ void USettingsWidget::ApplyKeybindings()
 
 	if (LookAction)
 	{
-		MappingContext->MapKey(LookAction, EKeys::Mouse2D);
-		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: restored Look bindings (Mouse2D)"));
+		FEnhancedActionKeyMapping& Mapping = MappingContext->MapKey(LookAction, EKeys::Mouse2D);
+		
+		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: Look (Mouse2D)"));
+
+		UInputModifierNegate* NegateModifier = NewObject<UInputModifierNegate>();
+		NegateModifier->bX = InvertedXMouse; // Invert X
+		NegateModifier->bY = InvertedYMouse; // Invert Y
+		NegateModifier->bZ = false;
+
+		Mapping.Modifiers.Add(NegateModifier);
+		UE_LOG(LogTemp, Log, TEXT("Look Modifiers: X | %s Y | %s"),
+			InvertedXMouse ? TEXT("true") : TEXT("false"),
+			InvertedYMouse ? TEXT("true") : TEXT("false")
+		);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: couldn't find IA_Look asset!"));
-	}
-
-	// Restore Jump
-	UInputAction* JumpAction = LoadObject<UInputAction>(
-		nullptr,
-		TEXT("/Game/ThirdPerson/Input/Actions/IA_Jump.IA_Jump")
-	);
-
-	if (JumpAction)
-	{
-		MappingContext->MapKey(JumpAction, EKeys::SpaceBar);
-		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: restored Jump binding (SpaceBar)"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: couldn't find IA_Jump asset!"));
 	}
 
 	for (UKeybindingsListData* Binding : DefaultKeybindings)
@@ -145,19 +132,11 @@ void USettingsWidget::ApplyKeybindings()
 			continue;
 		}
 
-		// Recreate FKey from stored internal name
-		FKey NewKey(*Binding->Keybind);
-		if (!NewKey.IsValid())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: invalid key string '%s' for action '%s'"), *Binding->Keybind, *Binding->Name);
-			continue;
-		}
-
 		// Map key for the action on the mapping context
 		// MapKey usually exists as a convenience wrapper exposed in the API you used earlier
-		MappingContext->MapKey(FoundAction, NewKey);
+		MappingContext->MapKey(FoundAction, Binding->Keybind);
 
-		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: mapped action %s -> key %s"), *Binding->Name, *NewKey.GetFName().ToString());
+		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: mapped action %s -> key %s"), *Binding->Name, *Binding->Keybind.GetFName().ToString());
 	}
 
 	// Re-apply mapping context to the subsystem (remove old first if necessary)

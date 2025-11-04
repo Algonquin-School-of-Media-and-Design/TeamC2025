@@ -27,9 +27,28 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings|Keybindings")
 	TArray<class UKeybindingsListData*> DefaultKeybindings;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool InvertedXMouse = false;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool InvertedYMouse = true;
+	UFUNCTION(BlueprintCallable)
+	void ToggleInvertedXMouse() {
+		if (InvertedXMouse) { InvertedXMouse = false; }
+		else { InvertedXMouse = true; }
+	}
+	UFUNCTION(BlueprintCallable)
+	void ToggleInvertedYMouse() {
+		if (InvertedYMouse) { InvertedYMouse = false; }
+		else { InvertedYMouse = true; }
+	}
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyKeybindings();
 protected:
 	UFUNCTION()
 	void BackButtonClicked();
 	void InitializeDefaultKeybindings();
-	void ApplyKeybindings();
+
 };
