@@ -16,6 +16,10 @@ class RELICRUNNERS_API USettingsWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 	FReply HandleKeyBindPressed(FKey PressedKey);
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateBinds();
+
 	UFUNCTION(BlueprintCallable)
 	void OnTileViewScrolled();
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -29,19 +33,14 @@ public:
 
 	class UTileView* KeybindingsTileView;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings|Keybindings")
-	TArray<class UKeybindingsListData*> DefaultKeybindings;
-
-	UFUNCTION(BlueprintCallable)
-	void ApplyKeybindings();
-
 	UFUNCTION(BlueprintCallable)
 	void ToggleInvertedXMouse();
 
 	UFUNCTION(BlueprintCallable)
 	void ToggleInvertedYMouse();
 
-	void InitializeDefaultKeybindings();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings|Keybindings")
+	TArray<class UKeybindingsListData*> DefaultKeybindings;
 
 	UPROPERTY()
 	class UKeybindingsListWidget* WaitingForKeyEntry = nullptr;
@@ -55,8 +54,12 @@ public:
 	UFUNCTION()
 	void OnRestoreDefaultsClicked();
 
+	void InitializeDefaultKeybindings();
+
 protected:
 	UFUNCTION()
 	void BackButtonClicked();
+
+
 
 };

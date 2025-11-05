@@ -6,12 +6,12 @@
 #include "Components/Button.h"
 #include "Components/TileView.h"
 #include "KeybindingsListData.h"
-#include <InputMappingContext.h>
 #include <EnhancedInputSubsystems.h>
 #include "Keybinds.h"
 #include "KeybindingsListWidget.h"
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
 #include <Kismet/GameplayStatics.h>
+#include "RelicRunners/Game/RelicRunnersGameInstance.h"
 
 void USettingsWidget::NativeConstruct()
 {
@@ -100,9 +100,7 @@ FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 			}
 		}
 	}
-
-	// Apply changes to input system
-	ApplyKeybindings();
+	UpdateBinds();
 
 	// Refresh all visuals
 	for (UKeybindingsListData* Binding : DefaultKeybindings)
@@ -117,6 +115,16 @@ FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 	WaitingForKeyEntry = nullptr;
 
 	return FReply::Handled();
+}
+
+void USettingsWidget::UpdateBinds()
+{
+	// Apply changes to input system
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		GI->ApplyKeybindings();
+	}
 }
 
 void USettingsWidget::OnTileViewScrolled()
@@ -173,86 +181,6 @@ void USettingsWidget::InitializeDefaultKeybindings()
 			KeybindingsTileView->AddItem(Binding);
 		}
 	}
-
-	ApplyKeybindings();
-}
-
-void USettingsWidget::ApplyKeybindings()
-{
-
-	// Get the player input subsystem
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC) return;
-
-	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC);
-	if (!RPC) return;
-
-	UInputMappingContext* MappingContext = RPC->GetInputMappingContext();
-	if (!MappingContext)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: No InputMappingContext set!"));
-		return;
-	}
-
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
-	if (!Subsystem) return;
-
-	MappingContext->UnmapAll();
-
-	// Restore Look
-	UInputAction* LookAction = LoadObject<UInputAction>(
-		nullptr,
-		TEXT("/Game/ThirdPerson/Input/Actions/IA_Look.IA_Look")
-	);
-
-	if (LookAction)
-	{
-		FEnhancedActionKeyMapping& Mapping = MappingContext->MapKey(LookAction, EKeys::Mouse2D);
-		
-		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: Look (Mouse2D)"));
-
-		UInputModifierNegate* NegateModifier = NewObject<UInputModifierNegate>();
-		NegateModifier->bX = RPC->GetKeybinds()->InvertedXMouse; // Invert X
-		NegateModifier->bY = RPC->GetKeybinds()->InvertedYMouse; // Invert Y
-		NegateModifier->bZ = false;
-
-		Mapping.Modifiers.Add(NegateModifier);
-		UE_LOG(LogTemp, Log, TEXT("Look Modifiers: X | %s Y | %s"),
-			RPC->GetKeybinds()->InvertedXMouse ? TEXT("true") : TEXT("false"),
-			RPC->GetKeybinds()->InvertedYMouse ? TEXT("true") : TEXT("false")
-		);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: couldn't find IA_Look asset!"));
-	}
-
-	for (UKeybindingsListData* Binding : DefaultKeybindings)
-	{
-		if (!Binding) continue;
-
-		// Build action asset name (your naming convention)
-		FString ActionAssetName = FString::Printf(TEXT("IA_%s"), *Binding->Name.Replace(TEXT(" "), TEXT("")));
-		FString AssetPath = FString::Printf(TEXT("/Game/ThirdPerson/Input/Actions/%s.%s"), *ActionAssetName, *ActionAssetName);
-
-		UInputAction* FoundAction = LoadObject<UInputAction>(nullptr, *AssetPath);
-		if (!FoundAction)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: couldn't load InputAction %s (path: %s)"), *ActionAssetName, *AssetPath);
-			continue;
-		}
-
-		// Map key for the action on the mapping context
-		// MapKey usually exists as a convenience wrapper exposed in the API you used earlier
-		MappingContext->MapKey(FoundAction, Binding->Keybind);
-
-		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: mapped action %s -> key %s"), *Binding->Name, *Binding->Keybind.GetFName().ToString());
-	}
-
-	// Re-apply mapping context to the subsystem (remove old first if necessary)
-	// You may want to remove then add to ensure updated mappings are used:
-	Subsystem->RemoveMappingContext(MappingContext);
-	Subsystem->AddMappingContext(MappingContext, 0);
 }
 
 void USettingsWidget::ToggleInvertedXMouse()
