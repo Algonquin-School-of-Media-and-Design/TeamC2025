@@ -131,3 +131,22 @@ void ARelicRunnersGameMode::PostSeamlessTravel()
         }
     }
 }
+
+void ARelicRunnersGameMode::Multicast_InitializeObjectives_Implementation(int maxObjectives)
+{
+    MaxObjectives = maxObjectives;
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max objectives: %f"), MaxObjectives));
+
+}
+
+void ARelicRunnersGameMode::Multicast_DecrementObjective_Implementation()
+{
+    RemainingObjectives--;
+
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining objectives: %f"), RemainingObjectives));
+
+    if (MaxObjectives - RemainingObjectives <= 0)
+    {
+        OnObjectiveActionCompleted.Broadcast();
+    }
+}

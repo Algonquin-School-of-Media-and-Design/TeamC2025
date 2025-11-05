@@ -20,6 +20,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "RelicRunnersGameMode.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnObjectiveActionCompleted);
+
 UCLASS(minimalapi)
 class ARelicRunnersGameMode : public AGameModeBase
 {
@@ -31,6 +33,23 @@ public:
 	virtual void PostSeamlessTravel() override;
 	UPROPERTY(EditDefaultsOnly, Category = "Preview")
 	TSubclassOf<class APlayerPreview> PlayerPreviewClass;
+
+
+	//TODO: Maybe make an Objectives Handler Object
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_InitializeObjectives(int maxObjectives);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_DecrementObjective();
+
+	UPROPERTY(Replicated)
+	int MaxObjectives = 0;
+
+	UPROPERTY(Replicated)
+	int RemainingObjectives = 0;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnObjectiveActionCompleted OnObjectiveActionCompleted;
 };
 
 

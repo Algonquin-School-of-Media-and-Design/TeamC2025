@@ -7,6 +7,7 @@
 #include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "../PlayerController/RelicRunnersPlayerController.h"
+#include "RelicRunners/RelicRunnersGameMode.h"
 
 // Sets default values
 ALevelChangeTrigger::ALevelChangeTrigger():
@@ -65,6 +66,11 @@ void ALevelChangeTrigger::BeginPlay()
 	{
 		const FString LevelString = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString()));
 		LevelTargetTextRender->SetText(FText::FromString(LevelString));
+
+		if (ARelicRunnersGameMode* gameMode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode()))
+		{
+			gameMode->OnObjectiveActionCompleted.AddDynamic(this, &ALevelChangeTrigger::Server_Activate);
+		}
 	}
 
 }
@@ -73,7 +79,7 @@ void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
-		if (HasAuthority())
+		if (HasAuthority() && IsActive)
 		{
 			Server_ChangeLevel();
 		}
@@ -109,6 +115,12 @@ void ALevelChangeTrigger::ChangeLevel()
 	}
 }
 
+void ALevelChangeTrigger::Server_Activate_Implementation()
+{
+	IsActive = true;
+	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Level Trigger has been activated")));
+}
+
 void ALevelChangeTrigger::Server_ChangeLevel_Implementation()
 {
 	ChangeLevel();
@@ -119,4 +131,5 @@ void ALevelChangeTrigger::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ALevelChangeTrigger, TargetLevel);
+	DOREPLIFETIME(ALevelChangeTrigger, IsActive);
 }

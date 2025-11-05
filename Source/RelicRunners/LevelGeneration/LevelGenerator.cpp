@@ -7,6 +7,7 @@
 #include "Net/UnrealNetwork.h"
 #include "PackedLevelActor/PackedLevelActor.h"
 #include "NavigationSystem.h"
+#include "RelicRunners/RelicRunnersGameMode.h"
 
 /*
 TODO:
