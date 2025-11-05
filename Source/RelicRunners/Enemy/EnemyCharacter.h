@@ -16,6 +16,13 @@ struct FAttackStartInfo
 	FVector AttackOriginPoint;
 };
 
+USTRUCT(BlueprintType)
+struct FAttackEndInfo
+{
+	GENERATED_BODY()
+	FVector AttackEndPoint;
+};
+
 UENUM(BlueprintType)
 enum class EEnemyType : uint8
 {
@@ -25,7 +32,20 @@ enum class EEnemyType : uint8
 	UNKNOWN = 3		UMETA(DisplayName = "unknown")
 };
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnAttackStartSignature, FAttackStartInfo, AttackInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttackStartSignature, FAttackStartInfo, AttackInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttackEndSignature, FAttackEndInfo, AttackInfo);
+
+UCLASS(Blueprintable, BlueprintType)
+class RELICRUNNERS_API UAttackDelegateWrapper : public UObject
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintAssignable)
+	FOnAttackStartSignature AttackStart;
+
+	UPROPERTY(EditAnywhere, BlueprintAssignable)
+	FOnAttackEndSignature AttackEnd;
+};
 
 UCLASS(Blueprintable, Abstract)
 class RELICRUNNERS_API AEnemyCharacter : public ACharacter
@@ -39,8 +59,10 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	//An array of function pointers so you can add as many abilities as you want
-	//TArray<FOnAttackStartSignature> AbilityFunctions;
-	TMap<class UAnimInstance*, FOnAttackStartSignature> AttackMethodMapping;
+	TMap<class UAnimMontage*, UAttackDelegateWrapper*> AttackStartMethodMap;
+
+	UPROPERTY(EditAnywhere, BlueprintAssignable)
+	FOnAttackStartSignature AttackStart;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float CurrentHealth;
