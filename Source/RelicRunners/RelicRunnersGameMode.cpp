@@ -132,10 +132,10 @@ void ARelicRunnersGameMode::PostSeamlessTravel()
     }
 }
 
-void ARelicRunnersGameMode::Multicast_InitializeObjectives_Implementation(int maxObjectives)
+void ARelicRunnersGameMode::Multicast_IncrementObjective_Implementation()
 {
-    MaxObjectives = maxObjectives;
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max objectives: %f"), MaxObjectives));
+    MaxObjectives++;
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max objectives is now: %i"), MaxObjectives));
 
 }
 
@@ -143,10 +143,11 @@ void ARelicRunnersGameMode::Multicast_DecrementObjective_Implementation()
 {
     RemainingObjectives--;
 
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining objectives: %f"), RemainingObjectives));
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining objectives: %i"), MaxObjectives - FMath::Abs(RemainingObjectives)));
 
-    if (MaxObjectives - RemainingObjectives <= 0)
+    if (MaxObjectives - FMath::Abs(RemainingObjectives) <= 0)
     {
         OnObjectiveActionCompleted.Broadcast();
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Objective has been reached!")));
     }
 }

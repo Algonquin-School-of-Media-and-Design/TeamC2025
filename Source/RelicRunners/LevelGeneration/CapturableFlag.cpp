@@ -28,6 +28,13 @@ ACapturableFlag::ACapturableFlag():
 void ACapturableFlag::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
+
+	if (gamemode)
+	{
+		gamemode->Multicast_IncrementObjective();
+	}
 	
 }
 
@@ -40,7 +47,16 @@ void ACapturableFlag::Tick(float DeltaTime)
 
 void ACapturableFlag::Interact_Implementation(ARelicRunnersCharacter* Char)
 {
-	isActive = true;
-	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Interacted with Flag")));
+	if (!isActive)
+	{
+		ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
+
+		if (gamemode)
+		{
+			gamemode->Multicast_DecrementObjective();
+		}
+		isActive = true;
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Interacted with Flag")));
+	}
 }
 

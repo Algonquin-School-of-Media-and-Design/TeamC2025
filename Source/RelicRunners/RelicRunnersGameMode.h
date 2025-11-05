@@ -37,15 +37,15 @@ public:
 
 	//TODO: Maybe make an Objectives Handler Object
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_InitializeObjectives(int maxObjectives);
+	void Multicast_IncrementObjective();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_DecrementObjective();
 
-	UPROPERTY(Replicated)
+	//UPROPERTY(Replicated)
 	int MaxObjectives = 0;
 
-	UPROPERTY(Replicated)
+	//UPROPERTY(Replicated)
 	int RemainingObjectives = 0;
 
 	UPROPERTY(BlueprintAssignable)
