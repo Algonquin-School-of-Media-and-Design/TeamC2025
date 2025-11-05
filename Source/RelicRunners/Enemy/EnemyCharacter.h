@@ -9,6 +9,13 @@
 class UItemObject;
 class UWidgetComponent;
 
+USTRUCT(BlueprintType)
+struct FAttackStartInfo
+{
+	GENERATED_BODY()
+	FVector AttackOriginPoint;
+};
+
 UENUM(BlueprintType)
 enum class EEnemyType : uint8
 {
@@ -17,6 +24,8 @@ enum class EEnemyType : uint8
 	BOSS = 2        UMETA(DisplayName = "boss"),
 	UNKNOWN = 3		UMETA(DisplayName = "unknown")
 };
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnAttackStartSignature, FAttackStartInfo, AttackInfo);
 
 UCLASS(Blueprintable, Abstract)
 class RELICRUNNERS_API AEnemyCharacter : public ACharacter
@@ -28,9 +37,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UItemObject*> ItemLootPool;
 
-	//UPROPERTY(VisableAnywhere, BlueprintRead)
+	UPROPERTY(EditAnywhere)
 	//An array of function pointers so you can add as many abilities as you want
-	TArray<void(*)> AbilityFunctions;
+	//TArray<FOnAttackStartSignature> AbilityFunctions;
+	TMap<class UAnimInstance*, FOnAttackStartSignature> AttackMethodMapping;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float CurrentHealth;
