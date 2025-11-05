@@ -1,20 +1,35 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/NoExportTypes.h"
+#include "Keybinds.generated.h"
 
-class RELICRUNNERS_API Keybinds
+USTRUCT(BlueprintType)
+struct FKeybinding
 {
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Keybinding")
+    FString Name;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Keybinding")
+    FKey Bind;
+};
+
+UCLASS(Blueprintable, BlueprintType)
+class RELICRUNNERS_API UKeybinds : public UObject
+{
+    GENERATED_BODY()
+
 public:
-	Keybinds();
-	~Keybinds();
+    UKeybinds();
 
-	struct FKeybindings
-	{
-		FString Name;
-		FKey Bind;
-	};
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    TArray<FKeybinding> KeyBinds;
 
-	TArray<FKeybindings> KeyBinds;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    bool InvertedXMouse = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    bool InvertedYMouse = true;
 };

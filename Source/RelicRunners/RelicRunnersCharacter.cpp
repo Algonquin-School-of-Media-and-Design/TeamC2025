@@ -615,7 +615,6 @@ void ARelicRunnersCharacter::InitLocalUI()
 		}
 	}
 
-
 	TryBindInventoryDelegates();
 }
 

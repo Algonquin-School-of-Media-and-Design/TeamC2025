@@ -35,6 +35,9 @@ public:
     UFUNCTION(BlueprintCallable)
     void StartSessionGame();
 
+    UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Input")
+    class UKeybinds* Keys;
+
     UPROPERTY()
     TArray<FUniqueNetIdRepl> SavedPlayers;
 

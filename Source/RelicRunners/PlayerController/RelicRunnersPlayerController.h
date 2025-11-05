@@ -102,8 +102,6 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnPossess(APawn* aPawn) override;
 
-	class Keybinds* Keys;
-
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	UInputMappingContext* GetInputMappingContext() const { return InputMappingContext; }
 
@@ -187,6 +185,8 @@ public:
 
 	UFUNCTION(Exec)
 	void SpendGold(int32 Amount = 10);
+
+	class UKeybinds* GetKeybinds() const;
 
 	// Begin Actor interface
 protected:

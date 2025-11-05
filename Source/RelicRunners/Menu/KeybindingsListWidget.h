@@ -18,9 +18,13 @@ class RELICRUNNERS_API UKeybindingsListWidget : public UUserWidget, public IUser
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
-	void Setup(UKeybindingsListData* InData);
+	void Setup(class UKeybindingsListData* InData);
+	UFUNCTION()
+	void OnBindButtonClicked();
+	class UKeybindingsListData* GetKeybindData() const;
+	void RefreshVisual();
 private:
-	UKeybindingsListData* KeybindData;
+	class UKeybindingsListData* KeybindData;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Name;

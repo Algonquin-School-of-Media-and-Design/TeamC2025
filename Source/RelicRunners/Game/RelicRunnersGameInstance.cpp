@@ -10,6 +10,7 @@
 #include "RelicRunners/PlayerPreview/LobbyPreview.h"
 #include "GameFramework/GameStateBase.h"
 #include "Engine/Engine.h"
+#include "RelicRunners/Menu/Keybinds.h"
 #include <RelicRunners/Menu/LobbyGameMode.h>
 #include <RelicRunners/RelicRunnersGameMode.h>
 
@@ -23,6 +24,7 @@ void URelicRunnersGameInstance::Init()
     {
         SessionInterface = OnlineSubsystem;
     }
+    Keys = NewObject<UKeybinds>(this);
 }
 
 void URelicRunnersGameInstance::Shutdown()

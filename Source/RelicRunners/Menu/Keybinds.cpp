@@ -3,7 +3,7 @@
 
 #include "Keybinds.h"
 
-Keybinds::Keybinds()
+UKeybinds::UKeybinds()
 {
     KeyBinds.Add({ TEXT("Walk Forward"),       EKeys::W });
     KeyBinds.Add({ TEXT("Walk Left"),          EKeys::A });
@@ -16,13 +16,10 @@ Keybinds::Keybinds()
     KeyBinds.Add({ TEXT("Map"),                EKeys::M });
     KeyBinds.Add({ TEXT("Pause"),              EKeys::Escape });
     KeyBinds.Add({ TEXT("Ping"),               EKeys::MiddleMouseButton });
+    KeyBinds.Add({ TEXT("Basic Attack"),       EKeys::LeftMouseButton });
     KeyBinds.Add({ TEXT("Damage Ability"),     EKeys::Q });
     KeyBinds.Add({ TEXT("Utility Ability"),    EKeys::R });
     KeyBinds.Add({ TEXT("Defence Ability"),    EKeys::T });
     KeyBinds.Add({ TEXT("Ultimate Ability"),   EKeys::F });
     KeyBinds.Add({ TEXT("Health Potion"),      EKeys::H });
-}
-
-Keybinds::~Keybinds()
-{
 }

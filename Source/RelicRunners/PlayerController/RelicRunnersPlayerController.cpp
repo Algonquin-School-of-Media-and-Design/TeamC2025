@@ -459,8 +459,6 @@ void ARelicRunnersPlayerController::SetupInputComponent()
 
 		// Health Potion
 		EnhancedInputComponent->BindAction(HealthPotionAction, ETriggerEvent::Started, this, &ARelicRunnersPlayerController::HealthPotion);
-	
-		Keys = new Keybinds();
 	}
 	else
 	{
@@ -623,6 +621,29 @@ void ARelicRunnersPlayerController::SpendGold(int32 Amount)
 			}
 		}
 	}
+}
+
+UKeybinds* ARelicRunnersPlayerController::GetKeybinds() const
+{
+	// Try to get the persistent Keybinds from the GameInstance
+	if (URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance()))
+	{
+		if (GI->Keys)
+		{
+			UE_LOG(LogTemp, Log, TEXT("GetKeybinds: Found GameInstance Keys with %d bindings"), GI->Keys->KeyBinds.Num());
+			for (const auto& Bind : GI->Keys->KeyBinds)
+			{
+				UE_LOG(LogTemp, Log, TEXT("Keybind: %s -> %s"), *Bind.Name, *Bind.Bind.GetFName().ToString());
+			}
+			return GI->Keys;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GetKeybinds: Keybinds in GameInstance is null"));
+		}
+	}
+
+	return nullptr;
 }
 
 void ARelicRunnersPlayerController::HealthPotion()

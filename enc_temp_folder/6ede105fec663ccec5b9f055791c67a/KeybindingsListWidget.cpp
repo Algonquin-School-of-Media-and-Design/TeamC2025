@@ -71,4 +71,15 @@ void UKeybindingsListWidget::RefreshVisual()
         FText::FromName(KeybindData->Keybind.GetFName()) :
         FText::FromString(TEXT("None"));
     TB_Bind->SetText(DisplayText);
+
+    // Default color
+    FSlateColor Color = FSlateColor(FLinearColor::White);
+
+        // Red if the key is invalid
+    if (DisplayText.ToString() == "None")
+    {
+        Color = FSlateColor(FLinearColor::Red);
+    }
+
+    TB_Bind->SetColorAndOpacity(Color);
 }

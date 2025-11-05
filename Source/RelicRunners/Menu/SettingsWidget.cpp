@@ -9,7 +9,9 @@
 #include <InputMappingContext.h>
 #include <EnhancedInputSubsystems.h>
 #include "Keybinds.h"
+#include "KeybindingsListWidget.h"
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
+#include <Kismet/GameplayStatics.h>
 
 void USettingsWidget::NativeConstruct()
 {
@@ -20,15 +22,111 @@ void USettingsWidget::NativeConstruct()
 		BackButton->OnClicked.AddDynamic(this, &USettingsWidget::BackButtonClicked);
 	}
 
-	InitializeDefaultKeybindings();
-
-	if (KeybindingsTileView)
+	if (B_RestoreDefaults)
 	{
-		KeybindingsTileView->ClearListItems();
+		B_RestoreDefaults->OnClicked.AddDynamic(this, &USettingsWidget::OnRestoreDefaultsClicked);
+	}
+}
 
-		for (UKeybindingsListData* Binding : DefaultKeybindings)
+void USettingsWidget::OnRestoreDefaultsClicked()
+{
+	
+}
+
+void USettingsWidget::StartRebinding(UKeybindingsListWidget* Entry)
+{
+	WaitingForKeyEntry = Entry;
+}
+
+FReply USettingsWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (!WaitingForKeyEntry)
+		return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+
+	FKey PressedKey = InKeyEvent.GetKey();
+	if (!PressedKey.IsValid())
+		return FReply::Handled();
+
+	return HandleKeyBindPressed(PressedKey);
+}
+
+FReply USettingsWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	if (!WaitingForKeyEntry)
+		return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+
+	// Use the mouse button that was pressed
+	FKey PressedKey = InMouseEvent.GetEffectingButton();
+	if (!PressedKey.IsValid())
+		return FReply::Handled();
+
+	return HandleKeyBindPressed(PressedKey);
+}
+
+FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
+{
+	// Get the data object for the row we’re rebinding
+	UKeybindingsListData* Data = WaitingForKeyEntry->GetKeybindData();
+	if (!Data)
+		return FReply::Handled();
+
+	// First, find all other bindings that use this key
+	for (UKeybindingsListData* Binding : DefaultKeybindings)
+	{
+		if (Binding != Data && Binding->Keybind == PressedKey)
 		{
-			KeybindingsTileView->AddItem(Binding);
+			Binding->Keybind = EKeys::Invalid;
+		}
+	}
+
+	// Assign new key
+	Data->Keybind = PressedKey;
+
+	// Update PlayerController keybinds
+	if (APlayerController* PC = GetOwningPlayer())
+	{
+		if (ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC))
+		{
+			if (UKeybinds* Keys = RPC->GetKeybinds())
+			{
+				for (auto& Bind : Keys->KeyBinds)
+				{
+					if (Bind.Name != Data->Name && Bind.Bind == PressedKey)
+						Bind.Bind = EKeys::Invalid;
+
+					if (Bind.Name == Data->Name)
+						Bind.Bind = PressedKey;
+				}
+			}
+		}
+	}
+
+	// Apply changes to input system
+	ApplyKeybindings();
+
+	// Refresh all visuals
+	for (UKeybindingsListData* Binding : DefaultKeybindings)
+	{
+		if (Binding->BoundWidget)
+		{
+			Binding->BoundWidget->RefreshVisual();
+		}
+	}
+
+	// Stop listening
+	WaitingForKeyEntry = nullptr;
+
+	return FReply::Handled();
+}
+
+void USettingsWidget::OnTileViewScrolled()
+{
+	// Refresh all currently active widgets
+	for (UKeybindingsListData* Binding : DefaultKeybindings)
+	{
+		if (Binding->BoundWidget)
+		{
+			Binding->BoundWidget->RefreshVisual();
 		}
 	}
 }
@@ -58,10 +156,22 @@ void USettingsWidget::InitializeDefaultKeybindings()
 			DefaultKeybindings.Add(NewEntry);
 		};
 
-	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(GetOwningLocalPlayer());
-	for (auto Binds : RPC->Keys->KeyBinds)
+	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(GetOwningPlayer());
+	if (!RPC) return;
+
+	for (auto Binds : RPC->GetKeybinds()->KeyBinds)
 	{
 		AddBinding(Binds.Name, Binds.Bind);
+	}
+
+	if (KeybindingsTileView)
+	{
+		KeybindingsTileView->ClearListItems();
+
+		for (UKeybindingsListData* Binding : DefaultKeybindings)
+		{
+			KeybindingsTileView->AddItem(Binding);
+		}
 	}
 
 	ApplyKeybindings();
@@ -102,14 +212,14 @@ void USettingsWidget::ApplyKeybindings()
 		UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: Look (Mouse2D)"));
 
 		UInputModifierNegate* NegateModifier = NewObject<UInputModifierNegate>();
-		NegateModifier->bX = InvertedXMouse; // Invert X
-		NegateModifier->bY = InvertedYMouse; // Invert Y
+		NegateModifier->bX = RPC->GetKeybinds()->InvertedXMouse; // Invert X
+		NegateModifier->bY = RPC->GetKeybinds()->InvertedYMouse; // Invert Y
 		NegateModifier->bZ = false;
 
 		Mapping.Modifiers.Add(NegateModifier);
 		UE_LOG(LogTemp, Log, TEXT("Look Modifiers: X | %s Y | %s"),
-			InvertedXMouse ? TEXT("true") : TEXT("false"),
-			InvertedYMouse ? TEXT("true") : TEXT("false")
+			RPC->GetKeybinds()->InvertedXMouse ? TEXT("true") : TEXT("false"),
+			RPC->GetKeybinds()->InvertedYMouse ? TEXT("true") : TEXT("false")
 		);
 	}
 	else
@@ -143,4 +253,28 @@ void USettingsWidget::ApplyKeybindings()
 	// You may want to remove then add to ensure updated mappings are used:
 	Subsystem->RemoveMappingContext(MappingContext);
 	Subsystem->AddMappingContext(MappingContext, 0);
+}
+
+void USettingsWidget::ToggleInvertedXMouse()
+{
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC) return;
+
+	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC);
+	if (!RPC) return;
+
+	if (RPC->GetKeybinds()->InvertedXMouse) { RPC->GetKeybinds()->InvertedXMouse = false; }
+	else { RPC->GetKeybinds()->InvertedXMouse = true; }
+}
+
+void USettingsWidget::ToggleInvertedYMouse()
+{
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC) return;
+
+	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC);
+	if (!RPC) return;
+
+	if (RPC->GetKeybinds()->InvertedYMouse) { RPC->GetKeybinds()->InvertedYMouse = false; }
+	else { RPC->GetKeybinds()->InvertedYMouse = true; }
 }
