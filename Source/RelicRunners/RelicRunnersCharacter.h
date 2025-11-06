@@ -27,6 +27,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class AAbilityBase;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -127,6 +128,14 @@ public:
 	void HealthPotions();
 
 	void SpendAbilityPoints();
+
+	// === Ability Slots ===
+	// Offensive / Damage ability slot (Moonbeam will be assigned here)
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DamageAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DamageAbilityInstance;
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();

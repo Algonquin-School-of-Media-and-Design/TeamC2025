@@ -36,6 +36,12 @@ public:
     virtual void EndAbility() override;
     virtual bool CanActivate() const override;
     virtual FName GetAbilityName() const override;
+    
+    UFUNCTION(BlueprintCallable, Category = "Ability|Timing")
+    float GetCooldown() const { return Cooldown; }
+
+    UFUNCTION(BlueprintCallable, Category = "Ability|Owner")
+    void SetAbilityOwner(AActor* InOwner) { OwnerActor = InOwner; }
 
 protected:
     UPROPERTY(BlueprintReadWrite, Category = "Ability|State")

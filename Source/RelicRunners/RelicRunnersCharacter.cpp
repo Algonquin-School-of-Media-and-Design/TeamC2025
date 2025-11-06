@@ -53,6 +53,8 @@
 #include "Game/RelicRunnersGameInstance.h"
 #include "Spawning System/Director.h"
 #include "Engine/Engine.h"
+#include "AbilitySystem/Moonbeam.h"       
+#include "AbilitySystem/AbilityBase.h"    
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -518,6 +520,32 @@ void ARelicRunnersCharacter::BeginPlay()
 			}
 		});
 	}
+
+	// Spawn Damage Ability (Moonbeam) 
+	if (DamageAbilityClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(
+			DamageAbilityClass,
+			GetActorLocation(),
+			GetActorRotation(),
+			Params
+		);
+
+		if (DamageAbilityInstance)
+		{
+			// Let the ability know who owns it (used by Moonbeam)
+			DamageAbilityInstance->SetAbilityOwner(this);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn DamageAbilityInstance (Moonbeam)."));
+		}
+	}
 }
 
 void ARelicRunnersCharacter::InitLocalUI()
@@ -953,7 +981,32 @@ bool ARelicRunnersCharacter::RemoveInventoryUI(APlayerController* playerControll
 
 void ARelicRunnersCharacter::DamageAbility()
 {
-	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+	
+	if (DamageAbilityInstance)
+	{
+		if (DamageAbilityInstance->CanActivate())
+		{
+			DamageAbilityInstance->ActivateAbility();
+
+			// Sync HUD cooldown with the ability's cooldown value
+			if (AbilityPointCounter)
+			{
+				AbilityPointCounter->StartDamageCooldown(DamageAbilityInstance->GetCooldown());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Verbose, TEXT("Damage ability is on cooldown."));
+		}
+
+		return; 
+	}
+
+	// Fallback: original behavior if no ability is assigned
+	if (AbilityPointCounter)
+	{
+		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+	}
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
