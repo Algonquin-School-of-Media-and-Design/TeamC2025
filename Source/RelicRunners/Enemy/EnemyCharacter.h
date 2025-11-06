@@ -32,21 +32,6 @@ enum class EEnemyType : uint8
 	UNKNOWN = 3		UMETA(DisplayName = "unknown")
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttackStartSignature, FAttackStartInfo, AttackInfo);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttackEndSignature, FAttackEndInfo, AttackInfo);
-
-UCLASS(Blueprintable, BlueprintType)
-class RELICRUNNERS_API UAttackDelegateWrapper : public UObject
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(EditAnywhere, BlueprintAssignable)
-	FOnAttackStartSignature AttackStart;
-
-	UPROPERTY(EditAnywhere, BlueprintAssignable)
-	FOnAttackEndSignature AttackEnd;
-};
-
 UCLASS(Blueprintable, Abstract)
 class RELICRUNNERS_API AEnemyCharacter : public ACharacter
 {
@@ -56,13 +41,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UItemObject*> ItemLootPool;
-
-	UPROPERTY(EditAnywhere)
-	//An array of function pointers so you can add as many abilities as you want
-	TMap<class UAnimMontage*, UAttackDelegateWrapper*> AttackStartMethodMap;
-
-	UPROPERTY(EditAnywhere, BlueprintAssignable)
-	FOnAttackStartSignature AttackStart;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float CurrentHealth;
@@ -82,9 +60,6 @@ public:
 	AEnemyCharacter();
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
-
-	UFUNCTION(BlueprintCallable)
-	virtual void PrimaryAttack();
 
 	UFUNCTION(BlueprintCallable)
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;

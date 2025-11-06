@@ -20,16 +20,6 @@ ATormentedSoulCharacter::ATormentedSoulCharacter() : Super()
 	AIControllerClass = ASoldierController::StaticClass();
 }
 
-void ATormentedSoulCharacter::PrimaryAttack()
-{
-	IsAttacking = true;
-	FTimerHandle timerHandle;
-	float timeOfAnimation = 2.f;
-	ATormentedSoulCharacter* soul = this;
-
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [soul] {soul->IsAttacking = false; }, timeOfAnimation, false);
-}
-
 void ATormentedSoulCharacter::Die(AController* EventInstigator)
 {
 	if (HasAuthority())
@@ -63,7 +53,7 @@ float ATormentedSoulCharacter::TakeDamage(float DamageAmount, FDamageEvent const
 	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
-void ATormentedSoulCharacter::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ATormentedSoulCharacter::BasicAttack(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (IsAttacking && OtherActor->Tags.Contains("Player"))
 	{
