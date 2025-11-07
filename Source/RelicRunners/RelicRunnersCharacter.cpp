@@ -424,13 +424,20 @@ float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const&
 {
 	float actualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	PlayerHealth -= actualDamage;
-
 	if (PlayerHealth <= 0)
 	{
 		PlayerHealth = 0;
 	}
 
+	if (DefenceAbilityInstance)
+	{
+		if (AImpunityAbility* Impunity = Cast<AImpunityAbility>(DefenceAbilityInstance))
+		{
+			actualDamage *= Impunity->GetDamageReductionMultiplier();
+		}
+	}
+
+	PlayerHealth -= actualDamage;
 	//UE_LOG(LogTemp, Log, TEXT("Player took %f damage, current health: %f"), actualDamage, PlayerHealth);
 
 	UpdateHUD();
@@ -1074,21 +1081,6 @@ void ARelicRunnersCharacter::DefenceAbility()
 	{
 		DefenceAbilityInstance->ActivateAbility();
 	}
-}
-
-float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) 
-{
-	float ModifiedDamage = DamageAmount; 
-
-	if (DefenceAbilityInstance) 
-	{
-		if (AImpunityAbility* Impunity = Cast<AImpunityAbility>(DefenceAbilityInstance)) 
-		{
-			ModifiedDamage *= Impunity->GetDamageReductionMultiplier(); 
-		}
-	}
-
-	return Super::TakeDamage(ModifiedDamage, DamageEvent, EventInstigator, DamageCauser); 
 }
 
 void ARelicRunnersCharacter::UtilityAbility()
