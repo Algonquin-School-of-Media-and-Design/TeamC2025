@@ -58,7 +58,7 @@
 
 #include "Enemy/EnemyCharacter.h"
 
-#include "AbilitySystem/WarBannerAbility.h"
+#include "Abilities/WarBannerAbility.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -665,11 +665,15 @@ void ARelicRunnersCharacter::TraceForInteractables()
 {
 	if (!IsLocallyControlled()) return;
 
-	const FVector PlayerLocation = FollowCamera->GetComponentLocation();
+	//const FVector PlayerLocation = FollowCamera->GetComponentLocation();
+	//const FVector PlayerForward = FollowCamera->GetForwardVector();
+	const FVector PlayerLocation = GetActorLocation();
 	const FVector PlayerForward = FollowCamera->GetForwardVector();
 
 	const float MaxDistance = 800.f;
 	const float MinFacingDot = 0.f; // 1 = perfectly facing, 0 = 90 degrees off
+
+	DrawDebugLine(GetWorld(),PlayerLocation, PlayerLocation + (PlayerForward * MaxDistance), FColor::Blue);
 
 	for (TActorIterator<AItemActor> It(GetWorld()); It; ++It)
 	{
@@ -704,11 +708,11 @@ void ARelicRunnersCharacter::TraceForInteractables()
 		bool bHit = GetWorld()->LineTraceSingleByChannel(
 			HitResult,
 			PlayerLocation,
-			PlayerLocation + (PlayerForward * 1000.0f),
+			PlayerLocation + (PlayerForward * MaxDistance),
 			ECC_Visibility,
 			TraceParams);
 
-		FVector targetPosition = bHit ? HitResult.Location : PlayerLocation + (PlayerForward * 1000.0f);
+		FVector targetPosition = bHit ? HitResult.Location : PlayerLocation + (PlayerForward * MaxDistance);
 
 		DrawDebugLine(GetWorld(), PlayerLocation, targetPosition, FColor::Blue);
 		WarBannerAbility->SetActorLocation(targetPosition);
@@ -917,7 +921,8 @@ void ARelicRunnersCharacter::Look(const FInputActionValue& Value)
 
 void ARelicRunnersCharacter::Interact()
 {
-	FVector Start = FollowCamera->GetComponentLocation();
+	//FVector Start = FollowCamera->GetComponentLocation();
+	FVector Start = GetActorLocation();
 	FVector End = Start + (FollowCamera->GetForwardVector() * 500.f); // Match TraceForInteractables
 
 	FHitResult Hit;
@@ -927,6 +932,7 @@ void ARelicRunnersCharacter::Interact()
 	DrawDebugSphere(GetWorld(), End, 40.f, 12, FColor::Orange, false, 0.1f);
 	if (GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(40.f), Params))
 	{
+		DrawDebugSphere(GetWorld(), Hit.Location, 40.f, 12, FColor::Orange, false, 0.1f);
 		AActor* HitActor = Hit.GetActor();
 		if (HitActor && HitActor->Implements<UInteractInterface>())
 		{

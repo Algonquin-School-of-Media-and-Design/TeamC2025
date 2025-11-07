@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "LevelGenerator.generated.h"
 
+enum class EObjectiveType : uint8;
+
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EFloorNeighbours : uint8
 {
@@ -34,7 +36,7 @@ enum class EFloorObstacle : uint8
 
 
 USTRUCT()
-struct FloorValues
+struct FSFloorValues
 {
 	GENERATED_BODY()
 public:
@@ -54,6 +56,17 @@ public:
 	int obstacleYaw = 0;
 };
 
+USTRUCT()
+struct FSFloorObstacleByTexture
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere,meta = (ClampMin = "0", UIMin = "0", ClampMax = "3", UIMax = "3"))
+	int ObstacleYaw = 0;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class APackedLevelActor> ObstacleActor;
+};
 
 UCLASS()
 class RELICRUNNERS_API ALevelGenerator : public AActor
@@ -76,6 +89,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle");
 	TSubclassOf<class APackedLevelActor> LevelEndPackedLevel;
 
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle| Key Tiles");
+	TSubclassOf<class APackedLevelActor> CapturableFlagPackedLevel;
+
 	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
 	class UStaticMeshComponent* FullPiece;
 
@@ -87,6 +103,15 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
 	class UStaticMeshComponent* ConvexCornerPiece;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | NonRandomized Floor", meta = (ToolTip = "If not nothing, level generation will place tiles based on position and colour of each pixel in the texture."))
+	class UTexture2D* LevelTexture;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | NonRandomized Floor", meta = (ToolTip = "If there are any specific modular pieces needed on a specific tile, define the colour and what spawns on top of every instance of that colour. Note: All non-white pixels in texture will have a floor set to that tile even if the specific colour isn't specified to have a modular piece."))
+	TMap <FColor, FSFloorObstacleByTexture> TileColourToPackedActor;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values")
+	EObjectiveType ObjectiveType;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
 	int SpawnWidth;
@@ -125,33 +150,37 @@ public:
 	void GenerateFloor(int x, int y);
 
 	void InitializeFloor();
-	void ForceFloorBool(bool forcedFloor, int x, int y);
+	void ForceFloorBool(bool forcedFloor, int x, int y, int width);
 
-	void InitializeModularObstacle(FloorValues& floorValue);
+	void InitializeModularObstacle(FSFloorValues& floorValue);
 
 	void SetStartingAndEndingPoints(int startingIndex, int endingIndex);
 
 	void SetKeyTile(int index);
 
-	void FindStartToEndPath(int startingIndex, int targetIndex);
+	void FindStartToEndPath(int startingIndex, int targetIndex, int width);
 
-	void CheckFloor(int x, int y);
+	void CheckFloor(int x, int y, int width, int depth);
 
-	void FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y);
-	void FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y);
-	void FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y);
+	void FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, int width);
+	void FloorCheckMiddleNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, int width);
+	void FloorCheckBottomNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, int width);
 
-	void SetFloorShape(int x, int y);
+	void SetFloorShape(int x, int y, int width);
 
-	void SetTopLeftFloorShape(int x, int y);
-	void SetTopRightFloorShape(int x, int y);
-	void SetBottomLeftFloorShape(int x, int y);
-	void SetBottomRightFloorShape(int x, int y);
+	void SetTopLeftFloorShape(int x, int y, int width);
+	void SetTopRightFloorShape(int x, int y, int width);
+	void SetBottomLeftFloorShape(int x, int y, int width);
+	void SetBottomRightFloorShape(int x, int y, int width);
 
 	UFUNCTION(Server, Reliable)
-	void Server_SpawnFloorObstacles(int x, int y);
+	void Server_SpawnFloorObstacles(int x, int y, int width);
 
-	void SpawnFloorObstacles(int x, int y);
+	void SpawnFloorObstacles(int x, int y, int width);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnFloorObstaclesByColour(int x, int y, int width, FColor colour);
+	void SpawnFloorObstaclesByColour(int x, int y, int width, FColor colour);
 
 	void CreateFloor();
 
@@ -166,7 +195,7 @@ public:
 	void OnRep_FloorValuesArrayChange();
 
 	UPROPERTY(ReplicatedUsing = OnRep_FloorValuesArrayChange)
-	TArray<FloorValues> FloorValuesArray;
+	TArray<FSFloorValues> FloorValuesArray;
 
 	TArray<FTransform> FullFloorPieceTransforms;
 	TArray<FTransform> SideFloorPieceTransforms;
