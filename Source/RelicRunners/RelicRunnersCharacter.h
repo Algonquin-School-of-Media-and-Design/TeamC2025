@@ -293,17 +293,7 @@ protected:
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> UtilityAbilityClass;
 
-	UPROPERTY()
-	AAbilityBase* UtilityAbilityInstance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> DamageAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* DamageAbilityInstance;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;
@@ -397,10 +387,28 @@ protected:
 	float UtilityCooldown = 5.f;
 	float UltimateCooldown = 10.f;
 
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AWarBannerAbility> WarBannerAbilityTemplate;
-	class AWarBannerAbility* WarBannerAbility;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<class AAbilityBase> DamageClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DefenceClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> UtilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> UltimateClass;
+
+	UPROPERTY()
+	class AAbilityBase* DamageAbilityInstance;
+	UPROPERTY()
+	class AAbilityBase* DefenceAbilityInstance;
+	UPROPERTY()
+	class AAbilityBase* UtilityAbilityInstance;
+	UPROPERTY()
+	class AAbilityBase* UltimateAbilityInstance;
+
 
 	bool IsWarBannerActive = false;
 

@@ -518,32 +518,6 @@ void ARelicRunnersCharacter::BeginPlay()
 		});
 	}
 
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	if (WarBannerAbilityTemplate != nullptr)
-	{
-		WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
-		WarBannerAbility->Server_Initialize(this);
-	}
-
-	//VengefulDance format
-    UtilityAbilityClass = AVengefulDance::StaticClass();
-
-    if (UtilityAbilityClass)
-    {
-		UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityAbilityClass);
-        if (UtilityAbilityInstance)
-        {
-			UtilityAbilityInstance->OwnerActor = this;
-        }
-    }
-
-	//BundleOfJoy format
-	if (!DamageAbilityClass)
-	{
-		DamageAbilityClass = ABundleOfJoy::StaticClass();
-	}
-	
-
 }
 
 
@@ -670,32 +644,7 @@ void ARelicRunnersCharacter::TraceForInteractables()
 		IInteractInterface::Execute_ShowTooltip(Item, bShouldShow);
 	}
 
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	if (WarBannerAbility == nullptr)
-		return;
 
-	if (!WarBannerAbility->CanActivate())
-		return;
-
-	if (IsWarBannerActive)
-	{
-		FHitResult HitResult;
-		FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true, this);
-
-		bool bHit = GetWorld()->LineTraceSingleByChannel(
-			HitResult,
-			PlayerLocation,
-			PlayerLocation + (PlayerForward * 1000.0f),
-			ECC_Visibility,
-			TraceParams);
-
-		FVector targetPosition = bHit ? HitResult.Location : PlayerLocation + (PlayerForward * 1000.0f);
-
-		DrawDebugLine(GetWorld(), PlayerLocation, targetPosition, FColor::Blue);
-		WarBannerAbility->SetActorLocation(targetPosition);
-		WarBannerAbility->SetActorRotation(FRotator(0.0f, GetControlRotation().Yaw, 0.0f));
-	}
-	//War Banner Ability Section End
 }
 
 void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
@@ -830,10 +779,6 @@ void ARelicRunnersCharacter::BasicAttack()
 		}
 	}
 
-	if (IsWarBannerActive && WarBannerAbility != nullptr)
-	{
-		WarBannerAbility->Server_SpawnBanner();
-	}
 }
 
 void ARelicRunnersCharacter::Walk(const FInputActionValue& Value)
@@ -1010,29 +955,6 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 void ARelicRunnersCharacter::DamageAbility()
 {
 	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
-
-	//For BundleOfJoy
-	//if (DamageAbilityClass && GetWorld())
-	//{
-	//	FActorSpawnParameters SpawnParams;
-	//	SpawnParams.Owner = this;
-	//	SpawnParams.Instigator = GetInstigator();
-	//	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	//	FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 150.f + FVector(0, 0, 100.f);
-	//	FRotator SpawnRotation = GetActorRotation();
-
-	//	DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageAbilityClass, SpawnLocation, SpawnRotation, SpawnParams);
-
-	//	if (DamageAbilityInstance)
-	//	{
-	//		DamageAbilityInstance->OwnerActor = this;
-	//		DamageAbilityInstance->SetActorLocation(SpawnLocation); 
-	//		DamageAbilityInstance->ActivateAbility();
-
-	//		UE_LOG(LogTemp, Warning, TEXT("Ability spawned at: %s"), *DamageAbilityInstance->GetActorLocation().ToString());
-	//	}
-	//}
 	GiveDamageAbilities();
 }
 
@@ -1045,27 +967,6 @@ void ARelicRunnersCharacter::DefenceAbility()
 void ARelicRunnersCharacter::UtilityAbility()
 {
 	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
-
-	////War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	//IsWarBannerActive = !IsWarBannerActive;
-
-	//if (WarBannerAbility == nullptr)
-	//	return;
-
-	//if (IsWarBannerActive)
-	//{
-	//	WarBannerAbility->ActivateAbility();
-	//}
-	//else
-	//{
-	//	WarBannerAbility->CancelAbility();
-	//}
-
-	////For VengefulDance
-	//if (UtilityAbilityInstance)
-	//{
-	//	UtilityAbilityInstance->ActivateAbility();
-	//}
 	GiveUtilityAbilities();
 }
 

@@ -20,6 +20,34 @@ void AAphroditeCharacter::BeginPlay()
 void AAphroditeCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
+
+	if (!DamageClass)
+	{
+		DamageClass = ABundleOfJoy::StaticClass();
+	}
+
+	//For BundleOfJoy
+	if (DamageClass && GetWorld())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 150.f + FVector(0, 0, 100.f);
+		FRotator SpawnRotation = GetActorRotation();
+
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+		if (DamageAbilityInstance)
+		{
+			DamageAbilityInstance->OwnerActor = this;
+			DamageAbilityInstance->SetActorLocation(SpawnLocation);
+			DamageAbilityInstance->ActivateAbility();
+
+		}
+	}
+
 }
 
 void AAphroditeCharacter::GiveDefenceAbilities()

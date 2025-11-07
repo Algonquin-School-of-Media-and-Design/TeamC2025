@@ -51,13 +51,24 @@ void ANemesisCharacter::GiveUtilityAbilities()
 {
 	Super::GiveUtilityAbilities();
 
+    UtilityClass = AVengefulDance::StaticClass();
+
+    if (UtilityClass)
+    {
+        UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityClass);
+        if (UtilityAbilityInstance)
+        {
+            UtilityAbilityInstance->OwnerActor = this;
+        }
+    }
+
 	if (AbilitySystem)
 	{
 		AbilitySystem->GiveAbility(FGameplayAbilitySpec(AVengefulDance::StaticClass(), 1, 0));
 
 		if (UtilityAbilityInstance)
 		{
-			UtilityAbilityInstance->ActivateAbility();
+            UtilityAbilityInstance->ActivateAbility();
 		}
 
 	}
