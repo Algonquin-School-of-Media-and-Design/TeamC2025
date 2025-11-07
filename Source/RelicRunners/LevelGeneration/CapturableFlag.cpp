@@ -5,6 +5,8 @@
 #include "Components/SceneComponent.h"
 #include "Components/BoxComponent.h"
 #include "RelicRunners/RelicRunnersGameMode.h"
+#include "RelicRunners/Game/RelicRunnersGameInstance.h"
+#include <Net/UnrealNetwork.h>
 
 // Sets default values
 ACapturableFlag::ACapturableFlag():
@@ -22,6 +24,8 @@ ACapturableFlag::ACapturableFlag():
 	TriggerBox->SetCollisionProfileName("BlockAll");
 	TriggerBox->SetGenerateOverlapEvents(true);
 	TriggerBox->SetupAttachment(Origin);
+
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
@@ -49,14 +53,27 @@ void ACapturableFlag::Interact_Implementation(ARelicRunnersCharacter* Char)
 {
 	if (!isActive)
 	{
-		ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
-
-		if (gamemode)
-		{
-			gamemode->Multicast_DecrementObjective();
-		}
-		isActive = true;
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Interacted with Flag")));
+		Multicast_Interacted();
 	}
 }
 
+void ACapturableFlag::Multicast_Interacted_Implementation()
+{
+	ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
+
+	URelicRunnersGameInstance* gameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+
+	if (gamemode)
+	{
+		gamemode->Multicast_DecrementObjective();
+	}
+	isActive = true;
+	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Interacted with Flag")));
+}
+
+void ACapturableFlag::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACapturableFlag, isActive);
+}

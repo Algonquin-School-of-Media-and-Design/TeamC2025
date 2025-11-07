@@ -26,6 +26,9 @@ public:
 
 	virtual void Interact_Implementation(class ARelicRunnersCharacter* Char) override;
 
+	UFUNCTION(Server, Reliable)
+	void Multicast_Interacted();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Default Values")
 	class USceneComponent* Origin;
 
@@ -33,7 +36,7 @@ public:
 	class UBoxComponent* TriggerBox;
 
 private:
-	//UPROPERTY(Replicated)
+	UPROPERTY(Replicated)
 	bool isActive = false;
 
 };

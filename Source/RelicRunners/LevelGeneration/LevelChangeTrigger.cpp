@@ -67,12 +67,13 @@ void ALevelChangeTrigger::BeginPlay()
 		const FString LevelString = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString()));
 		LevelTargetTextRender->SetText(FText::FromString(LevelString));
 
-		if (ARelicRunnersGameMode* gameMode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode()))
-		{
-			gameMode->OnObjectiveActionCompleted.AddDynamic(this, &ALevelChangeTrigger::Server_Activate);
-		}
 	}
 
+	if (ARelicRunnersGameMode* gameMode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		gameMode->OnObjectiveActionCompleted.AddDynamic(this, &ALevelChangeTrigger::Server_Activate);
+		IsActive = gameMode->InitializeTriggerState();
+	}
 }
 
 void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -97,17 +98,6 @@ void ALevelChangeTrigger::ChangeLevel()
 		return;
 
 	const FString LevelURL = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString() + "?listen"));
-
-	//for (FConstPlayerControllerIterator Iterator = world->GetPlayerControllerIterator(); Iterator; ++Iterator)
-	//{
-	//	ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(*Iterator);
-	//	if (PC && !PC->IsLocalController()) // skip host
-	//	{
-	//		PC->ClientTravelToGame();
-	//	}
-	//}
-
-	//world->SeamlessTravel(LevelURL);
 
 	if (HasAuthority())
 	{

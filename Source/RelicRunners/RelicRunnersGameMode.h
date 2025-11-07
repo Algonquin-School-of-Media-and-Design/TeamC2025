@@ -22,6 +22,14 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnObjectiveActionCompleted);
 
+UENUM(BlueprintType)
+enum class EObjectiveType : uint8
+{
+	None,
+	Custom,
+	CaptureTheFlag,
+};
+
 UCLASS(minimalapi)
 class ARelicRunnersGameMode : public AGameModeBase
 {
@@ -35,7 +43,7 @@ public:
 	TSubclassOf<class APlayerPreview> PlayerPreviewClass;
 
 
-	//TODO: Maybe make an Objectives Handler Object
+	//TODO: Move all this stuff into a GameState
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_IncrementObjective();
 
@@ -43,13 +51,18 @@ public:
 	void Multicast_DecrementObjective();
 
 	//UPROPERTY(Replicated)
-	int MaxObjectives = 0;
-
-	//UPROPERTY(Replicated)
 	int RemainingObjectives = 0;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnObjectiveActionCompleted OnObjectiveActionCompleted;
+
+	EObjectiveType ObjectiveType = EObjectiveType::None;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetObjectiveType(EObjectiveType newType);
+
+	bool InitializeTriggerState();
+
 };
 
 

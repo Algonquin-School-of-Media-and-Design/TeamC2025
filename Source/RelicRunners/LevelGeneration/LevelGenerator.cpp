@@ -6,6 +6,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "PackedLevelActor/PackedLevelActor.h"
+#include "LevelChangeTrigger.h"
 #include "NavigationSystem.h"
 #include "RelicRunners/RelicRunnersGameMode.h"
 
@@ -17,11 +18,13 @@ Teleport every player to the starting point when the level starts
 ALevelGenerator::ALevelGenerator() :
 	LevelStartPackedLevel(nullptr),
 	LevelEndPackedLevel(nullptr),
+	CapturableFlagPackedLevel(nullptr),
 	FullPiece(nullptr),
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
 	ConvexCornerPiece(nullptr),
 	LevelTexture(nullptr),
+	ObjectiveType(EObjectiveType::None),
 	SpawnWidth(2),
 	SpawnDepth(2),
 	FullPercentage(75.0f),
@@ -101,7 +104,6 @@ void ALevelGenerator::PostInitializeComponents()
 		}
 		else
 		{
-
 			int startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 			int endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 
@@ -162,6 +164,13 @@ void ALevelGenerator::PostInitializeComponents()
 				}
 			}
 			CreateFloor();
+
+			ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
+
+			if (gamemode)
+			{
+				gamemode->Multicast_SetObjectiveType(ObjectiveType);
+			}
 		}
 	}
 }
@@ -694,6 +703,15 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 		}
 		break;
 	case EFloorObstacle::KeyTile:
+		switch (ObjectiveType)
+		{
+		case EObjectiveType::CaptureTheFlag:
+			if (CapturableFlagPackedLevel != nullptr)
+			{
+				APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(CapturableFlagPackedLevel, posOffset, FRotator(0.0f, yaw, 0.0f));
+			}
+			break;
+		}
 		break;
 	case EFloorObstacle::Shop:
 		break;
@@ -714,7 +732,7 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 
 void ALevelGenerator::Server_SpawnFloorObstaclesByColour_Implementation(int x, int y, int width, FColor colour)
 {
-	SpawnFloorObstaclesByColour(x,y,width,colour);
+	SpawnFloorObstaclesByColour(x, y, width, colour);
 }
 
 void ALevelGenerator::SpawnFloorObstaclesByColour(int x, int y, int width, FColor colour)

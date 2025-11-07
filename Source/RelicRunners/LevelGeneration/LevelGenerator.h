@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "LevelGenerator.generated.h"
 
+enum class EObjectiveType : uint8;
+
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EFloorNeighbours : uint8
 {
@@ -87,6 +89,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle");
 	TSubclassOf<class APackedLevelActor> LevelEndPackedLevel;
 
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle| Key Tiles");
+	TSubclassOf<class APackedLevelActor> CapturableFlagPackedLevel;
+
 	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
 	class UStaticMeshComponent* FullPiece;
 
@@ -104,6 +109,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues | NonRandomized Floor", meta = (ToolTip = "If there are any specific modular pieces needed on a specific tile, define the colour and what spawns on top of every instance of that colour. Note: All non-white pixels in texture will have a floor set to that tile even if the specific colour isn't specified to have a modular piece."))
 	TMap <FColor, FSFloorObstacleByTexture> TileColourToPackedActor;
+
+	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values")
+	EObjectiveType ObjectiveType;
 
 	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
 	int SpawnWidth;

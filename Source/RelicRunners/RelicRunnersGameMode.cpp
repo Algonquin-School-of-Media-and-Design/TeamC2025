@@ -132,10 +132,37 @@ void ARelicRunnersGameMode::PostSeamlessTravel()
     }
 }
 
+bool ARelicRunnersGameMode::InitializeTriggerState()
+{
+    switch (ObjectiveType)
+    {
+    case EObjectiveType::None:
+        return true;
+        break;
+    case EObjectiveType::CaptureTheFlag:
+        return false;
+        break;
+    }
+    return false;
+}
+
+void ARelicRunnersGameMode::Multicast_SetObjectiveType_Implementation(EObjectiveType newType)
+{
+    ObjectiveType = newType;
+
+    switch (ObjectiveType)
+    {
+    case EObjectiveType::None:
+        Multicast_DecrementObjective();
+        break;
+    }
+
+}
+
 void ARelicRunnersGameMode::Multicast_IncrementObjective_Implementation()
 {
-    MaxObjectives++;
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max objectives is now: %i"), MaxObjectives));
+    RemainingObjectives++;
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max objectives is now: %i"), RemainingObjectives));
 
 }
 
@@ -143,9 +170,9 @@ void ARelicRunnersGameMode::Multicast_DecrementObjective_Implementation()
 {
     RemainingObjectives--;
 
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining objectives: %i"), MaxObjectives - FMath::Abs(RemainingObjectives)));
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining objectives: %i"), RemainingObjectives));
 
-    if (MaxObjectives - FMath::Abs(RemainingObjectives) <= 0)
+    if (RemainingObjectives <= 0)
     {
         OnObjectiveActionCompleted.Broadcast();
         GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Objective has been reached!")));
