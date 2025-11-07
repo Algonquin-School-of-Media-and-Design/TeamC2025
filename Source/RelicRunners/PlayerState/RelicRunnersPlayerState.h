@@ -18,16 +18,21 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
+#include "AttributeSet.h"
 #include "RelicRunnersPlayerState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class RELICRUNNERS_API ARelicRunnersPlayerState : public APlayerState
+class RELICRUNNERS_API ARelicRunnersPlayerState : public APlayerState, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 public:
+    ARelicRunnersPlayerState();
+
     UPROPERTY(ReplicatedUsing = OnRep_SelectedClass)
     FName SelectedClass;
 
@@ -41,6 +46,19 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnSelectedClassChanged, FName);
 
     FOnSelectedClassChanged OnSelectedClassChanged;
+
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+
+    UAttributeSet* GetAttributeSet() const { return AttributeSet; }
+
+protected:
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+    TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+    TObjectPtr<UAttributeSet> AttributeSet;
 
 };
 

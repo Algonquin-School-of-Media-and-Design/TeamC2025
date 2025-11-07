@@ -73,6 +73,9 @@ public:
     TWeakPtr<class IOnlineSession, ESPMode::ThreadSafe> SessionInterface;
 
     FString PlayerName;
+
+    void SetSelectedClass(FName NewClass) { SelectedClass = NewClass; }
+
 private:
 
     TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
@@ -80,6 +83,8 @@ private:
     int32 PendingHostAfterLeave = 0;
     int32 PendingJoinIndex = -1;
     FString PendingTravelTargetMap;
+public:
+    FName SelectedClass;
 
 
 

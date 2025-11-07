@@ -146,36 +146,37 @@ APawn* ARelicRunnersGameMode::SpawnDefaultPawnFor_Implementation(AController* Ne
 {
     ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(NewPlayer);
 
-    ARelicRunnersPlayerState* RRPS = RRPC->GetPlayerState<ARelicRunnersPlayerState>();
-    if (!RRPS)
-    {
-        return Cast<ARelicRunnersCharacter>(Super::SpawnDefaultPawnFor_Implementation(RRPC, StartSpot));
-    }
+    URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
 
     TSubclassOf<ARelicRunnersCharacter> CharacterToSpawn = nullptr;
 
-    if (RRPS->SelectedClass == FName("Nemesis"))
+    if (GameInstance)
     {
-        CharacterToSpawn = NemesisCharacterClass;
-    }
-    else if (RRPS->SelectedClass == FName("Aphrodite"))
-    {
-        CharacterToSpawn = AphroditeCharacterClass;
-    }
-    else if (RRPS->SelectedClass == FName("Artemis"))
-    {
-        CharacterToSpawn = ArtemisCharacterClass;
-    }
-    else if (RRPS->SelectedClass == FName("Ares"))
-    {
-        CharacterToSpawn = AresCharacterClass;
+        if (GameInstance->SelectedClass == FName("Nemesis"))
+        {
+            CharacterToSpawn = NemesisCharacterClass;
+        }
+        else if (GameInstance->SelectedClass == FName("Aphrodite"))
+        {
+            CharacterToSpawn = AphroditeCharacterClass;
+        }
+        else if (GameInstance->SelectedClass == FName("Artemis"))
+        {
+            CharacterToSpawn = ArtemisCharacterClass;
+        }
+        else if (GameInstance->SelectedClass == FName("Ares"))
+        {
+            CharacterToSpawn = AresCharacterClass;
+        }
     }
 
     if (CharacterToSpawn)
     {
         FActorSpawnParameters Params;
-        Params.Owner = RRPC;
-        Params.Instigator = nullptr; 
+        if (RRPC)
+        {
+            Params.Owner = RRPC;
+        }
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
         FVector SpawnLoc = StartSpot->GetActorLocation();

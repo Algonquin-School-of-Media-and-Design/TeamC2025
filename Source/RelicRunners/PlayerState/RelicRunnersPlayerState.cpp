@@ -17,6 +17,22 @@
 #include "RelicRunnersPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
+
+ARelicRunnersPlayerState::ARelicRunnersPlayerState()
+{
+    AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+    AttributeSet = CreateDefaultSubobject<UAttributeSet>(TEXT("AttributeSet"));
+
+    AbilitySystemComponent->SetIsReplicated(true);
+    AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+}
+
+UAbilitySystemComponent* ARelicRunnersPlayerState::GetAbilitySystemComponent() const
+{
+    return AbilitySystemComponent;
+}
+
+
 void ARelicRunnersPlayerState::SetSelectedClass(FName NewClass)
 {
     if (HasAuthority())

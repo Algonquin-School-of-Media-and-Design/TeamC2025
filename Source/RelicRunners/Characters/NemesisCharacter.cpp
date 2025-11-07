@@ -11,6 +11,31 @@ void ANemesisCharacter::BeginPlay()
 
 }
 
+void ANemesisCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+
+    
+    ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+    if (PS)
+    {
+        AbilitySystem = PS->GetAbilitySystemComponent(); 
+        AbilitySystem->InitAbilityActorInfo(PS, this);   
+    }
+}
+
+void ANemesisCharacter::OnRep_PlayerState()
+{
+    Super::OnRep_PlayerState();
+
+    ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+    if (PS)
+    {
+        AbilitySystem = PS->GetAbilitySystemComponent();
+        AbilitySystem->InitAbilityActorInfo(PS, this);
+    }
+}
+
 void ANemesisCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();

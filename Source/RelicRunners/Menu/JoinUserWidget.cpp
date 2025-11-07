@@ -200,12 +200,19 @@ void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 			}
 			else
 			{
-				// If client, call a server RPC
+			
 				if (ARelicRunnersPlayerController* RPC_PC = Cast<ARelicRunnersPlayerController>(PC))
 				{
 					RPC_PC->Server_SetSelectedClass(ClassKey);
 				}
 			}
+		}
+
+		URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+
+		if (GameInstance)
+		{
+			GameInstance->SetSelectedClass(ClassKey);
 		}
 	}
 }
