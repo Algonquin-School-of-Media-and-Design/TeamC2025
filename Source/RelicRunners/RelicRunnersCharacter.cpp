@@ -804,9 +804,9 @@ void ARelicRunnersCharacter::PerformSwingTrace()
 				{
 					Server_HitEnemy(Enemy);
 				}
-				else if (AEnemyCharacterAI* Enemy = Cast<AEnemyCharacterAI>(HitActor))
+				else if (AEnemyCharacterAI* TEnemy = Cast<AEnemyCharacterAI>(HitActor))
 				{
-					Server_HitEnemy(Enemy);
+					Server_HitEnemy(TEnemy);
 				}
 
 				AlreadyHitActors.Add(HitActor);
