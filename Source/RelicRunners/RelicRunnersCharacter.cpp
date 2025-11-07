@@ -827,6 +827,8 @@ void ARelicRunnersCharacter::Server_HitEnemy_Implementation(AActor* HitActor)
 
 void ARelicRunnersCharacter::BasicAttack()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Attacking"));
+
 	if (!Inventory)
 	{
 		return;

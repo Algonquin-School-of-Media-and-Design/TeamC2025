@@ -30,7 +30,10 @@ class RELICRUNNERS_API UEnemyHUDWorld : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void InitWidgetWithCharacter(class AEnemyCharacterAI* InOwnerCharacter);
+	void InitWidgetWithCharacter(class ACharacter* InOwnerCharacter);
+
+	void UpdateInfo(class AEnemyCharacterAI* enemy);
+	void UpdateInfo(class AEnemyCharacter* enemy);
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
@@ -52,5 +55,5 @@ public:
 protected:
 
 	UPROPERTY()
-	class AEnemyCharacterAI* EnemyCharacter;
+	class ACharacter* EnemyCharacter;
 };

@@ -16,6 +16,7 @@ ATormentedSoulCharacter::ATormentedSoulCharacter() : Super()
 	AttackOverlapCollider = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Attack Collider"));
 	AttackOverlapCollider->BodyInstance.SetCollisionProfileName("OverlapAll");
 	AttackOverlapCollider->SetupAttachment(GetMesh());
+	EnemyName = "Tormented Soul";
 
 	AIControllerClass = ASoldierController::StaticClass();
 }

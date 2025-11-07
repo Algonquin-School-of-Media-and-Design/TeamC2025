@@ -43,6 +43,8 @@ protected:
 	TArray<UItemObject*> ItemLootPool;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	FName EnemyName = "Enemy";
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float CurrentHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float MaxHealth;
@@ -50,6 +52,12 @@ protected:
 	float RemainingStunTime = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	int Level;
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
+	int EnemyResource = 100;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
+	int EnemyMaxResource = 100;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	EEnemyType TypeOfEnemy;
 	UPROPERTY(VisibleAnywhere, Replicated)
@@ -92,6 +100,15 @@ public:
 	void SetStunTime(const float& newStunTime) { RemainingStunTime = newStunTime; }
 	UFUNCTION(BlueprintCallable)
 	void SetEnemyLevel(const int& newLevel) { Level = newLevel; }
+
+	UFUNCTION(BlueprintCallable)
+	int GetEnemyResource() { return EnemyResource; }
+
+	UFUNCTION(BlueprintCallable)
+	int GetEnemyMaxResource() { return EnemyMaxResource; }
+
+	UFUNCTION(BlueprintCallable)
+	FName GetEnemyName() { return EnemyName; }
 
 protected:
 	// Called when the game starts or when spawned
