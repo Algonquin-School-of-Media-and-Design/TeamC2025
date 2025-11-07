@@ -167,7 +167,10 @@ void ASpawnPoint::SpawnEnemies()
 
 				for (int i = 0; i < 10; i++)
 				{
-					APawn* newEnemy = static_cast<APawn*>(GetWorld()->SpawnActor<APawn>(PickableCards[pickedEnemyIndex]->EnemyClass, GetRandomPosition() + FVector(0, 0, 400), FRotator::ZeroRotator));
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+					APawn* newEnemy = static_cast<APawn*>(GetWorld()->SpawnActor<APawn>(PickableCards[pickedEnemyIndex]->EnemyClass, GetRandomPosition(), FRotator::ZeroRotator, SpawnParams));
 
 					//spawning the enemy and adding it to the array
 					if (newEnemy)

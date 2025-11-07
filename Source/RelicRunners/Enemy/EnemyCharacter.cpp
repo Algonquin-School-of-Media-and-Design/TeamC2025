@@ -54,6 +54,11 @@ float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 
 	CurrentHealth -= DamageAmount;
 
+	if (DamageAmount < 0)
+	{
+		DamageAmount = 0;
+	}
+
 	if (IsDead())
 	{
 		Die(EventInstigator);
@@ -203,6 +208,7 @@ void AEnemyCharacter::UpdateEnemyHUDWorldFacing()
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UpdateEnemyHUDWorldFacing();
 }
 
 // Called to bind functionality to input

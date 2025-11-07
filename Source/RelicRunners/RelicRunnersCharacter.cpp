@@ -417,6 +417,24 @@ void ARelicRunnersCharacter::OnLevelUp()
 	}
 }
 
+float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float actualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	PlayerHealth -= actualDamage;
+
+	if (PlayerHealth <= 0)
+	{
+		PlayerHealth = 0;
+	}
+
+	//UE_LOG(LogTemp, Log, TEXT("Player took %f damage, current health: %f"), actualDamage, PlayerHealth);
+
+	UpdateHUD();
+
+	return actualDamage;
+}
+
 bool ARelicRunnersCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
@@ -431,6 +449,7 @@ bool ARelicRunnersCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBun
 
 void ARelicRunnersCharacter::OnRep_PlayerState()
 {
+	Super::OnRep_PlayerState();
 	Super::OnRep_PlayerState();
 
 	InitLocalUI();

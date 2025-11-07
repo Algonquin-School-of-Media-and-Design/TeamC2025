@@ -263,6 +263,8 @@ public:
 
 	void OnLevelUp();
 
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
 protected:
 
 	//Other Classes

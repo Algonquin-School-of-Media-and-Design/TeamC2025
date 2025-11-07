@@ -5,7 +5,6 @@
 
 void UTormentedSoulAnimNotifyState::NotifyBegin(class USkeletalMeshComponent* MeshComp, class UAnimSequenceBase* Animation, float TotalDuration)
 {
-	Super::NotifyBegin(MeshComp, Animation, TotalDuration);
 	if (AActor* Owner = MeshComp->GetOwner())
 	{
 		OwnerCharacter = Cast<ATormentedSoulCharacter>(Owner);
@@ -23,7 +22,6 @@ void UTormentedSoulAnimNotifyState::NotifyBegin(class USkeletalMeshComponent* Me
 
 void UTormentedSoulAnimNotifyState::NotifyEnd(class USkeletalMeshComponent* MeshComp, class UAnimSequenceBase* Animation) 
 {
-	Super::NotifyEnd(MeshComp, Animation);
 	if (OwnerCharacter)
 	{
 		OwnerCharacter->IsAttacking = false;
