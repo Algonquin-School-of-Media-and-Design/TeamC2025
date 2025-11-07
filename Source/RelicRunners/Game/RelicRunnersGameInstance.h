@@ -35,6 +35,8 @@ public:
     UFUNCTION(BlueprintCallable)
     void StartSessionGame();
 
+    void ResetToDefaults();
+
     UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Input")
     class UKeybinds* Keys;
 

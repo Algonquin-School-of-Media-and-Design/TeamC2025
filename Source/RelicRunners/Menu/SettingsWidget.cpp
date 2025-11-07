@@ -30,7 +30,13 @@ void USettingsWidget::NativeConstruct()
 
 void USettingsWidget::OnRestoreDefaultsClicked()
 {
-	
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		GI->ResetToDefaults();
+	}
+
+	InitializeDefaultKeybindings();
 }
 
 void USettingsWidget::StartRebinding(UKeybindingsListWidget* Entry)

@@ -29,7 +29,11 @@ void URelicRunnersGameInstance::Init()
     }
     Keys = NewObject<UKeybinds>(this);
     DefaultKeys = NewObject<UKeybinds>(this);
+}
 
+void URelicRunnersGameInstance::ResetToDefaults()
+{
+    Keys = DuplicateObject<UKeybinds>(DefaultKeys, this);
     ApplyKeybindings();
 }
 

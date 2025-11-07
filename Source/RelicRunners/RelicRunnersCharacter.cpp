@@ -866,11 +866,11 @@ void ARelicRunnersCharacter::BasicAttack()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Attacking"));
 
-	if (!Inventory)
+	if (!Inventory || !InventoryComponent)
 	{
 		return;
 	}
-	if (InventoryComponent->GetEquippedItemByType("Sword") && InventoryComponent)
+	if (InventoryComponent->GetEquippedItemByType("Sword"))
 	{
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (!AnimInstance) return;
@@ -889,11 +889,6 @@ void ARelicRunnersCharacter::BasicAttack()
 			// Play as dynamic montage
 			AnimInstance->PlaySlotAnimationAsDynamicMontage(SelectedSequence, FName("DefaultSlot"));
 		}
-	}
-
-	if (IsWarBannerActive && WarBannerAbility != nullptr)
-	{
-		WarBannerAbility->Server_SpawnBanner();
 	}
 }
 
