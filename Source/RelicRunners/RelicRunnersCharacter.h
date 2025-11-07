@@ -19,6 +19,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystem/AbilityBase.h"
+#include "AbilitySystem/ImpunityAbility.h"
+#include "AbilitySystem/EarthquakeAbility.h"
 #include "Abilities/VengefulDance.h"
 #include "Abilities/BundleOfJoy.h"
 #include "Logging/LogMacros.h"
@@ -301,6 +303,20 @@ protected:
 	UPROPERTY()
 	AAbilityBase* DamageAbilityInstance;
 
+	//Defence Ability (Impunity Ability)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DefenceAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DefenceAbilityInstance;
+
+	// Ultimate Ability (Earthquake Ability)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> UltimateAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* UltimateAbilityInstance;
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;
 
@@ -416,5 +432,7 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	
+	// Add this line to explicitly override TakeDamage from ACharacter
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
 };
 

@@ -59,6 +59,8 @@
 #include "Enemy/EnemyCharacter.h"
 
 #include "Abilities/WarBannerAbility.h"
+#include "AbilitySystem/ImpunityAbility.h"
+#include "AbilitySystem/EarthquakeAbility.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -158,8 +160,7 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetIsReplicated(true);
 
-	//Starting Stats
-	PlayerStartingMaxHealth = 100;
+	//Starting Stats1	PlayerStartingMaxHealth = 100;
 	PlayerMaxHealth = PlayerStartingMaxHealth;
 	PlayerHealth = 20;
 	PlayerStartingMaxResource = 100;
@@ -563,6 +564,35 @@ void ARelicRunnersCharacter::BeginPlay()
 	if (!DamageAbilityClass)
 	{
 		DamageAbilityClass = ABundleOfJoy::StaticClass();
+	}
+
+	// Impunity (Defensive) Ability
+	if (!DefenceAbilityClass)
+	{
+		DefenceAbilityClass = AImpunityAbility::StaticClass();
+	}
+
+	if (DefenceAbilityClass)
+	{
+		DefenceAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DefenceAbilityClass);
+		if (DefenceAbilityInstance)
+		{
+			DefenceAbilityInstance->OwnerActor = this;
+		}
+	}
+
+	if (!UltimateAbilityClass)
+	{
+		UltimateAbilityClass = AEarthquakeAbility::StaticClass();
+	}
+
+	if (UltimateAbilityClass)
+	{
+		UltimateAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UltimateAbilityClass);
+		if (UltimateAbilityInstance)
+		{
+			UltimateAbilityInstance->OwnerActor = this;
+		}
 	}
 }
 
@@ -1039,6 +1069,26 @@ void ARelicRunnersCharacter::DamageAbility()
 void ARelicRunnersCharacter::DefenceAbility()
 {
 	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+
+	if (DefenceAbilityInstance)
+	{
+		DefenceAbilityInstance->ActivateAbility();
+	}
+}
+
+float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) 
+{
+	float ModifiedDamage = DamageAmount; 
+
+	if (DefenceAbilityInstance) 
+	{
+		if (AImpunityAbility* Impunity = Cast<AImpunityAbility>(DefenceAbilityInstance)) 
+		{
+			ModifiedDamage *= Impunity->GetDamageReductionMultiplier(); 
+		}
+	}
+
+	return Super::TakeDamage(ModifiedDamage, DamageEvent, EventInstigator, DamageCauser); 
 }
 
 void ARelicRunnersCharacter::UtilityAbility()
@@ -1070,6 +1120,11 @@ void ARelicRunnersCharacter::UtilityAbility()
 void ARelicRunnersCharacter::UltimateAbility()
 {
 	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+
+	if (UltimateAbilityInstance)
+	{
+		UltimateAbilityInstance->ActivateAbility();
+	}
 }
 
 void ARelicRunnersCharacter::HealthPotions()

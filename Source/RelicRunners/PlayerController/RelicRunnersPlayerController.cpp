@@ -568,6 +568,7 @@ void ARelicRunnersPlayerController::UltimateAbility()
 		PossessedPawn->UltimateAbility();
 	}
 }
+
 void ARelicRunnersPlayerController::BasicAttack()
 {
 	if (PossessedPawn)
