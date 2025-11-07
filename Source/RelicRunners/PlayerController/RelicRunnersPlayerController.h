@@ -186,8 +186,6 @@ public:
 	UFUNCTION(Exec)
 	void SpendGold(int32 Amount = 10);
 
-	class UKeybinds* GetKeybinds() const;
-
 	// Begin Actor interface
 protected:
 	ARelicRunnersPlayerController();

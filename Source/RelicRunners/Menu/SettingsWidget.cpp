@@ -83,20 +83,18 @@ FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 	Data->Keybind = PressedKey;
 
 	// Update PlayerController keybinds
-	if (APlayerController* PC = GetOwningPlayer())
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (GI)
 	{
-		if (ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC))
+		if (UKeybinds* Keys = GI->Keys)
 		{
-			if (UKeybinds* Keys = RPC->GetKeybinds())
+			for (auto& Bind : Keys->KeyBinds)
 			{
-				for (auto& Bind : Keys->KeyBinds)
-				{
-					if (Bind.Name != Data->Name && Bind.Bind == PressedKey)
-						Bind.Bind = EKeys::Invalid;
+				if (Bind.Name != Data->Name && Bind.Bind == PressedKey)
+					Bind.Bind = EKeys::Invalid;
 
-					if (Bind.Name == Data->Name)
-						Bind.Bind = PressedKey;
-				}
+				if (Bind.Name == Data->Name)
+					Bind.Bind = PressedKey;
 			}
 		}
 	}
@@ -127,18 +125,6 @@ void USettingsWidget::UpdateBinds()
 	}
 }
 
-void USettingsWidget::OnTileViewScrolled()
-{
-	// Refresh all currently active widgets
-	for (UKeybindingsListData* Binding : DefaultKeybindings)
-	{
-		if (Binding->BoundWidget)
-		{
-			Binding->BoundWidget->RefreshVisual();
-		}
-	}
-}
-
 void USettingsWidget::SetParentMenu(UMainMenuWidget* InParentMenu)
 {
 	ParentMenu = InParentMenu;
@@ -164,10 +150,10 @@ void USettingsWidget::InitializeDefaultKeybindings()
 			DefaultKeybindings.Add(NewEntry);
 		};
 
-	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(GetOwningPlayer());
-	if (!RPC) return;
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (!GI) return;
 
-	for (auto Binds : RPC->GetKeybinds()->KeyBinds)
+	for (auto Binds : GI->Keys->KeyBinds)
 	{
 		AddBinding(Binds.Name, Binds.Bind);
 	}
@@ -185,24 +171,18 @@ void USettingsWidget::InitializeDefaultKeybindings()
 
 void USettingsWidget::ToggleInvertedXMouse()
 {
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC) return;
-
-	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC);
-	if (!RPC) return;
-
-	if (RPC->GetKeybinds()->InvertedXMouse) { RPC->GetKeybinds()->InvertedXMouse = false; }
-	else { RPC->GetKeybinds()->InvertedXMouse = true; }
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		GI->Keys->InvertedXMouse = !GI->Keys->InvertedXMouse;
+	}
 }
 
 void USettingsWidget::ToggleInvertedYMouse()
 {
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC) return;
-
-	ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC);
-	if (!RPC) return;
-
-	if (RPC->GetKeybinds()->InvertedYMouse) { RPC->GetKeybinds()->InvertedYMouse = false; }
-	else { RPC->GetKeybinds()->InvertedYMouse = true; }
+	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		GI->Keys->InvertedYMouse = !GI->Keys->InvertedYMouse;
+	}
 }

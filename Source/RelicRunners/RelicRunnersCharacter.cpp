@@ -160,7 +160,7 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetIsReplicated(true);
 
-	//Starting Stats1	PlayerStartingMaxHealth = 100;
+	PlayerStartingMaxHealth = 100;
 	PlayerMaxHealth = PlayerStartingMaxHealth;
 	PlayerHealth = 20;
 	PlayerStartingMaxResource = 100;

@@ -20,8 +20,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UpdateBinds();
 
-	UFUNCTION(BlueprintCallable)
-	void OnTileViewScrolled();
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	void SetParentMenu(class UMainMenuWidget* InParentMenu);
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
