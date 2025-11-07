@@ -20,9 +20,6 @@
 #include "GameFramework/PlayerState.h"
 #include "RelicRunnersPlayerState.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class RELICRUNNERS_API ARelicRunnersPlayerState : public APlayerState
 {
@@ -33,6 +30,10 @@ public:
 
     UFUNCTION()
     void OnRep_SelectedClass();
+
+    ARelicRunnersPlayerState();
+
+    ~ARelicRunnersPlayerState();
 
     void SetSelectedClass(FName NewClass);
 

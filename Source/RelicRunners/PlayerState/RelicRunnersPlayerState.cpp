@@ -15,7 +15,18 @@
  ************************************************************************************/
 
 #include "RelicRunnersPlayerState.h"
+#include "RelicRunners/Menu/Keybinds.h"
 #include "Net/UnrealNetwork.h"
+
+ARelicRunnersPlayerState::ARelicRunnersPlayerState()
+{
+
+}
+
+ARelicRunnersPlayerState::~ARelicRunnersPlayerState()
+{
+
+}
 
 void ARelicRunnersPlayerState::SetSelectedClass(FName NewClass)
 {

@@ -564,7 +564,6 @@ void ARelicRunnersCharacter::BeginPlay()
 	{
 		DamageAbilityClass = ABundleOfJoy::StaticClass();
 	}
-	
 }
 
 void ARelicRunnersCharacter::InitLocalUI()
@@ -636,7 +635,6 @@ void ARelicRunnersCharacter::InitLocalUI()
 			}
 		}
 	}
-
 
 	TryBindInventoryDelegates();
 }
@@ -860,49 +858,23 @@ void ARelicRunnersCharacter::BasicAttack()
 	}
 }
 
-void ARelicRunnersCharacter::Walk(const FInputActionValue& Value)
+void ARelicRunnersCharacter::MoveInDirection(EAxis::Type Axis, float Value)
 {
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
+	if (Controller && Value != 0.0f)
 	{
-		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y / 1.75);
-		AddMovementInput(RightDirection, MovementVector.X / 1.75);
-	}
-}
-
-void ARelicRunnersCharacter::Run(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		if (Axis == EAxis::X)
+		{
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			AddMovementInput(Direction, Value);
+		}
+		else if (Axis == EAxis::Y)
+		{
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			AddMovementInput(Direction, Value);
+		}
 	}
 }
 
