@@ -98,6 +98,8 @@ void ALevelGenerator::PostInitializeComponents()
 					Server_SpawnFloorObstaclesByColour(x, y, textureWidth, PixelColor);
 				}
 			}
+			//add director
+
 			CreateFloor();
 
 			MipMap.BulkData.Unlock();
@@ -163,6 +165,9 @@ void ALevelGenerator::PostInitializeComponents()
 					Server_SpawnFloorObstacles(x, y, SpawnWidth);
 				}
 			}
+
+			//add director
+
 			CreateFloor();
 
 			ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
