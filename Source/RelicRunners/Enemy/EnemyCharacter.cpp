@@ -3,7 +3,7 @@
 
 #include "EnemyCharacter.h"
 #include "RelicRunners/CustomDamageEvents.h"
-#include "RelicRunners/Spawning System/Director.h"
+#include "RelicRunners/Director System/Director.h"
 #include <Kismet/GameplayStatics.h>
 #include <RelicRunners/Item/ItemActor.h>
 #include "RelicRunners/RelicRunnersCharacter.h"

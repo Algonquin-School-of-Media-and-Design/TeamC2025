@@ -53,7 +53,7 @@
 #include "Enemy/EnemyCharacterAI.h"
 #include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
 #include "Game/RelicRunnersGameInstance.h"
-#include "Spawning System/Director.h"
+#include "Director System/Director.h"
 #include "Engine/Engine.h"
 
 #include "Enemy/EnemyCharacter.h"
