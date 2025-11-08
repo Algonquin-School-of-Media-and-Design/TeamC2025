@@ -569,7 +569,7 @@ void ARelicRunnersCharacter::BeginPlay()
         }
     }
 
-	//BundleOfJoy format
+	////BundleOfJoy format
 	if (!DamageAbilityClass)
 	{
 		DamageAbilityClass = ABundleOfJoy::StaticClass();

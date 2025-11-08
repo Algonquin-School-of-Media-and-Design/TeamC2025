@@ -306,12 +306,6 @@ protected:
 	UPROPERTY()
 	AAbilityBase* UtilityAbilityInstance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> DamageAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* DamageAbilityInstance;
-
 	//Defence Ability (Impunity Ability)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
 	TSubclassOf<AAbilityBase> DefenceAbilityClass;
