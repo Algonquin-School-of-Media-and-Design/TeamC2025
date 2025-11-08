@@ -11,7 +11,7 @@
  *   Any use, distribution, or modification outside of these projects
  *   is strictly prohibited without explicit written permission.
  *
- *   © 2025 Tristan Anglin. All rights reserved.
+ *   ï¿½ 2025 Tristan Anglin. All rights reserved.
  ************************************************************************************/
 
 #include "RelicRunnersCharacter.h"
@@ -55,6 +55,8 @@
 #include "Game/RelicRunnersGameInstance.h"
 #include "Director System/Director.h"
 #include "Engine/Engine.h"
+#include "AbilitySystem/Moonbeam.h"       
+#include "AbilitySystem/AbilityBase.h"    
 
 #include "Enemy/EnemyCharacter.h"
 
@@ -601,6 +603,32 @@ void ARelicRunnersCharacter::BeginPlay()
 			UltimateAbilityInstance->OwnerActor = this;
 		}
 	}
+	
+	// Spawn Damage Ability (Moonbeam) 
+	if (DamageAbilityClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(
+			DamageAbilityClass,
+			GetActorLocation(),
+			GetActorRotation(),
+			Params
+		);
+
+		if (DamageAbilityInstance)
+		{
+			// Let the ability know who owns it (used by Moonbeam)
+			DamageAbilityInstance->SetAbilityOwner(this);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn DamageAbilityInstance (Moonbeam)."));
+		}
+	}
 }
 
 void ARelicRunnersCharacter::InitLocalUI()
@@ -766,12 +794,12 @@ void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
 	FVector CameraLocation = LocalController->PlayerCameraManager->GetCameraLocation();
 	FVector WidgetLocation = PlayerHUDWorld->GetComponentLocation();
 
-	// This character is locally controlled — make it face *away* from camera
+	// This character is locally controlled ï¿½ make it face *away* from camera
 	if (IsLocallyControlled())
 	{
 		PlayerHUDWorld->SetVisibility(false);
 	}
-	else // Remote player — make it face toward camera
+	else // Remote player ï¿½ make it face toward camera
 	{
 		FVector ToCamera = CameraLocation - WidgetLocation;
 		ToCamera.Z = 0.f; // optional: lock pitch
@@ -1064,6 +1092,34 @@ void ARelicRunnersCharacter::DamageAbility()
 
 			UE_LOG(LogTemp, Warning, TEXT("Ability spawned at: %s"), *DamageAbilityInstance->GetActorLocation().ToString());
 		}
+
+		return;
+	}
+	
+	if (DamageAbilityInstance)
+	{
+		if (DamageAbilityInstance->CanActivate())
+		{
+			DamageAbilityInstance->ActivateAbility();
+
+			// Sync HUD cooldown with the ability's cooldown value
+			if (AbilityPointCounter)
+			{
+				AbilityPointCounter->StartDamageCooldown(DamageAbilityInstance->GetCooldown());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Verbose, TEXT("Damage ability is on cooldown."));
+		}
+
+		return; 
+	}
+
+	// Fallback: original behavior if no ability is assigned
+	if (AbilityPointCounter)
+	{
+		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 	}
 
 }
