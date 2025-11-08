@@ -31,5 +31,5 @@ public:
     bool InvertedXMouse = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-    bool InvertedYMouse = true;
+    bool InvertedYMouse = false;
 };
