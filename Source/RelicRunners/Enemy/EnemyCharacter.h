@@ -6,7 +6,6 @@
 #include "GameFramework/Character.h"
 #include "EnemyCharacter.generated.h"
 
-class UItemObject;
 class UWidgetComponent;
 
 USTRUCT(BlueprintType)
@@ -32,6 +31,8 @@ enum class EEnemyType : uint8
 	UNKNOWN = 3		UMETA(DisplayName = "unknown")
 };
 
+class UAnimMontage;
+
 UCLASS(Blueprintable, Abstract)
 class RELICRUNNERS_API AEnemyCharacter : public ACharacter
 {
@@ -40,7 +41,7 @@ class RELICRUNNERS_API AEnemyCharacter : public ACharacter
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<UItemObject*> ItemLootPool;
+	TArray<class UItemCard*> ItemLootPool;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	FName EnemyName = "Enemy";
@@ -51,17 +52,23 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float RemainingStunTime = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
-	int Level;
+	int Level = 1;
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
 	int EnemyResource = 100;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
 	int EnemyMaxResource = 100;
 
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
+	float ChanceToDrpopItem = 1.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	EEnemyType TypeOfEnemy;
 	UPROPERTY(VisibleAnywhere, Replicated)
 	UWidgetComponent* EnemyHUDWorld;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAnimMontage* test;
 
 public:
 	// Sets default values for this character's properties
@@ -109,6 +116,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FName GetEnemyName() { return EnemyName; }
+
+	//Need to be netmulticast to play on all clients as client does own the actor their for client rpc won't work
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void PlayMontageOnClient(UAnimMontage* Montage, float PlayRate = 1.0f);
 
 protected:
 	// Called when the game starts or when spawned

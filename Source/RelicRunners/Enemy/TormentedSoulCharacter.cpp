@@ -10,6 +10,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "SoldierController.h"
+#include "RelicRunners/RelicRunnersCharacter.h"
 
 ATormentedSoulCharacter::ATormentedSoulCharacter() : Super()
 {
@@ -19,27 +20,6 @@ ATormentedSoulCharacter::ATormentedSoulCharacter() : Super()
 	EnemyName = "Tormented Soul";
 
 	AIControllerClass = ASoldierController::StaticClass();
-}
-
-void ATormentedSoulCharacter::Die(AController* EventInstigator)
-{
-	if (HasAuthority())
-	{
-		if (EventInstigator)
-		{
-			if (ARelicRunnersCharacter* player = Cast<ARelicRunnersCharacter>(EventInstigator->GetPawn()))
-			{
-				player->AddExperience(CalculateXP());
-			}
-		}
-
-		if (EnemyHUDWorld)
-		{
-			EnemyHUDWorld->DestroyComponent();
-		}
-
-		Destroy();
-	}
 }
 
 float ATormentedSoulCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)

@@ -27,8 +27,6 @@ protected:
 public:
 	ATormentedSoulCharacter();
 
-	virtual void Die(AController* EventInstigator) override;
-
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	UFUNCTION(BlueprintCallable)

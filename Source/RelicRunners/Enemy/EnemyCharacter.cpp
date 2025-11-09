@@ -10,7 +10,8 @@
 #include "Components/WidgetComponent.h"
 #include <Net/UnrealNetwork.h>
 #include "EnemyHUDWorld.h"
-
+#include "RelicRunners/Item/ItemCard.h"
+#include "RelicRunners/Item/ItemStats.h"
 
 // Sets default values
 AEnemyCharacter::AEnemyCharacter()
@@ -165,20 +166,25 @@ void AEnemyCharacter::SpawnItem()
 {
 	if (ItemLootPool.Num() > 0)
 	{
-		int randomIndex = FMath::RandRange(0, ItemLootPool.Num() - 1);
-		UItemObject* itemToSpawn = ItemLootPool[randomIndex];
+		float chance = FMath::FRandRange(0.f, 1.f);
 
-		if (itemToSpawn != nullptr)
+		if (chance <= ChanceToDrpopItem)
 		{
-			FVector spawnLocation = GetActorLocation();
-			FRotator spawnRotation = FRotator::ZeroRotator;
-			FActorSpawnParameters spawnParams;
-			spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+			int randomIndex = FMath::RandRange(0, ItemLootPool.Num() - 1);
+			UItemCard* itemToSpawn = ItemLootPool[randomIndex];
 
-			AItemActor* spawnedItem = GetWorld()->SpawnActor<AItemActor>(AItemActor::StaticClass(), spawnLocation, spawnRotation, spawnParams);
-			if (spawnedItem != nullptr)
+			if (itemToSpawn != nullptr)
 			{
-				spawnedItem->Initialize(itemToSpawn->ItemData);
+				FVector spawnLocation = GetActorLocation();
+				FRotator spawnRotation = FRotator::ZeroRotator;
+				FActorSpawnParameters spawnParams;
+				spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+				AItemActor* spawnedItem = GetWorld()->SpawnActor<AItemActor>(AItemActor::StaticClass(), spawnLocation, spawnRotation, spawnParams);
+				if (spawnedItem != nullptr)
+				{
+					spawnedItem->Initialize(ItemStats::CreateSpecificItemData(Level, itemToSpawn->ItemType, itemToSpawn->MeshData));
+				}
 			}
 		}
 	}
@@ -187,6 +193,19 @@ void AEnemyCharacter::SpawnItem()
 float AEnemyCharacter::CalculateXP() const
 {
 	return Level * FMath::RandRange(100, 150);
+}
+
+void AEnemyCharacter::PlayMontageOnClient_Implementation(UAnimMontage* Montage, float PlayRate)
+{
+	if (!HasAuthority())
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Play(Montage, PlayRate);
+		}
+	}
 }
 
 void AEnemyCharacter::UpdateEnemyHUDWorldFacing()
