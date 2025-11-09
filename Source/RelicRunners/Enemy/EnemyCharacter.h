@@ -9,6 +9,20 @@
 class UItemObject;
 class UWidgetComponent;
 
+USTRUCT(BlueprintType)
+struct FAttackStartInfo
+{
+	GENERATED_BODY()
+	FVector AttackOriginPoint;
+};
+
+USTRUCT(BlueprintType)
+struct FAttackEndInfo
+{
+	GENERATED_BODY()
+	FVector AttackEndPoint;
+};
+
 UENUM(BlueprintType)
 enum class EEnemyType : uint8
 {
@@ -28,10 +42,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UItemObject*> ItemLootPool;
 
-	//UPROPERTY(VisableAnywhere, BlueprintRead)
-	//An array of function pointers so you can add as many abilities as you want
-	TArray<void(*)> AbilityFunctions;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	FName EnemyName = "Enemy";
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float CurrentHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
@@ -40,6 +52,12 @@ protected:
 	float RemainingStunTime = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	int Level;
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
+	int EnemyResource = 100;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Enemy")
+	int EnemyMaxResource = 100;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	EEnemyType TypeOfEnemy;
 	UPROPERTY(VisibleAnywhere, Replicated)
@@ -50,9 +68,6 @@ public:
 	AEnemyCharacter();
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
-
-	UFUNCTION(BlueprintCallable)
-	virtual void PrimaryAttack();
 
 	UFUNCTION(BlueprintCallable)
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
@@ -85,6 +100,15 @@ public:
 	void SetStunTime(const float& newStunTime) { RemainingStunTime = newStunTime; }
 	UFUNCTION(BlueprintCallable)
 	void SetEnemyLevel(const int& newLevel) { Level = newLevel; }
+
+	UFUNCTION(BlueprintCallable)
+	int GetEnemyResource() { return EnemyResource; }
+
+	UFUNCTION(BlueprintCallable)
+	int GetEnemyMaxResource() { return EnemyMaxResource; }
+
+	UFUNCTION(BlueprintCallable)
+	FName GetEnemyName() { return EnemyName; }
 
 protected:
 	// Called when the game starts or when spawned

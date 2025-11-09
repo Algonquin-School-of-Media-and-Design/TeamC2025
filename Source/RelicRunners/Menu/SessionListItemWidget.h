@@ -11,8 +11,7 @@
 
 
 UCLASS()
-class RELICRUNNERS_API USessionListItemWidget
-    : public UUserWidget, public IUserObjectListEntry
+class RELICRUNNERS_API USessionListItemWidget : public UUserWidget, public IUserObjectListEntry
 {
     GENERATED_BODY()
 

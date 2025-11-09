@@ -3,12 +3,13 @@
 
 #include "EnemyCharacter.h"
 #include "RelicRunners/CustomDamageEvents.h"
-#include "RelicRunners/Spawning System/Director.h"
+#include "RelicRunners/Director System/Director.h"
 #include <Kismet/GameplayStatics.h>
 #include <RelicRunners/Item/ItemActor.h>
 #include "RelicRunners/RelicRunnersCharacter.h"
 #include "Components/WidgetComponent.h"
 #include <Net/UnrealNetwork.h>
+#include "EnemyHUDWorld.h"
 
 
 // Sets default values
@@ -46,18 +47,20 @@ void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AEnemyCharacter, Level);
 	DOREPLIFETIME(AEnemyCharacter, TypeOfEnemy);
 	DOREPLIFETIME(AEnemyCharacter, EnemyHUDWorld);
-}
-
-//meant to be overridden
-void AEnemyCharacter::PrimaryAttack()
-{
+	DOREPLIFETIME(AEnemyCharacter, EnemyResource);
+	DOREPLIFETIME(AEnemyCharacter, EnemyMaxResource);
 }
 
 float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	CurrentHealth -= DamageAmount;
+
+	if (DamageAmount < 0)
+	{
+		DamageAmount = 0;
+	}
 
 	if (IsDead())
 	{
@@ -123,6 +126,19 @@ void AEnemyCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentHealth = MaxHealth;
+
+	if (EnemyHUDWorld)
+	{
+		UUserWidget* Widget = EnemyHUDWorld->GetUserWidgetObject();
+		if (Widget)
+		{
+			UEnemyHUDWorld* EnemyHUD = Cast<UEnemyHUDWorld>(Widget);
+			if (EnemyHUD)
+			{
+				EnemyHUD->InitWidgetWithCharacter(this);
+			}
+		}
+	}
 
 	if (HasAuthority())
 	{
@@ -208,6 +224,7 @@ void AEnemyCharacter::UpdateEnemyHUDWorldFacing()
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UpdateEnemyHUDWorldFacing();
 }
 
 // Called to bind functionality to input

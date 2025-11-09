@@ -11,7 +11,7 @@
  *   Any use, distribution, or modification outside of these projects
  *   is strictly prohibited without explicit written permission.
  *
- *   © 2025 Tristan Anglin. All rights reserved.
+ *   ï¿½ 2025 Tristan Anglin. All rights reserved.
  ************************************************************************************/
 
 #include "RelicRunnersCharacter.h"
@@ -52,10 +52,16 @@
 #include "Enemy/EnemyCharacterAI.h"
 #include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
 #include "Game/RelicRunnersGameInstance.h"
-#include "Spawning System/Director.h"
+#include "Director System/Director.h"
 #include "Engine/Engine.h"
+#include "AbilitySystem/Moonbeam.h"       
+#include "AbilitySystem/AbilityBase.h"    
 
-#include "AbilitySystem/WarBannerAbility.h"
+#include "Enemy/EnemyCharacter.h"
+
+#include "Abilities/WarBannerAbility.h"
+#include "AbilitySystem/ImpunityAbility.h"
+#include "AbilitySystem/EarthquakeAbility.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -155,7 +161,6 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetIsReplicated(true);
 
-	//Starting Stats
 	PlayerStartingMaxHealth = 100;
 	PlayerMaxHealth = PlayerStartingMaxHealth;
 	PlayerHealth = 20;
@@ -416,6 +421,31 @@ void ARelicRunnersCharacter::OnLevelUp()
 	}
 }
 
+float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float actualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (DefenceAbilityInstance)
+	{
+		if (AImpunityAbility* Impunity = Cast<AImpunityAbility>(DefenceAbilityInstance))
+		{
+			actualDamage *= Impunity->GetDamageReductionMultiplier();
+		}
+	}
+
+	PlayerHealth -= actualDamage;
+
+	if (PlayerHealth <= 0)
+	{
+		PlayerHealth = 0;
+	}
+	//UE_LOG(LogTemp, Log, TEXT("Player took %f damage, current health: %f"), actualDamage, PlayerHealth);
+
+	UpdateHUD();
+
+	return actualDamage;
+}
+
 bool ARelicRunnersCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
 	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
@@ -430,6 +460,7 @@ bool ARelicRunnersCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBun
 
 void ARelicRunnersCharacter::OnRep_PlayerState()
 {
+	Super::OnRep_PlayerState();
 	Super::OnRep_PlayerState();
 
 	InitLocalUI();
@@ -518,6 +549,87 @@ void ARelicRunnersCharacter::BeginPlay()
 		});
 	}
 
+
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	if (WarBannerAbilityTemplate != nullptr)
+	{
+		WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
+		WarBannerAbility->Server_Initialize(this);
+	}
+
+	//VengefulDance format
+    UtilityAbilityClass = AVengefulDance::StaticClass();
+
+    if (UtilityAbilityClass)
+    {
+		UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityAbilityClass);
+        if (UtilityAbilityInstance)
+        {
+			UtilityAbilityInstance->OwnerActor = this;
+        }
+    }
+
+	////BundleOfJoy format
+	if (!DamageAbilityClass)
+	{
+		DamageAbilityClass = ABundleOfJoy::StaticClass();
+	}
+
+	// Impunity (Defensive) Ability
+	if (!DefenceAbilityClass)
+	{
+		DefenceAbilityClass = AImpunityAbility::StaticClass();
+	}
+
+	if (DefenceAbilityClass)
+	{
+		DefenceAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DefenceAbilityClass);
+		if (DefenceAbilityInstance)
+		{
+			DefenceAbilityInstance->OwnerActor = this;
+		}
+	}
+
+	if (!UltimateAbilityClass)
+	{
+		UltimateAbilityClass = AEarthquakeAbility::StaticClass();
+	}
+
+	if (UltimateAbilityClass)
+	{
+		UltimateAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UltimateAbilityClass);
+		if (UltimateAbilityInstance)
+		{
+			UltimateAbilityInstance->OwnerActor = this;
+		}
+	}
+	
+	// Spawn Damage Ability (Moonbeam) 
+	if (DamageAbilityClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(
+			DamageAbilityClass,
+			GetActorLocation(),
+			GetActorRotation(),
+			Params
+		);
+
+		if (DamageAbilityInstance)
+		{
+			// Let the ability know who owns it (used by Moonbeam)
+			DamageAbilityInstance->SetAbilityOwner(this);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn DamageAbilityInstance (Moonbeam)."));
+		}
+	}
+
 }
 
 
@@ -592,7 +704,6 @@ void ARelicRunnersCharacter::InitLocalUI()
 		}
 	}
 
-
 	TryBindInventoryDelegates();
 }
 
@@ -620,11 +731,15 @@ void ARelicRunnersCharacter::TraceForInteractables()
 {
 	if (!IsLocallyControlled()) return;
 
-	const FVector PlayerLocation = FollowCamera->GetComponentLocation();
+	//const FVector PlayerLocation = FollowCamera->GetComponentLocation();
+	//const FVector PlayerForward = FollowCamera->GetForwardVector();
+	const FVector PlayerLocation = GetActorLocation();
 	const FVector PlayerForward = FollowCamera->GetForwardVector();
 
 	const float MaxDistance = 800.f;
 	const float MinFacingDot = 0.f; // 1 = perfectly facing, 0 = 90 degrees off
+
+	DrawDebugLine(GetWorld(),PlayerLocation, PlayerLocation + (PlayerForward * MaxDistance), FColor::Blue);
 
 	for (TActorIterator<AItemActor> It(GetWorld()); It; ++It)
 	{
@@ -644,7 +759,6 @@ void ARelicRunnersCharacter::TraceForInteractables()
 		IInteractInterface::Execute_ShowTooltip(Item, bShouldShow);
 	}
 
-
 }
 
 void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
@@ -657,12 +771,12 @@ void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
 	FVector CameraLocation = LocalController->PlayerCameraManager->GetCameraLocation();
 	FVector WidgetLocation = PlayerHUDWorld->GetComponentLocation();
 
-	// This character is locally controlled — make it face *away* from camera
+	// This character is locally controlled ï¿½ make it face *away* from camera
 	if (IsLocallyControlled())
 	{
 		PlayerHUDWorld->SetVisibility(false);
 	}
-	else // Remote player — make it face toward camera
+	else // Remote player ï¿½ make it face toward camera
 	{
 		FVector ToCamera = CameraLocation - WidgetLocation;
 		ToCamera.Z = 0.f; // optional: lock pitch
@@ -729,9 +843,13 @@ void ARelicRunnersCharacter::PerformSwingTrace()
 			if (!AlreadyHitActors.Contains(HitActor))
 			{
 				// Check if it's an enemy before applying damage
-				if (AEnemyCharacterAI* Enemy = Cast<AEnemyCharacterAI>(HitActor))
+				if (AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(HitActor))
 				{
 					Server_HitEnemy(Enemy);
+				}
+				else if (AEnemyCharacterAI* TEnemy = Cast<AEnemyCharacterAI>(HitActor))
+				{
+					Server_HitEnemy(TEnemy);
 				}
 
 				AlreadyHitActors.Add(HitActor);
@@ -754,11 +872,13 @@ void ARelicRunnersCharacter::Server_HitEnemy_Implementation(AActor* HitActor)
 
 void ARelicRunnersCharacter::BasicAttack()
 {
-	if (!Inventory)
+	UE_LOG(LogTemp, Warning, TEXT("Attacking"));
+
+	if (!Inventory || !InventoryComponent)
 	{
 		return;
 	}
-	if (InventoryComponent->GetEquippedItemByType("Sword") && InventoryComponent)
+	if (InventoryComponent->GetEquippedItemByType("Sword"))
 	{
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (!AnimInstance) return;
@@ -778,52 +898,25 @@ void ARelicRunnersCharacter::BasicAttack()
 			AnimInstance->PlaySlotAnimationAsDynamicMontage(SelectedSequence, FName("DefaultSlot"));
 		}
 	}
-
 }
 
-void ARelicRunnersCharacter::Walk(const FInputActionValue& Value)
+void ARelicRunnersCharacter::MoveInDirection(EAxis::Type Axis, float Value)
 {
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
+	if (Controller && Value != 0.0f)
 	{
-		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y / 1.75);
-		AddMovementInput(RightDirection, MovementVector.X / 1.75);
-	}
-}
-
-void ARelicRunnersCharacter::Run(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		if (Axis == EAxis::X)
+		{
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			AddMovementInput(Direction, Value);
+		}
+		else if (Axis == EAxis::Y)
+		{
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			AddMovementInput(Direction, Value);
+		}
 	}
 }
 
@@ -842,7 +935,8 @@ void ARelicRunnersCharacter::Look(const FInputActionValue& Value)
 
 void ARelicRunnersCharacter::Interact()
 {
-	FVector Start = FollowCamera->GetComponentLocation();
+	//FVector Start = FollowCamera->GetComponentLocation();
+	FVector Start = GetActorLocation();
 	FVector End = Start + (FollowCamera->GetForwardVector() * 500.f); // Match TraceForInteractables
 
 	FHitResult Hit;
@@ -852,6 +946,7 @@ void ARelicRunnersCharacter::Interact()
 	DrawDebugSphere(GetWorld(), End, 40.f, 12, FColor::Orange, false, 0.1f);
 	if (GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(40.f), Params))
 	{
+		DrawDebugSphere(GetWorld(), Hit.Location, 40.f, 12, FColor::Orange, false, 0.1f);
 		AActor* HitActor = Hit.GetActor();
 		if (HitActor && HitActor->Implements<UInteractInterface>())
 		{
@@ -954,14 +1049,45 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 
 void ARelicRunnersCharacter::DamageAbility()
 {
-	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 	GiveDamageAbilities();
+
+	if (DamageAbilityInstance)
+	{
+		if (DamageAbilityInstance->CanActivate())
+		{
+			DamageAbilityInstance->ActivateAbility();
+
+			if (AbilityPointCounter)
+			{
+				AbilityPointCounter->StartDamageCooldown(DamageAbilityInstance->GetCooldown());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Verbose, TEXT("Damage ability is on cooldown."));
+		}
+
+		return; 
+	}
+
+	// Fallback: original behavior if no ability is assigned
+	if (AbilityPointCounter)
+	{
+		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+	}
+
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
 {
 	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 	GiveDefenceAbilities();
+
+	if (DefenceAbilityInstance)
+	{
+		DefenceAbilityInstance->ActivateAbility();
+	}
+
 }
 
 void ARelicRunnersCharacter::UtilityAbility()
@@ -974,6 +1100,12 @@ void ARelicRunnersCharacter::UltimateAbility()
 {
 	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 	GiveUltimateAbilities();
+
+	if (UltimateAbilityInstance)
+	{
+		UltimateAbilityInstance->ActivateAbility();
+	}
+
 }
 
 void ARelicRunnersCharacter::GiveDamageAbilities()

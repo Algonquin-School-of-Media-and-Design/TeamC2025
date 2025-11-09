@@ -7,6 +7,7 @@
 #include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "../PlayerController/RelicRunnersPlayerController.h"
+#include "RelicRunners/RelicRunnersGameMode.h"
 
 // Sets default values
 ALevelChangeTrigger::ALevelChangeTrigger():
@@ -65,15 +66,21 @@ void ALevelChangeTrigger::BeginPlay()
 	{
 		const FString LevelString = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString()));
 		LevelTargetTextRender->SetText(FText::FromString(LevelString));
+
 	}
 
+	if (ARelicRunnersGameMode* gameMode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		gameMode->OnObjectiveActionCompleted.AddDynamic(this, &ALevelChangeTrigger::Server_Activate);
+		IsActive = gameMode->InitializeTriggerState();
+	}
 }
 
 void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
-		if (HasAuthority())
+		if (HasAuthority() && IsActive)
 		{
 			Server_ChangeLevel();
 		}
@@ -92,21 +99,16 @@ void ALevelChangeTrigger::ChangeLevel()
 
 	const FString LevelURL = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString() + "?listen"));
 
-	//for (FConstPlayerControllerIterator Iterator = world->GetPlayerControllerIterator(); Iterator; ++Iterator)
-	//{
-	//	ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(*Iterator);
-	//	if (PC && !PC->IsLocalController()) // skip host
-	//	{
-	//		PC->ClientTravelToGame();
-	//	}
-	//}
-
-	//world->SeamlessTravel(LevelURL);
-
 	if (HasAuthority())
 	{
 		world->ServerTravel(LevelURL);
 	}
+}
+
+void ALevelChangeTrigger::Server_Activate_Implementation()
+{
+	IsActive = true;
+	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Level Trigger has been activated")));
 }
 
 void ALevelChangeTrigger::Server_ChangeLevel_Implementation()
@@ -119,4 +121,5 @@ void ALevelChangeTrigger::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ALevelChangeTrigger, TargetLevel);
+	DOREPLIFETIME(ALevelChangeTrigger, IsActive);
 }

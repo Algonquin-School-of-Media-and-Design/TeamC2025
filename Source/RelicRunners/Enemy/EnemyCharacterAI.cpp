@@ -27,7 +27,7 @@
 #include "RelicRunners/Inventory/Inventory.h"
 #include "RelicRunners/Inventory/InventoryComponent.h"
 #include "RelicRunners/Item/ItemActor.h"
-#include "RelicRunners/Spawning System/Director.h"
+#include "RelicRunners/Director System/Director.h"
 
 // Sets default values
 AEnemyCharacterAI::AEnemyCharacterAI()

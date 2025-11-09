@@ -44,4 +44,10 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_ChangeLevel();
 
+	UFUNCTION(Server, Reliable)
+	void Server_Activate();
+
+	UPROPERTY(Replicated)
+	bool IsActive = false;
+
 };

@@ -11,7 +11,7 @@
  *   Any use, distribution, or modification outside of these projects
  *   is strictly prohibited without explicit written permission.
  *
- *   © 2025 Tristan Anglin. All rights reserved.
+ *   ï¿½ 2025 Tristan Anglin. All rights reserved.
  ************************************************************************************/
 
 #pragma once
@@ -20,6 +20,8 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "AbilitySystem/AbilityBase.h"
+#include "AbilitySystem/ImpunityAbility.h"
+#include "AbilitySystem/EarthquakeAbility.h"
 #include "Abilities/VengefulDance.h"
 #include "Abilities/BundleOfJoy.h"
 
@@ -35,6 +37,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class AAbilityBase;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -119,8 +122,7 @@ public:
 
 	//Inputs
 	void BasicAttack();
-	void Walk(const FInputActionValue& Value);
-	void Run(const FInputActionValue& Value);
+	void MoveInDirection(EAxis::Type Axis, float Value);
 	void Look(const FInputActionValue& Value);
 	void Interact();
 	void ToggleUI(UUserWidget* UIWidget, bool bClosePopups);
@@ -145,6 +147,14 @@ public:
 	void Server_UseHealthPotion(int NewHealth, int NewPotionCount);
 
 
+
+	// === Ability Slots ===
+	// Offensive / Damage ability slot (Moonbeam will be assigned here)
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DamageAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DamageAbilityInstance;
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
@@ -223,7 +233,7 @@ public:
 	void OnRep_MeshUpdate(UObject* MeshAsset, const FString& ItemType);
 
 	void TryBindInventoryDelegates();
-	
+
 	//Animations
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimSequence* SwordBasicAttack0;
@@ -268,6 +278,8 @@ public:
 
 	void OnLevelUp();
 
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
 protected:
 
 	//Other Classes
@@ -293,6 +305,23 @@ protected:
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
 
+
+	UPROPERTY()
+	AAbilityBase* UtilityAbilityInstance;
+
+	//Defence Ability (Impunity Ability)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DefenceAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DefenceAbilityInstance;
+
+	// Ultimate Ability (Earthquake Ability)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> UltimateAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* UltimateAbilityInstance;
 
 
 	UPROPERTY(EditAnywhere)
@@ -447,6 +476,5 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	
 };
 

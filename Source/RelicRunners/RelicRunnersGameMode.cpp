@@ -11,7 +11,7 @@
  *   Any use, distribution, or modification outside of these projects
  *   is strictly prohibited without explicit written permission.
  *
- *   © 2025 Tristan Anglin. All rights reserved.
+ *   ï¿½ 2025 Tristan Anglin. All rights reserved.
  ************************************************************************************/
 
 #include "RelicRunnersGameMode.h"
@@ -56,7 +56,7 @@ void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
 
     }
 
-    // Skip the host player (listen server’s own controller)
+    // Skip the host player (listen serverï¿½s own controller)
     if (NewPlayer->IsLocalController())
     {
         UE_LOG(LogTemp, Warning, TEXT("[GameMode] Skipping preview spawn for host: %s"), *NewPlayer->GetName());
@@ -142,6 +142,7 @@ void ARelicRunnersGameMode::PostSeamlessTravel()
     }
 }
 
+
 APawn* ARelicRunnersGameMode::SpawnDefaultPawnFor_Implementation(AController* NewPlayer, AActor* StartSpot)
 {
     ARelicRunnersPlayerController* RRPC = Cast<ARelicRunnersPlayerController>(NewPlayer);
@@ -188,4 +189,52 @@ APawn* ARelicRunnersGameMode::SpawnDefaultPawnFor_Implementation(AController* Ne
     }
 
     return Cast<ARelicRunnersCharacter>(Super::SpawnDefaultPawnFor_Implementation(RRPC, StartSpot));
+}
+
+bool ARelicRunnersGameMode::InitializeTriggerState()
+{
+    switch (ObjectiveType)
+    {
+    case EObjectiveType::None:
+        return true;
+        break;
+    case EObjectiveType::CaptureTheFlag:
+        return false;
+        break;
+    }
+    return false;
+}
+
+void ARelicRunnersGameMode::Multicast_SetObjectiveType_Implementation(EObjectiveType newType)
+{
+    ObjectiveType = newType;
+
+    switch (ObjectiveType)
+    {
+    case EObjectiveType::None:
+        Multicast_DecrementObjective();
+        break;
+    }
+
+}
+
+void ARelicRunnersGameMode::Multicast_IncrementObjective_Implementation()
+{
+    RemainingObjectives++;
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max objectives is now: %i"), RemainingObjectives));
+
+}
+
+void ARelicRunnersGameMode::Multicast_DecrementObjective_Implementation()
+{
+    RemainingObjectives--;
+
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining objectives: %i"), RemainingObjectives));
+
+    if (RemainingObjectives <= 0)
+    {
+        OnObjectiveActionCompleted.Broadcast();
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Objective has been reached!")));
+    }
+
 }

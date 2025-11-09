@@ -11,10 +11,11 @@
  *   Any use, distribution, or modification outside of these projects
  *   is strictly prohibited without explicit written permission.
  *
- *   © 2025 Tristan Anglin. All rights reserved.
+ *   ï¿½ 2025 Tristan Anglin. All rights reserved.
  ************************************************************************************/
 
 #include "RelicRunnersPlayerState.h"
+#include "RelicRunners/Menu/Keybinds.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -32,6 +33,11 @@ UAbilitySystemComponent* ARelicRunnersPlayerState::GetAbilitySystemComponent() c
     return AbilitySystemComponent;
 }
 
+
+ARelicRunnersPlayerState::~ARelicRunnersPlayerState()
+{
+
+}
 
 void ARelicRunnersPlayerState::SetSelectedClass(FName NewClass)
 {

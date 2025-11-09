@@ -23,9 +23,6 @@
 #include "AttributeSet.h"
 #include "RelicRunnersPlayerState.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class RELICRUNNERS_API ARelicRunnersPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -38,6 +35,10 @@ public:
 
     UFUNCTION()
     void OnRep_SelectedClass();
+
+    ARelicRunnersPlayerState();
+
+    ~ARelicRunnersPlayerState();
 
     void SetSelectedClass(FName NewClass);
 
