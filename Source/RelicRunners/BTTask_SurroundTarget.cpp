@@ -29,8 +29,11 @@ EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& 
 	FAIMoveRequest requestLocation;
 	AActor* target = Cast<AActor>(BlackBoard->GetValueAsObject(TargetActorKey.SelectedKeyName));
 	FNavLocation moveLocation;
+
+	FVector worldLocation = target->GetActorLocation() + (target->GetActorLocation() - ControlledPawn->GetActorLocation()).GetSafeNormal() * SeparationDistance;
+
 	//finding the close navmesh point to the world point (mainly if their is a wall between the enemy and target or something like that)
-	if (!NavSys->ProjectPointToNavigation(target->GetActorLocation(), moveLocation, NavExtent))
+	if (!NavSys->ProjectPointToNavigation(worldLocation, moveLocation, NavExtent))
 	{
 		return EBTNodeResult::Failed;
 	}
