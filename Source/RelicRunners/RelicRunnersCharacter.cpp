@@ -15,7 +15,13 @@
  ************************************************************************************/
 
 #include "RelicRunnersCharacter.h"
-#include "Engine/LocalPlayer.h"
+
+#include "PlayerHUD/PlayerHUD.h"
+#include "PlayerHUD/PlayerHUDWorld.h"
+#include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
+#include "PlayerPreview/PlayerPreview.h"
+#include "PlayerState/RelicRunnersPlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -31,38 +37,31 @@
 #include "InputActionValue.h"
 #include "EngineUtils.h"
 #include "Inventory/Inventory.h"
+#include "Inventory/InventoryComponent.h"
 #include "Inventory/InventoryToolTip.h"
 #include "Inventory/InventoryItemOptions.h"
 #include "Inventory/InventorySortingOptions.h"
 #include "Item/ItemStats.h"
 #include "Item/ItemActor.h"
 #include "Interact/InteractInterface.h"
-#include "PlayerHUD/PlayerHUD.h"
 #include "Menu/PauseMenu.h"
-
 #include "AbilitySystem/AbilityPointCounter.h"
 #include "AbilitySystem/AbilitySelection.h"
 #include "AbilitySystem/HealthPotion.h"
-#include "PlayerHUD/PlayerHUDWorld.h"
-#include "PlayerPreview/PlayerPreview.h"
-#include "PlayerState/RelicRunnersPlayerState.h"
-#include "Kismet/GameplayStatics.h"
-#include "Item/ItemData.h"
-#include "Inventory/InventoryComponent.h"
-#include "Engine/ActorChannel.h"
-#include "Enemy/EnemyCharacterAI.h"
-#include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
-#include "Game/RelicRunnersGameInstance.h"
-#include "Director System/Director.h"
-#include "Engine/Engine.h"
 #include "AbilitySystem/Moonbeam.h"       
 #include "AbilitySystem/AbilityBase.h"    
-
-#include "Enemy/EnemyCharacter.h"
-
 #include "Abilities/WarBannerAbility.h"
 #include "AbilitySystem/ImpunityAbility.h"
 #include "AbilitySystem/EarthquakeAbility.h"
+#include "Item/ItemData.h"
+#include "Engine/ActorChannel.h"
+#include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
+#include "Game/RelicRunnersGameInstance.h"
+#include "Director System/Director.h"
+#include "Enemy/EnemyCharacter.h"
+#include "Enemy/EnemyCharacterAI.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -107,41 +106,41 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	UpperMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	UpperMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	UpperMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	LowerMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LowerMesh"));
 	LowerMesh->SetupAttachment(GetMesh());
 	LowerMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LowerMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	LowerMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	LowerMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
 	ArmsMesh->SetupAttachment(GetMesh());
 	ArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ArmsMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	ArmsMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	ArmsMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	HelmetMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetMesh"));
 	HelmetMesh->SetupAttachment(GetMesh());
 	HelmetMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HelmetMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	HelmetMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	HelmetMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	NecklaceMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NecklaceMesh"));
 	NecklaceMesh->SetupAttachment(GetMesh());
 	NecklaceMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	NecklaceMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	NecklaceMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	NecklaceMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	MainhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainhandMesh"));
 	MainhandItemMesh->SetupAttachment(GetMesh(), TEXT("MainhandSocket"));
 	MainhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MainhandItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	MainhandItemMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-
+	// Mesh attachments
 	OffhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OffhandMesh"));
 	OffhandItemMesh->SetupAttachment(GetMesh(), TEXT("OffhandSocket"));
 	OffhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -161,7 +160,8 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	//Inventory
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetIsReplicated(true);
-
+	
+	//Starting Stats
 	PlayerStartingMaxHealth = 100;
 	PlayerMaxHealth = PlayerStartingMaxHealth;
 	PlayerHealth = 20;
