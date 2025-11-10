@@ -12,9 +12,10 @@
 #include "EnemyHUDWorld.h"
 #include "RelicRunners/Item/ItemCard.h"
 #include "RelicRunners/Item/ItemStats.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
-AEnemyCharacter::AEnemyCharacter()
+AEnemyCharacter::AEnemyCharacter() : ACharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -23,6 +24,8 @@ AEnemyCharacter::AEnemyCharacter()
 	RemainingStunTime = 0;
 	Level = 1;
 	TypeOfEnemy = EEnemyType::UNKNOWN;
+
+	GetCapsuleComponent()->SetCollisionProfileName("Enemy");
 
 	//tristan UI stuff
 	EnemyHUDWorld = CreateDefaultSubobject<UWidgetComponent>(TEXT("TooltipWidgetComponent"));
