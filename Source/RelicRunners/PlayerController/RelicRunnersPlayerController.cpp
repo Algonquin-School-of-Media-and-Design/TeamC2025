@@ -385,6 +385,7 @@ void ARelicRunnersPlayerController::BeginPlay()
 
 	if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
 	{
+		GI->ApplyKeybindings();
 		Server_SetPlayerName(GI->GetCharacterName());
 		UE_LOG(LogTemp, Log, TEXT("BeginPlay: Sent server player name: %s"), *GI->GetCharacterName());
 	}

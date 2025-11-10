@@ -39,52 +39,38 @@ void URelicRunnersGameInstance::ResetToDefaults()
 
 void URelicRunnersGameInstance::ApplyKeybindings()
 {
-
-    // Get the player input subsystem
     APlayerController* PC = GetFirstLocalPlayerController();
     if (!PC) return;
 
     ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC);
     if (!RPC) return;
 
-    UInputMappingContext* MappingContext = RPC->GetInputMappingContext();
-    if (!MappingContext)
+    UInputMappingContext* OldMappingContext = RPC->GetInputMappingContext();
+    if (!OldMappingContext)
     {
         UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: No InputMappingContext set!"));
         return;
     }
 
-    UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+    UInputMappingContext* MappingContext = DuplicateObject<UInputMappingContext>(OldMappingContext, this);
+
+    UEnhancedInputLocalPlayerSubsystem* Subsystem =
+        ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
     if (!Subsystem) return;
 
+    Subsystem->RemoveMappingContext(OldMappingContext);
     MappingContext->UnmapAll();
 
-    // Restore Look
-    UInputAction* LookAction = LoadObject<UInputAction>(
-        nullptr,
-        TEXT("/Game/ThirdPerson/Input/Actions/IA_Look.IA_Look")
-    );
-
+    UInputAction* LookAction = LoadObject<UInputAction>(nullptr, TEXT("/Game/ThirdPerson/Input/Actions/IA_Look.IA_Look"));
     if (LookAction)
     {
         FEnhancedActionKeyMapping& Mapping = MappingContext->MapKey(LookAction, EKeys::Mouse2D);
 
-        UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: Look (Mouse2D)"));
-
-        UInputModifierNegate* NegateModifier = NewObject<UInputModifierNegate>();
-        NegateModifier->bX = Keys->InvertedXMouse; // Invert X
-        NegateModifier->bY = Keys->InvertedYMouse; // Invert Y
-        NegateModifier->bZ = false;
+        UInputModifierNegate* NegateModifier = NewObject<UInputModifierNegate>(MappingContext);
+        NegateModifier->bX = Keys->InvertedXMouse;
+        NegateModifier->bY = Keys->InvertedYMouse;
 
         Mapping.Modifiers.Add(NegateModifier);
-        UE_LOG(LogTemp, Log, TEXT("Look Modifiers: X | %s Y | %s"),
-            Keys->InvertedXMouse ? TEXT("true") : TEXT("false"),
-            Keys->InvertedYMouse ? TEXT("true") : TEXT("false")
-        );
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: couldn't find IA_Look asset!"));
     }
 
     for (auto& Binding : Keys->KeyBinds)
@@ -107,9 +93,6 @@ void URelicRunnersGameInstance::ApplyKeybindings()
         UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: mapped action %s -> key %s"), *Binding.Name, *Binding.Bind.GetFName().ToString());
     }
 
-    // Re-apply mapping context to the subsystem (remove old first if necessary)
-    // You may want to remove then add to ensure updated mappings are used:
-    Subsystem->RemoveMappingContext(MappingContext);
     Subsystem->AddMappingContext(MappingContext, 0);
 }
 

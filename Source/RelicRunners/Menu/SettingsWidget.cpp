@@ -61,7 +61,6 @@ FReply USettingsWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, con
 	if (!WaitingForKeyEntry)
 		return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 
-	// Use the mouse button that was pressed
 	FKey PressedKey = InMouseEvent.GetEffectingButton();
 	if (!PressedKey.IsValid())
 		return FReply::Handled();
@@ -71,12 +70,10 @@ FReply USettingsWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, con
 
 FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 {
-	// Get the data object for the row we’re rebinding
 	UKeybindingsListData* Data = WaitingForKeyEntry->GetKeybindData();
 	if (!Data)
 		return FReply::Handled();
 
-	// First, find all other bindings that use this key
 	for (UKeybindingsListData* Binding : DefaultKeybindings)
 	{
 		if (Binding != Data && Binding->Keybind == PressedKey)
@@ -85,10 +82,8 @@ FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 		}
 	}
 
-	// Assign new key
 	Data->Keybind = PressedKey;
 
-	// Update PlayerController keybinds
 	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
 	if (GI)
 	{
@@ -106,7 +101,6 @@ FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 	}
 	UpdateBinds();
 
-	// Refresh all visuals
 	for (UKeybindingsListData* Binding : DefaultKeybindings)
 	{
 		if (Binding->BoundWidget)
@@ -115,7 +109,6 @@ FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 		}
 	}
 
-	// Stop listening
 	WaitingForKeyEntry = nullptr;
 
 	return FReply::Handled();
@@ -123,7 +116,6 @@ FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 
 void USettingsWidget::UpdateBinds()
 {
-	// Apply changes to input system
 	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
 	if (GI)
 	{
@@ -148,13 +140,7 @@ void USettingsWidget::InitializeDefaultKeybindings()
 {
 	DefaultKeybindings.Empty();
 
-	auto AddBinding = [&](const FString& ActionName, const FKey& Key)
-		{
-			UKeybindingsListData* NewEntry = NewObject<UKeybindingsListData>(this);
-			NewEntry->Name = ActionName;
-			NewEntry->Keybind = Key;
-			DefaultKeybindings.Add(NewEntry);
-		};
+	auto AddBinding = [&](const FString& ActionName, const FKey& Key) { UKeybindingsListData* NewEntry = NewObject<UKeybindingsListData>(this); NewEntry->Name = ActionName; NewEntry->Keybind = Key; DefaultKeybindings.Add(NewEntry); };
 
 	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
 	if (!GI) return;

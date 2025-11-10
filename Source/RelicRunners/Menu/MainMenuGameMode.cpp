@@ -13,14 +13,12 @@ AMainMenuGameMode::AMainMenuGameMode()
     PlayerControllerClass = ARelicRunnersPlayerController::StaticClass();
 
     bUseSeamlessTravel = true;
-    bReplicates = true;
+    bReplicates = false;
 }
 
 void AMainMenuGameMode::BeginPlay()
 {
     Super::BeginPlay();
-
-
 }
 
 
