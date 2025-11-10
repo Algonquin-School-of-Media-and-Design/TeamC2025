@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilityBase.h"
+#include "RelicRunners/AbilitySystem/AbilityBase.h"
 #include "ImpunityAbility.generated.h"
 
 /**

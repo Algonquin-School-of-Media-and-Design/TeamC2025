@@ -18,7 +18,7 @@ AMoonbeam::AMoonbeam()
     TargetType = EAbilityTargetType::Cone; 
 
     // Tuning
-    DamageAmount = 20.f;      
+    DamageAmount = 50.f;      
     Cooldown = 5.f;       
     Duration = 5.0f;       
 

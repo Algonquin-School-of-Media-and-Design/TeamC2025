@@ -17,6 +17,9 @@ class RELICRUNNERS_API AAphroditeCharacter : public ARelicRunnersCharacter
 public:
 	AAphroditeCharacter();
 
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
 protected:
 	virtual void BeginPlay() override;
 

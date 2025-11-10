@@ -1,4 +1,5 @@
 #include "NemesisCharacter.h"
+#include "RelicRunners/AbilitySystem/AbilityPointCounter.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 
 ANemesisCharacter::ANemesisCharacter()
@@ -8,6 +9,11 @@ ANemesisCharacter::ANemesisCharacter()
 void ANemesisCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+    DamageCooldown = 5.0f;
+    DefenceCooldown = 5.0f;
+    UtilityCooldown = 5.0f;
+    UltimateCooldown = 10.0f;
 
 }
 
@@ -40,6 +46,7 @@ void ANemesisCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
 
+    AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 }
 
 void ANemesisCharacter::GiveDefenceAbilities()
@@ -64,6 +71,8 @@ void ANemesisCharacter::GiveDefenceAbilities()
     {
         DefenceAbilityInstance->ActivateAbility();
     }
+
+    AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 }
 
 void ANemesisCharacter::GiveUtilityAbilities()
@@ -71,32 +80,29 @@ void ANemesisCharacter::GiveUtilityAbilities()
 	Super::GiveUtilityAbilities();
 
     UtilityClass = AVengefulDance::StaticClass();
-
-    if (UtilityClass)
+    
+    if (AbilitySystem)
     {
-        UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityClass);
-        if (UtilityAbilityInstance)
+        AbilitySystem->GiveAbility(FGameplayAbilitySpec(AVengefulDance::StaticClass(), 1, 0));
+
+        if (UtilityClass)
         {
-            UtilityAbilityInstance->OwnerActor = this;
+            UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityClass);
+            if (UtilityAbilityInstance)
+            {
+                UtilityAbilityInstance->OwnerActor = this;
+                UtilityAbilityInstance->ActivateAbility();
+            }
         }
-    }
-
-	if (AbilitySystem)
-	{
-		AbilitySystem->GiveAbility(FGameplayAbilitySpec(AVengefulDance::StaticClass(), 1, 0));
-
-		if (UtilityAbilityInstance)
-		{
-            UtilityAbilityInstance->ActivateAbility();
-		}
-
 	}
+
+    AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 }
 
 void ANemesisCharacter::GiveUltimateAbilities()
 {
 	Super::GiveUltimateAbilities();
 
-
+    AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 }
 

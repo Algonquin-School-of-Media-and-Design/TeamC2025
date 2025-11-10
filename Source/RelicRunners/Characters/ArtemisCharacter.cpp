@@ -2,6 +2,7 @@
 
 
 #include "ArtemisCharacter.h"
+#include "RelicRunners/AbilitySystem/AbilityPointCounter.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 
 AArtemisCharacter::AArtemisCharacter()
@@ -12,21 +13,57 @@ void AArtemisCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	DamageCooldown = 5.0f;
+	DefenceCooldown = 5.0f;
+	UtilityCooldown = 5.0f;
+	UltimateCooldown = 10.0f;
+
+}
+
+void AArtemisCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+
+	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+	if (PS)
+	{
+		AbilitySystem = PS->GetAbilitySystemComponent();
+		AbilitySystem->InitAbilityActorInfo(PS, this);
+	}
+}
+
+void AArtemisCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+	if (PS)
+	{
+		AbilitySystem = PS->GetAbilitySystemComponent();
+		AbilitySystem->InitAbilityActorInfo(PS, this);
+	}
 }
 
 void AArtemisCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
+
+	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 }
 
 void AArtemisCharacter::GiveDefenceAbilities()
 {
 	Super::GiveDefenceAbilities();
+
+	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 }
 
 void AArtemisCharacter::GiveUtilityAbilities()
 {
 	Super::GiveUtilityAbilities();
+
+	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 }
 
 void AArtemisCharacter::GiveUltimateAbilities()
@@ -65,6 +102,6 @@ void AArtemisCharacter::GiveUltimateAbilities()
 			UltimateAbilityInstance->ActivateAbility();
 		}
 	}
-
+	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 }
 

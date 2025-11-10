@@ -16,6 +16,9 @@ class RELICRUNNERS_API AArtemisCharacter : public ARelicRunnersCharacter
 public:
     AArtemisCharacter();
 
+    virtual void PossessedBy(AController* NewController) override;
+    virtual void OnRep_PlayerState() override;
+
 protected:
     virtual void BeginPlay() override;
     

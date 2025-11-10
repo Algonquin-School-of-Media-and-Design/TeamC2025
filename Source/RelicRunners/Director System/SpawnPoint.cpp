@@ -59,6 +59,8 @@ FVector ASpawnPoint::GetRandomPosition()
 		//check to make sure their is enough space between the players and all the enemies
 		for (APawn* player : Director->GetPlayers())
 		{
+			if (!player) continue;
+
 			if (FVector::Dist2D(player->GetActorLocation(), hit.ImpactPoint) <= SpawnSeparationDistance)
 			{
 				hasFoundHitPoint = false;

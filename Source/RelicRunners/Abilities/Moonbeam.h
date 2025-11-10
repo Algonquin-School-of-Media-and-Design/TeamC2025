@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilityBase.h"
+#include "RelicRunners/AbilitySystem/AbilityBase.h"
 #include "Moonbeam.generated.h"
 
 UCLASS()

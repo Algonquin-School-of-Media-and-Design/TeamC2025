@@ -20,11 +20,12 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "AbilitySystem/AbilityBase.h"
-#include "AbilitySystem/ImpunityAbility.h"
-#include "AbilitySystem/EarthquakeAbility.h"
+#include "Abilities/ImpunityAbility.h"
+#include "Abilities/EarthquakeAbility.h"
 #include "Abilities/VengefulDance.h"
+#include "Abilities/WarBannerAbility.h"
 #include "Abilities/BundleOfJoy.h"
-
+#include "Abilities/Moonbeam.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
@@ -382,10 +383,10 @@ protected:
 
 
 
-	float DamageCooldown = 5.f;
-	float DefenceCooldown = 5.f;
-	float UtilityCooldown = 5.f;
-	float UltimateCooldown = 10.f;
+	float DamageCooldown;
+	float DefenceCooldown;
+	float UtilityCooldown;
+	float UltimateCooldown;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")

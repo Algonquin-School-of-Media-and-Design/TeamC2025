@@ -54,14 +54,9 @@
 #include "Game/RelicRunnersGameInstance.h"
 #include "Director System/Director.h"
 #include "Engine/Engine.h"
-#include "AbilitySystem/Moonbeam.h"       
 #include "AbilitySystem/AbilityBase.h"    
-
 #include "Enemy/EnemyCharacter.h"
 
-#include "Abilities/WarBannerAbility.h"
-#include "AbilitySystem/ImpunityAbility.h"
-#include "AbilitySystem/EarthquakeAbility.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -968,26 +963,25 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 
 void ARelicRunnersCharacter::DamageAbility()
 {
-	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+
 	GiveDamageAbilities();
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
 {
-	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+
 	GiveDefenceAbilities();
 
 }
 
 void ARelicRunnersCharacter::UtilityAbility()
 {
-	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+
 	GiveUtilityAbilities();
 }
 
 void ARelicRunnersCharacter::UltimateAbility()
 {
-	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 	GiveUltimateAbilities();
 
 }

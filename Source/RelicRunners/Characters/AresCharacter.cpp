@@ -2,6 +2,7 @@
 
 
 #include "AresCharacter.h"
+#include "RelicRunners/AbilitySystem/AbilityPointCounter.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 
 AAresCharacter::AAresCharacter()
@@ -12,6 +13,36 @@ void AAresCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	DamageCooldown = 5.0f;
+	DefenceCooldown = 5.0f;
+	UtilityCooldown = 5.0f;
+	UltimateCooldown = 10.0f;
+
+}
+
+void AAresCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+
+	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+	if (PS)
+	{
+		AbilitySystem = PS->GetAbilitySystemComponent();
+		AbilitySystem->InitAbilityActorInfo(PS, this);
+	}
+}
+
+void AAresCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+	if (PS)
+	{
+		AbilitySystem = PS->GetAbilitySystemComponent();
+		AbilitySystem->InitAbilityActorInfo(PS, this);
+	}
 }
 
 void AAresCharacter::GiveDamageAbilities()
@@ -37,12 +68,14 @@ void AAresCharacter::GiveDamageAbilities()
 		DamageAbilityInstance->ActivateAbility();
 	}
 
-
+	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 }
 
 void AAresCharacter::GiveDefenceAbilities()
 {
 	Super::GiveDefenceAbilities();
+
+	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 }
 
 void AAresCharacter::GiveUtilityAbilities()
@@ -96,11 +129,15 @@ void AAresCharacter::GiveUtilityAbilities()
 	//	WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
 	//	WarBannerAbility->Server_Initialize(this);
 	//}
+
+	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 }
 
 void AAresCharacter::GiveUltimateAbilities()
 {
 	Super::GiveUltimateAbilities();
+
+	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 }
 
 

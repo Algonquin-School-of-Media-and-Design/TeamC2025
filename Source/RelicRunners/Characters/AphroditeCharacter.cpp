@@ -2,6 +2,7 @@
 
 
 #include "AphroditeCharacter.h"
+#include "RelicRunners/AbilitySystem/AbilityPointCounter.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 
 
@@ -14,9 +15,36 @@ void AAphroditeCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	DamageCooldown = 5.0f;
+	DefenceCooldown = 5.0f;
+	UtilityCooldown = 5.0f;
+	UltimateCooldown = 10.0f;
 
 }
 
+void AAphroditeCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+	if (PS)
+	{
+		AbilitySystem = PS->GetAbilitySystemComponent();
+		AbilitySystem->InitAbilityActorInfo(PS, this);
+	}
+}
+
+void AAphroditeCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+	if (PS)
+	{
+		AbilitySystem = PS->GetAbilitySystemComponent();
+		AbilitySystem->InitAbilityActorInfo(PS, this);
+	}
+}
 void AAphroditeCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
@@ -44,25 +72,30 @@ void AAphroditeCharacter::GiveDamageAbilities()
 			DamageAbilityInstance->OwnerActor = this;
 			DamageAbilityInstance->SetActorLocation(SpawnLocation);
 			DamageAbilityInstance->ActivateAbility();
-
 		}
 	}
-
+	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 }
 
 void AAphroditeCharacter::GiveDefenceAbilities()
 {
 	Super::GiveDefenceAbilities();
+
+	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 }
 
 void AAphroditeCharacter::GiveUtilityAbilities()
 {
 	Super::GiveUtilityAbilities();
+
+	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 }
 
 void AAphroditeCharacter::GiveUltimateAbilities()
 {
 	Super::GiveUltimateAbilities();
+
+	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 }
 
 
