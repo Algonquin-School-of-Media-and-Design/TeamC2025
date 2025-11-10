@@ -36,6 +36,7 @@
 #include "Inventory/InventorySortingOptions.h"
 #include "Item/ItemStats.h"
 #include "Item/ItemActor.h"
+#include "LevelGeneration/CapturableFlag.h"
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
 #include "Menu/PauseMenu.h"
@@ -981,6 +982,18 @@ void ARelicRunnersCharacter::Interact()
 						MyPC->Server_RequestPickup(Item);
 					}
 				}
+			}
+			else if (ACapturableFlag* Flag = Cast<ACapturableFlag>(HitActor))
+			{
+				if (APlayerController* PC = Cast<APlayerController>(GetController()))
+				{
+					ARelicRunnersPlayerController* MyPC = Cast<ARelicRunnersPlayerController>(PC);
+					if (MyPC)
+					{
+						MyPC->Server_RequestFlagActivation(Flag);
+					}
+				}
+
 			}
 			else
 			{

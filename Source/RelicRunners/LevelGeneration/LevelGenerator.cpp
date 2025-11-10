@@ -8,7 +8,7 @@
 #include "PackedLevelActor/PackedLevelActor.h"
 #include "LevelChangeTrigger.h"
 #include "NavigationSystem.h"
-#include "RelicRunners/RelicRunnersGameMode.h"
+#include "RelicRunners/RelicRunnersGameState.h"
 
 /*
 TODO:
@@ -52,7 +52,7 @@ ALevelGenerator::ALevelGenerator() :
 	ConvexCornerPiece = CreateDefaultSubobject<UStaticMeshComponent>("ConvexCornerPiece");
 	ConvexCornerPiece->SetupAttachment(Origin);
 
-	SetReplicates(true);
+	bReplicates = true;
 	bAlwaysRelevant = true;
 }
 
@@ -170,11 +170,11 @@ void ALevelGenerator::PostInitializeComponents()
 
 			CreateFloor();
 
-			ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
+			ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
 
-			if (gamemode)
+			if (gameState)
 			{
-				gamemode->Multicast_SetObjectiveType(ObjectiveType);
+				gameState->Multicast_SetObjectiveType(ObjectiveType);
 			}
 		}
 	}

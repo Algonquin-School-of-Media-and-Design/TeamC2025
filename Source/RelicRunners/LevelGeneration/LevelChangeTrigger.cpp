@@ -7,7 +7,8 @@
 #include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "../PlayerController/RelicRunnersPlayerController.h"
-#include "RelicRunners/RelicRunnersGameMode.h"
+#include "RelicRunners/RelicRunnersGameState.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ALevelChangeTrigger::ALevelChangeTrigger():
@@ -31,9 +32,8 @@ ALevelChangeTrigger::ALevelChangeTrigger():
 	LevelTargetTextRender = CreateDefaultSubobject<UTextRenderComponent>("LevelTextRender");
 	LevelTargetTextRender->SetupAttachment(Origin);
 
-	SetReplicates(true);
-	bAlwaysRelevant = true;
 	bReplicates = true;
+	bAlwaysRelevant = true;
 }
 
 void ALevelChangeTrigger::OnConstruction(const FTransform& transform)
@@ -69,10 +69,10 @@ void ALevelChangeTrigger::BeginPlay()
 
 	}
 
-	if (ARelicRunnersGameMode* gameMode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode()))
+	if (ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState()))
 	{
-		gameMode->OnObjectiveActionCompleted.AddDynamic(this, &ALevelChangeTrigger::Server_Activate);
-		IsActive = gameMode->InitializeTriggerState();
+		gameState->OnObjectiveActionCompleted.AddDynamic(this, &ALevelChangeTrigger::Server_Activate);
+		IsActive = gameState->InitializeTriggerState();
 	}
 }
 
@@ -82,9 +82,15 @@ void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent
 	{
 		if (HasAuthority() && IsActive)
 		{
+			//GetWorld()->GetFirstPlayerController()->RestartLevel();
 			Server_ChangeLevel();
 		}
 	}
+}
+
+void ALevelChangeTrigger::Server_ChangeLevel_Implementation()
+{
+	ChangeLevel();
 }
 
 void ALevelChangeTrigger::ChangeLevel()
@@ -98,10 +104,27 @@ void ALevelChangeTrigger::ChangeLevel()
 		return;
 
 	const FString LevelURL = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString() + "?listen"));
+	const FString LevelURLB = TargetLevel.ToSoftObjectPath().ToString();
+
+	const FString LevelURLC = TEXT("/Game/ThirdPerson/Maps/GenerateLevelTest?listen");
+
+	const FString LevelURLD = TargetLevel.GetUniqueID().ToString();
+	
+	for (FConstPlayerControllerIterator Iterator = world->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(*Iterator);
+		if (PC && !PC->IsLocalController()) // skip host
+		{
+			PC->ClientTravelToGame();
+		}
+	}
 
 	if (HasAuthority())
 	{
-		world->ServerTravel(LevelURL);
+		//world->ServerTravel(LevelURLC);
+		//world->SeamlessTravel(LevelURL);
+		UGameplayStatics::OpenLevel(this, FName("GenerateLevelTest"), true, FString("listen"));
+		//UGameplayStatics::OpenLevelBySoftObjectPtr(this, TargetLevel, true, FString("listen"));
 	}
 }
 
@@ -109,11 +132,6 @@ void ALevelChangeTrigger::Server_Activate_Implementation()
 {
 	IsActive = true;
 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Level Trigger has been activated")));
-}
-
-void ALevelChangeTrigger::Server_ChangeLevel_Implementation()
-{
-	ChangeLevel();
 }
 
 void ALevelChangeTrigger::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

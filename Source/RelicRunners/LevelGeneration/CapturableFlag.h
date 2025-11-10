@@ -27,7 +27,9 @@ public:
 	virtual void Interact_Implementation(class ARelicRunnersCharacter* Char) override;
 
 	UFUNCTION(Server, Reliable)
-	void Multicast_Interacted();
+	void Server_HandleInteracted(class ARelicRunnersCharacter* Character);
+
+	void HandleInteracted(class ARelicRunnersCharacter* Character);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Default Values")
 	class USceneComponent* Origin;
