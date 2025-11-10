@@ -26,7 +26,7 @@ AWarBannerAbility::AWarBannerAbility()
     BannerSilhouetteMesh = CreateDefaultSubobject<UStaticMeshComponent>("BannerSilhoetteMesh");
     RootComponent = BannerSilhouetteMesh;
 
-    SetReplicates(true);
+    bReplicates = true;
 }
 
 void AWarBannerAbility::Server_Initialize_Implementation(AActor* newOwner)

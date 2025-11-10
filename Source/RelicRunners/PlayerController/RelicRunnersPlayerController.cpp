@@ -21,6 +21,7 @@
 #include "RelicRunners/Inventory/Inventory.h"
 #include "InputActionValue.h"
 #include "RelicRunners/Item/ItemActor.h"
+#include "RelicRunners/LevelGeneration/CapturableFlag.h"
 #include "Net/UnrealNetwork.h"
 #include "RelicRunners/PlayerPreview/PlayerPreview.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -210,6 +211,14 @@ void ARelicRunnersPlayerController::Server_RequestPickup_Implementation(AItemAct
 	if (Item)
 	{
 		Item->HandlePickup(Cast<ARelicRunnersCharacter>(GetPawn()));
+	}
+}
+
+void ARelicRunnersPlayerController::Server_RequestFlagActivation_Implementation(ACapturableFlag* Flag)
+{
+	if (Flag)
+	{
+		Flag->HandleInteracted(Cast<ARelicRunnersCharacter>(GetPawn()));
 	}
 }
 

@@ -14,8 +14,7 @@ AWarBanner::AWarBanner()
 	BannerMesh = CreateDefaultSubobject<UStaticMeshComponent>("Banner");
 	BannerMesh->SetupAttachment(RootComponent);
 
-	SetReplicates(true);
-
+	bReplicates = true;
 }
 
 void AWarBanner::BeginPlay()

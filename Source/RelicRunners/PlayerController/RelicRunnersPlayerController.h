@@ -135,6 +135,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_RequestPickup(class AItemActor* Item);
 
+	UFUNCTION(Server, Reliable)
+	void Server_RequestFlagActivation(class ACapturableFlag* Flag);
+
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerPreview)
 	class APlayerPreview* PlayerPreviewInstance;
 
