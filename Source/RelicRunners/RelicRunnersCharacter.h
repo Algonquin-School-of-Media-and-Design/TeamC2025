@@ -146,16 +146,6 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_UseHealthPotion(int NewHealth, int NewPotionCount);
 
-
-
-	// === Ability Slots ===
-	// Offensive / Damage ability slot (Moonbeam will be assigned here)
-	UPROPERTY(EditAnywhere, Category = "Abilities")
-	TSubclassOf<AAbilityBase> DamageAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* DamageAbilityInstance;
-
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
 	void TraceForInteractables();
@@ -304,25 +294,6 @@ protected:
 
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
-
-
-	UPROPERTY()
-	AAbilityBase* UtilityAbilityInstance;
-
-	//Defence Ability (Impunity Ability)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> DefenceAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* DefenceAbilityInstance;
-
-	// Ultimate Ability (Earthquake Ability)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> UltimateAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* UltimateAbilityInstance;
-
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;

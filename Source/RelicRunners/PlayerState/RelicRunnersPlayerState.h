@@ -36,7 +36,6 @@ public:
     UFUNCTION()
     void OnRep_SelectedClass();
 
-    ARelicRunnersPlayerState();
 
     ~ARelicRunnersPlayerState();
 

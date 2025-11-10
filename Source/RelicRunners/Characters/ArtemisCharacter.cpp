@@ -32,5 +32,39 @@ void AArtemisCharacter::GiveUtilityAbilities()
 void AArtemisCharacter::GiveUltimateAbilities()
 {
 	Super::GiveUltimateAbilities();
+
+	if (!UltimateClass)
+	{
+		UltimateClass = AMoonbeam::StaticClass();
+	}
+
+	if (UltimateClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		UltimateAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(
+			UltimateClass,
+			GetActorLocation(),
+			GetActorRotation(),
+			Params
+		);
+
+		if (UltimateAbilityInstance)
+		{
+			UltimateAbilityInstance->SetAbilityOwner(this);
+		}
+	}
+
+	if (UltimateAbilityInstance)
+	{
+		if (UltimateAbilityInstance->CanActivate())
+		{
+			UltimateAbilityInstance->ActivateAbility();
+		}
+	}
+
 }
 

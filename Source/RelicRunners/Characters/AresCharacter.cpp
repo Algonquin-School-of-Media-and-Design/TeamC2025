@@ -17,6 +17,27 @@ void AAresCharacter::BeginPlay()
 void AAresCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
+
+	if (!DamageClass)
+	{
+		DamageClass = AEarthquakeAbility::StaticClass();
+	}
+
+	if (DamageClass)
+	{
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageClass);
+		if (DamageAbilityInstance)
+		{
+			DamageAbilityInstance->OwnerActor = this;
+		}
+	}
+
+	if (DamageAbilityInstance)
+	{
+		DamageAbilityInstance->ActivateAbility();
+	}
+
+
 }
 
 void AAresCharacter::GiveDefenceAbilities()

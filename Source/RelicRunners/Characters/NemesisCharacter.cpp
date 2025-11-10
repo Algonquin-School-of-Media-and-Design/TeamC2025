@@ -45,6 +45,25 @@ void ANemesisCharacter::GiveDamageAbilities()
 void ANemesisCharacter::GiveDefenceAbilities()
 {
 	Super::GiveDefenceAbilities();
+
+    if (!DefenceClass)
+    {
+        DefenceClass = AImpunityAbility::StaticClass();
+    }
+
+    if (DefenceClass)
+    {
+        DefenceAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DefenceClass);
+        if (DefenceAbilityInstance)
+        {
+            DefenceAbilityInstance->OwnerActor = this;
+        }
+    }
+
+    if (DefenceAbilityInstance)
+    {
+        DefenceAbilityInstance->ActivateAbility();
+    }
 }
 
 void ANemesisCharacter::GiveUtilityAbilities()

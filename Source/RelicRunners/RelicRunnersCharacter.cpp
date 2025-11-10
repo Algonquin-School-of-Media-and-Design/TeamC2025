@@ -549,87 +549,6 @@ void ARelicRunnersCharacter::BeginPlay()
 		});
 	}
 
-
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	if (WarBannerAbilityTemplate != nullptr)
-	{
-		WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
-		WarBannerAbility->Server_Initialize(this);
-	}
-
-	//VengefulDance format
-    UtilityAbilityClass = AVengefulDance::StaticClass();
-
-    if (UtilityAbilityClass)
-    {
-		UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityAbilityClass);
-        if (UtilityAbilityInstance)
-        {
-			UtilityAbilityInstance->OwnerActor = this;
-        }
-    }
-
-	////BundleOfJoy format
-	if (!DamageAbilityClass)
-	{
-		DamageAbilityClass = ABundleOfJoy::StaticClass();
-	}
-
-	// Impunity (Defensive) Ability
-	if (!DefenceAbilityClass)
-	{
-		DefenceAbilityClass = AImpunityAbility::StaticClass();
-	}
-
-	if (DefenceAbilityClass)
-	{
-		DefenceAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DefenceAbilityClass);
-		if (DefenceAbilityInstance)
-		{
-			DefenceAbilityInstance->OwnerActor = this;
-		}
-	}
-
-	if (!UltimateAbilityClass)
-	{
-		UltimateAbilityClass = AEarthquakeAbility::StaticClass();
-	}
-
-	if (UltimateAbilityClass)
-	{
-		UltimateAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UltimateAbilityClass);
-		if (UltimateAbilityInstance)
-		{
-			UltimateAbilityInstance->OwnerActor = this;
-		}
-	}
-	
-	// Spawn Damage Ability (Moonbeam) 
-	if (DamageAbilityClass)
-	{
-		FActorSpawnParameters Params;
-		Params.Owner = this;
-		Params.Instigator = this;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(
-			DamageAbilityClass,
-			GetActorLocation(),
-			GetActorRotation(),
-			Params
-		);
-
-		if (DamageAbilityInstance)
-		{
-			// Let the ability know who owns it (used by Moonbeam)
-			DamageAbilityInstance->SetAbilityOwner(this);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn DamageAbilityInstance (Moonbeam)."));
-		}
-	}
-
 }
 
 
@@ -1044,49 +963,19 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 {
 	if (UI != "Ability") HideUI(AbilitySelection, playerController);
 	if (UI != "Inventory") HideUI(Inventory, playerController, true);
-	//if (UI != "Pause") HideUI(PauseMenu, playerController);
+	if (UI != "Pause") HideUI(PauseMenu, playerController);
 }
 
 void ARelicRunnersCharacter::DamageAbility()
 {
+	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 	GiveDamageAbilities();
-
-	if (DamageAbilityInstance)
-	{
-		if (DamageAbilityInstance->CanActivate())
-		{
-			DamageAbilityInstance->ActivateAbility();
-
-			if (AbilityPointCounter)
-			{
-				AbilityPointCounter->StartDamageCooldown(DamageAbilityInstance->GetCooldown());
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Damage ability is on cooldown."));
-		}
-
-		return; 
-	}
-
-	// Fallback: original behavior if no ability is assigned
-	if (AbilityPointCounter)
-	{
-		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
-	}
-
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
 {
 	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 	GiveDefenceAbilities();
-
-	if (DefenceAbilityInstance)
-	{
-		DefenceAbilityInstance->ActivateAbility();
-	}
 
 }
 
@@ -1100,11 +989,6 @@ void ARelicRunnersCharacter::UltimateAbility()
 {
 	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 	GiveUltimateAbilities();
-
-	if (UltimateAbilityInstance)
-	{
-		UltimateAbilityInstance->ActivateAbility();
-	}
 
 }
 

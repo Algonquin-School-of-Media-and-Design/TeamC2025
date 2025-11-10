@@ -5,7 +5,6 @@
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
-
 #include "RelicRunners/Enemy/EnemyCharacter.h"
 #include "RelicRunners/Enemy/EnemyCharacterAI.h"
 
