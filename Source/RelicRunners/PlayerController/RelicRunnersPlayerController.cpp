@@ -385,7 +385,8 @@ void ARelicRunnersPlayerController::BeginPlay()
 
 	if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
 	{
-		GI->ApplyKeybindings();
+		FTimerHandle DelayHandle;
+		GetWorldTimerManager().SetTimer(DelayHandle, [this, GI]() { GI->ApplyKeybindings(); }, 0.2f, false);
 		Server_SetPlayerName(GI->GetCharacterName());
 		UE_LOG(LogTemp, Log, TEXT("BeginPlay: Sent server player name: %s"), *GI->GetCharacterName());
 	}

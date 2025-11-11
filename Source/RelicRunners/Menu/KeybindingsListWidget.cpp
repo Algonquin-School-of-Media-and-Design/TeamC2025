@@ -11,11 +11,7 @@ void UKeybindingsListWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (!B_BindButton)
-    {
-        UE_LOG(LogTemp, Error, TEXT("B_BindButton is NULL in %s"), *GetName());
-        return;
-    }
+    if (!B_BindButton) return;
 
     B_BindButton->OnClicked.AddDynamic(this, &UKeybindingsListWidget::OnBindButtonClicked);
 }
@@ -40,7 +36,7 @@ void UKeybindingsListWidget::Setup(UKeybindingsListData* InData)
     if (KeybindData)
     {
         TB_Name->SetText(FText::FromString(KeybindData->Name));
-        TB_Bind->SetText(FText::FromString(KeybindData->Keybind.GetFName().ToString()));
+        TB_Bind->SetText(FText::FromString(KeybindData->ReadableBind));
     }
 }
 
@@ -49,7 +45,7 @@ void UKeybindingsListWidget::OnBindButtonClicked()
     USettingsWidget* Settings = Cast<USettingsWidget>(GetTypedOuter(USettingsWidget::StaticClass()));
     if (Settings)
     {
-        Settings->StartRebinding(this); // tells parent to start listening
+        Settings->StartRebinding(this);
     }
 
     if (TB_Bind)
@@ -66,9 +62,6 @@ void UKeybindingsListWidget::RefreshVisual()
     if (!KeybindData || !TB_Bind)
         return;
 
-    // Set displayed text
-    FText DisplayText = KeybindData->Keybind.IsValid() ?
-        FText::FromName(KeybindData->Keybind.GetFName()) :
-        FText::FromString(TEXT("None"));
+    FText DisplayText = KeybindData->Keybind.IsValid() ? FText::FromString(KeybindData->ReadableBind) : FText::FromString(TEXT("None"));
     TB_Bind->SetText(DisplayText);
 }

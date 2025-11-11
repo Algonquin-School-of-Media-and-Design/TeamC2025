@@ -16,6 +16,7 @@
 #include <InputMappingContext.h>
 #include <EnhancedInputSubsystems.h>
 #include <RelicRunners/Menu/KeybindingsListData.h>
+#include <RelicRunners/AbilitySystem/AbilityPointCounter.h>
 
 void URelicRunnersGameInstance::Init()
 {
@@ -54,8 +55,7 @@ void URelicRunnersGameInstance::ApplyKeybindings()
 
     UInputMappingContext* MappingContext = DuplicateObject<UInputMappingContext>(OldMappingContext, this);
 
-    UEnhancedInputLocalPlayerSubsystem* Subsystem =
-        ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+    UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
     if (!Subsystem) return;
 
     Subsystem->RemoveMappingContext(OldMappingContext);
@@ -75,7 +75,6 @@ void URelicRunnersGameInstance::ApplyKeybindings()
 
     for (auto& Binding : Keys->KeyBinds)
     {
-        // Build action asset name (your naming convention)
         FString ActionAssetName = FString::Printf(TEXT("IA_%s"), *Binding.Name.Replace(TEXT(" "), TEXT("")));
         FString AssetPath = FString::Printf(TEXT("/Game/ThirdPerson/Input/Actions/%s.%s"), *ActionAssetName, *ActionAssetName);
 
@@ -86,11 +85,9 @@ void URelicRunnersGameInstance::ApplyKeybindings()
             continue;
         }
 
-        // Map key for the action on the mapping context
-        // MapKey usually exists as a convenience wrapper exposed in the API you used earlier
         MappingContext->MapKey(FoundAction, Binding.Bind);
 
-        UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: mapped action %s -> key %s"), *Binding.Name, *Binding.Bind.GetFName().ToString());
+        UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: %s -> key %s"), *Binding.Name, *Binding.ReadableBind);
     }
 
     Subsystem->AddMappingContext(MappingContext, 0);

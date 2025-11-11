@@ -27,6 +27,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* QuitButton = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pause Menu")
+	TSubclassOf<class USettingsWidget> SettingsWidgetClass;
+
+	UPROPERTY()
+	class USettingsWidget* SettingsWidget;
+
 protected:
 	virtual void NativeConstruct() override;
 

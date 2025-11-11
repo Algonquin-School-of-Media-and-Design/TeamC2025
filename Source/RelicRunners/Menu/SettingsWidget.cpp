@@ -26,6 +26,8 @@ void USettingsWidget::NativeConstruct()
 	{
 		B_RestoreDefaults->OnClicked.AddDynamic(this, &USettingsWidget::OnRestoreDefaultsClicked);
 	}
+
+	InitializeDefaultKeybindings();
 }
 
 void USettingsWidget::OnRestoreDefaultsClicked()
@@ -74,31 +76,38 @@ FReply USettingsWidget::HandleKeyBindPressed(FKey PressedKey)
 	if (!Data)
 		return FReply::Handled();
 
+	// Prevent duplicate keys
 	for (UKeybindingsListData* Binding : DefaultKeybindings)
 	{
 		if (Binding != Data && Binding->Keybind == PressedKey)
 		{
 			Binding->Keybind = EKeys::Invalid;
+			Binding->ReadableBind = TEXT("None");
 		}
 	}
 
 	Data->Keybind = PressedKey;
+	Data->ReadableBind = GetReadableKeyName(PressedKey);
 
-	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
-	if (GI)
+	if (URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance()))
 	{
 		if (UKeybinds* Keys = GI->Keys)
 		{
 			for (auto& Bind : Keys->KeyBinds)
 			{
 				if (Bind.Name != Data->Name && Bind.Bind == PressedKey)
+				{
 					Bind.Bind = EKeys::Invalid;
+				}
 
 				if (Bind.Name == Data->Name)
+				{
 					Bind.Bind = PressedKey;
+				}
 			}
 		}
 	}
+
 	UpdateBinds();
 
 	for (UKeybindingsListData* Binding : DefaultKeybindings)
@@ -140,7 +149,14 @@ void USettingsWidget::InitializeDefaultKeybindings()
 {
 	DefaultKeybindings.Empty();
 
-	auto AddBinding = [&](const FString& ActionName, const FKey& Key) { UKeybindingsListData* NewEntry = NewObject<UKeybindingsListData>(this); NewEntry->Name = ActionName; NewEntry->Keybind = Key; DefaultKeybindings.Add(NewEntry); };
+	auto AddBinding = [&](const FString& ActionName, const FKey& Key) 
+	{ 
+		UKeybindingsListData* NewEntry = NewObject<UKeybindingsListData>(this); 
+		NewEntry->Name = ActionName; 
+		NewEntry->Keybind = Key; 
+		NewEntry->ReadableBind = GetReadableKeyName(Key);  
+		DefaultKeybindings.Add(NewEntry); 
+	};
 
 	URelicRunnersGameInstance* GI = Cast<URelicRunnersGameInstance>(GetGameInstance());
 	if (!GI) return;

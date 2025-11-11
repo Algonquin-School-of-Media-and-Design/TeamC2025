@@ -38,6 +38,18 @@ protected:
     UTextBlock* TB_UltimateCooldown;
 
     UPROPERTY(meta = (BindWidget))
+    UTextBlock* TB_DamageAbility;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* TB_DefenceAbility;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* TB_UtilityAbility;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* TB_UltimateAbility;
+
+    UPROPERTY(meta = (BindWidget))
     UTextBlock* TB_AbilityPoints;
 
 public:
@@ -45,6 +57,8 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void UpdateHUD(int AbilityPoints);
+
+    void UpdateBindText();
 
     void RunCooldown(UTextBlock* CooldownText, float& RemainingTime, FTimerHandle& TimerHandle, float CooldownTime);
 
