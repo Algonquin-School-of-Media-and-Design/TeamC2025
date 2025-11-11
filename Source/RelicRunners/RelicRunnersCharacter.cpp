@@ -709,8 +709,6 @@ void ARelicRunnersCharacter::TraceForInteractables()
 	const float MaxDistance = 800.f;
 	const float MinFacingDot = 0.f; // 1 = perfectly facing, 0 = 90 degrees off
 
-	DrawDebugLine(GetWorld(),PlayerLocation, PlayerLocation + (PlayerForward * MaxDistance), FColor::Blue);
-
 	for (TActorIterator<AItemActor> It(GetWorld()); It; ++It)
 	{
 		AItemActor* Item = *It;

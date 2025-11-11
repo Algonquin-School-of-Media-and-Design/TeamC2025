@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "../RelicRunnersGameState.h"
 #include "LevelGenerator.generated.h"
 
 enum class EObjectiveType : uint8;
@@ -61,7 +62,10 @@ struct FSFloorObstacleByTexture
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(EditAnywhere,meta = (ClampMin = "0", UIMin = "0", ClampMax = "3", UIMax = "3"))
+	UPROPERTY(EditAnywhere)
+	bool IsRandomYaw = false;
+
+	UPROPERTY(EditAnywhere,meta = (EditCondition = "!IsRandomYaw",ClampMin = "0", UIMin = "0", ClampMax = "3", UIMax = "3"))
 	int ObstacleYaw = 0;
 
 	UPROPERTY(EditAnywhere)
@@ -80,65 +84,68 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class USceneComponent* Origin;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle");
-	TArray <TSubclassOf<class APackedLevelActor>> PackedLevelArray;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenerationValues | Values", meta = (Bitmask, BitmaskEnum = EObjectiveType))
+	int ObjectiveType;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle");
-	TSubclassOf<class APackedLevelActor> LevelStartPackedLevel;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle");
-	TSubclassOf<class APackedLevelActor> LevelEndPackedLevel;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Obstacle| Key Tiles");
-	TSubclassOf<class APackedLevelActor> CapturableFlagPackedLevel;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
-	class UStaticMeshComponent* FullPiece;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
-	class UStaticMeshComponent* SidePiece;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
-	class UStaticMeshComponent* ConcaveCornerPiece;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Modular Floor")
-	class UStaticMeshComponent* ConvexCornerPiece;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | NonRandomized Floor", meta = (ToolTip = "If not nothing, level generation will place tiles based on position and colour of each pixel in the texture."))
-	class UTexture2D* LevelTexture;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | NonRandomized Floor", meta = (ToolTip = "If there are any specific modular pieces needed on a specific tile, define the colour and what spawns on top of every instance of that colour. Note: All non-white pixels in texture will have a floor set to that tile even if the specific colour isn't specified to have a modular piece."))
-	TMap <FColor, FSFloorObstacleByTexture> TileColourToPackedActor;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values")
-	EObjectiveType ObjectiveType;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
-	int SpawnWidth;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
-	int SpawnDepth;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
-	float FullPercentage;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
-	float BasicObstaclePercentage;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
-	int CenterForceFull;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
-	int BorderForceFull;
-
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000"))
 	float TileScale;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000"))
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values")
+	bool GenerationIsRandom;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "!GenerationIsRandom", ToolTip = "If not nothing, level generation will place tiles based on position and colour of each pixel in the texture."))
+	class UTexture2D* LevelTexture;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "!GenerationIsRandom", ToolTip = "If there are any specific modular pieces needed on a specific tile, define the colour and what spawns on top of every instance of that colour. Note: All non-white pixels in texture will have a floor set to that tile even if the specific colour isn't specified to have a modular piece."))
+	TMap <FColor, FSFloorObstacleByTexture> TileColourToPackedActor;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
+	int SpawnWidth;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
+	int SpawnDepth;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	float FullPercentage;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	float BasicObstaclePercentage;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	int CenterForceFull;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100"))
+	int BorderForceFull;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000"))
 	int MaxKeyTileAmount;
 
-	UPROPERTY(EditAnywhere, Category = "SpawningValues | Values", meta = (ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000"))
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000"))
 	int MaxShopAmount;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle");
+	TArray <TSubclassOf<class APackedLevelActor>> PackedLevelArray;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle");
+	TSubclassOf<class APackedLevelActor> LevelStartPackedLevel;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle");
+	TSubclassOf<class APackedLevelActor> LevelEndPackedLevel;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle| Key Tiles");
+	TArray<TSubclassOf<class APackedLevelActor>> CapturableFlagPackedLevel;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Floor")
+	class UStaticMeshComponent* FullPiece;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Floor")
+	class UStaticMeshComponent* SidePiece;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Floor")
+	class UStaticMeshComponent* ConcaveCornerPiece;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Floor")
+	class UStaticMeshComponent* ConvexCornerPiece;
 
 protected:
 

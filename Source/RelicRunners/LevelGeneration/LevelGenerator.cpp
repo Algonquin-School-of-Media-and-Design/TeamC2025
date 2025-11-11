@@ -16,24 +16,24 @@ Teleport every player to the starting point when the level starts
 */
 
 ALevelGenerator::ALevelGenerator() :
-	LevelStartPackedLevel(nullptr),
-	LevelEndPackedLevel(nullptr),
-	CapturableFlagPackedLevel(nullptr),
-	FullPiece(nullptr),
-	SidePiece(nullptr),
-	ConcaveCornerPiece(nullptr),
-	ConvexCornerPiece(nullptr),
+	ObjectiveType(0),
+	TileScale(1.0f),
+	GenerationIsRandom(true),
 	LevelTexture(nullptr),
-	ObjectiveType(EObjectiveType::None),
 	SpawnWidth(2),
 	SpawnDepth(2),
 	FullPercentage(75.0f),
 	BasicObstaclePercentage(50.0f),
 	CenterForceFull(0),
 	BorderForceFull(0),
-	TileScale(1.0f),
 	MaxKeyTileAmount(1),
-	MaxShopAmount(1)
+	MaxShopAmount(1),
+	LevelStartPackedLevel(nullptr),
+	LevelEndPackedLevel(nullptr),
+	FullPiece(nullptr),
+	SidePiece(nullptr),
+	ConcaveCornerPiece(nullptr),
+	ConvexCornerPiece(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -62,9 +62,14 @@ void ALevelGenerator::PostInitializeComponents()
 
 	if (HasAuthority())
 	{
-		if (LevelTexture && LevelTexture->GetPlatformData())
+		if (LevelTexture && LevelTexture->GetPlatformData() && !GenerationIsRandom)
 		{
-			LevelTexture->CompressionSettings = TC_VectorDisplacementmap;
+			if (LevelTexture->CompressionSettings != TC_VectorDisplacementmap)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 30.0f, FColor::Red, FString::Printf(TEXT
+				("Warning!! Texture uses incompatible Compression Setting. Go into the texture's setting, find the *Compression Settings* option and set it to *VectorDisplacementMap.*")));
+				return;
+			}
 			FTexture2DMipMap& MipMap = LevelTexture->GetPlatformData()->Mips[0];
 			void* Data = MipMap.BulkData.Lock(LOCK_READ_ONLY);
 
@@ -170,13 +175,29 @@ void ALevelGenerator::PostInitializeComponents()
 
 			CreateFloor();
 
-			ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
-
-			if (gameState)
-			{
-				gameState->Multicast_SetObjectiveType(ObjectiveType);
-			}
 		}
+		ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
+
+		if (gameState)
+		{
+			gameState->Multicast_SetObjectiveType(ObjectiveType);
+		}
+	}
+
+	TArray<FString> enumName;
+
+	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::CaptureTheFlag))
+		enumName.Add(TEXT("Capture the Flag"));
+	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DefeatAllEnemies))
+		enumName.Add(TEXT("Defeat all anemies"));
+	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DefendTheCrystal))
+		enumName.Add(TEXT("Defend the crystal"));
+	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DeliverPackage))
+		enumName.Add(TEXT("Deliver package"));
+
+	for (FString& value : enumName)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Current Objective:")) + value);
 	}
 }
 
@@ -187,7 +208,6 @@ void ALevelGenerator::BeginPlay()
 	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	if (NavSys)
 	{
-
 		NavSys->Build();
 	}
 }
@@ -708,14 +728,17 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 		}
 		break;
 	case EFloorObstacle::KeyTile:
-		switch (ObjectiveType)
+		if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::CaptureTheFlag))
 		{
-		case EObjectiveType::CaptureTheFlag:
-			if (CapturableFlagPackedLevel != nullptr)
+			if (!CapturableFlagPackedLevel.IsEmpty())
 			{
-				APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(CapturableFlagPackedLevel, posOffset, FRotator(0.0f, yaw, 0.0f));
+				int randIndex = FMath::RandRange(0, CapturableFlagPackedLevel.Num() - 1);
+
+				if (CapturableFlagPackedLevel[randIndex] != nullptr)
+				{
+					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(CapturableFlagPackedLevel[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
+				}
 			}
-			break;
 		}
 		break;
 	case EFloorObstacle::Shop:
@@ -742,11 +765,16 @@ void ALevelGenerator::Server_SpawnFloorObstaclesByColour_Implementation(int x, i
 
 void ALevelGenerator::SpawnFloorObstaclesByColour(int x, int y, int width, FColor colour)
 {
-	FVector posOffset = FVector((TileScale * x * 4) + TileScale, (TileScale * y * 4) + TileScale, TileScale);
-
 	if (TileColourToPackedActor.Find(colour) != nullptr)
 	{
-		APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(TileColourToPackedActor.Find(colour)->ObstacleActor, posOffset, FRotator(0.0f, TileColourToPackedActor.Find(colour)->ObstacleYaw * 90, 0.0f));
+		FVector posOffset = FVector((TileScale * x * 4) + TileScale, (TileScale * y * 4) + TileScale, TileScale);
+		float obstacleYaw = TileColourToPackedActor.Find(colour)->IsRandomYaw ?
+			//True
+			FMath::RandRange(0, 3) * 90 :
+			//False
+			TileColourToPackedActor.Find(colour)->ObstacleYaw * 90;
+
+		APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(TileColourToPackedActor.Find(colour)->ObstacleActor, posOffset, FRotator(0.0f, obstacleYaw, 0.0f));
 	}
 }
 

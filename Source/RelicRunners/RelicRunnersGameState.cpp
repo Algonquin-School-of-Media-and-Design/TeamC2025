@@ -11,14 +11,9 @@ ARelicRunnersGameState::ARelicRunnersGameState()
 
 bool ARelicRunnersGameState::InitializeTriggerState()
 {
-    switch (ObjectiveType)
+    if (ObjectiveType == 0)
     {
-    case EObjectiveType::None:
         return true;
-        break;
-    case EObjectiveType::CaptureTheFlag:
-        return false;
-        break;
     }
     return false;
 }
@@ -27,13 +22,24 @@ void ARelicRunnersGameState::Multicast_SetObjectiveType_Implementation(EObjectiv
 {
     if (HasAuthority())
     {
+        ObjectiveType = static_cast<uint8>(newType);
+
+        if (ObjectiveType == 0)
+        {
+            Multicast_DecrementObjective();
+        }
+    }
+}
+
+void ARelicRunnersGameState::Multicast_SetObjectiveType(int newType)
+{
+    if (HasAuthority())
+    {
         ObjectiveType = newType;
 
-        switch (ObjectiveType)
+        if (ObjectiveType == 0)
         {
-        case EObjectiveType::None:
             Multicast_DecrementObjective();
-            break;
         }
     }
 }
@@ -43,6 +49,7 @@ void ARelicRunnersGameState::Multicast_IncrementObjective_Implementation()
     if (HasAuthority())
     {
         RemainingObjectives++;
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max objectives: %i"), RemainingObjectives));
     }
 }
 
@@ -50,12 +57,9 @@ void ARelicRunnersGameState::Multicast_DecrementObjective_Implementation()
 {
     RemainingObjectives--;
 
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining objectives: %i"), RemainingObjectives));
-
     if (RemainingObjectives <= 0)
     {
         OnObjectiveActionCompleted.Broadcast();
-        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Objective has been reached!")));
     }
 }
 
