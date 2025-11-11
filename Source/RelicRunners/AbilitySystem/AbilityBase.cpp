@@ -1,21 +1,46 @@
 #include "AbilityBase.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
+#include "GameplayTagContainer.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "DrawDebugHelpers.h"
 
-AAbilityBase::AAbilityBase()
+UAbilityBase::UAbilityBase()
 {
-    bIsOnCooldown = false;
-    bCanBeInterrupted = true;
-    Cooldown = 0.f;
-    Duration = 0.f;
-    DamageAmount = 0.f;
-    AreaRadius = 0.f;
-    ConeAngle = 0.f;
-    AbilityName = NAME_None;
-    AbilityCategory = EAbilityCategory::None;
-    TargetType = EAbilityTargetType::None;
-    OwnerActor = nullptr;
+
+    InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+
+    Cooldown = 0;
+    Duration = 0;
+    DamageAmount = 0;
+    AreaRadius = 0;
+    ConeAngle = 0;
+    AbilityName = FName("BaseAbility");
 }
 
-void AAbilityBase::ActivateAbility() {}
-void AAbilityBase::EndAbility() {}
-bool AAbilityBase::CanActivate() const { return true; }
-FName AAbilityBase::GetAbilityName() const { return AbilityName; }
+void UAbilityBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+    
+    if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+    {
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+
+        return;
+    }
+
+    AActor* OwnerActor = GetAvatarActorFromActorInfo();
+    if (!OwnerActor)
+    {
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+
+        return;
+    }
+}
+
+void UAbilityBase::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,const FGameplayAbilityActivationInfo ActivationInfo,bool bReplicateEndAbility, bool bWasCancelled)
+{
+   
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+}

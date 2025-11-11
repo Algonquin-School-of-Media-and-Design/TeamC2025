@@ -389,27 +389,6 @@ protected:
 	float UltimateCooldown;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<class AAbilityBase> DamageClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> DefenceClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> UtilityClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> UltimateClass;
-
-	UPROPERTY()
-	class AAbilityBase* DamageAbilityInstance;
-	UPROPERTY()
-	class AAbilityBase* DefenceAbilityInstance;
-	UPROPERTY()
-	class AAbilityBase* UtilityAbilityInstance;
-	UPROPERTY()
-	class AAbilityBase* UltimateAbilityInstance;
-
 
 	bool IsWarBannerActive = false;
 

@@ -49,59 +49,41 @@ void AArtemisCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
 
-	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+	if (AbilitySystem)
+	{
+		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+	}
 }
 
 void AArtemisCharacter::GiveDefenceAbilities()
 {
 	Super::GiveDefenceAbilities();
 
-	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+	if (AbilitySystem)
+	{
+		AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+	}
 }
 
 void AArtemisCharacter::GiveUtilityAbilities()
 {
 	Super::GiveUtilityAbilities();
 
-	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+	if (AbilitySystem)
+	{
+		AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+	}
 }
 
 void AArtemisCharacter::GiveUltimateAbilities()
 {
 	Super::GiveUltimateAbilities();
 
-	if (!UltimateClass)
+	if (AbilitySystem)
 	{
-		UltimateClass = AMoonbeam::StaticClass();
+		AbilitySystem->GiveAbility(FGameplayAbilitySpec(UMoonbeam::StaticClass(), 1, 0));
+		AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 	}
-
-	if (UltimateClass)
-	{
-		FActorSpawnParameters Params;
-		Params.Owner = this;
-		Params.Instigator = this;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-		UltimateAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(
-			UltimateClass,
-			GetActorLocation(),
-			GetActorRotation(),
-			Params
-		);
-
-		if (UltimateAbilityInstance)
-		{
-			UltimateAbilityInstance->SetAbilityOwner(this);
-		}
-	}
-
-	if (UltimateAbilityInstance)
-	{
-		if (UltimateAbilityInstance->CanActivate())
-		{
-			UltimateAbilityInstance->ActivateAbility();
-		}
-	}
-	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+	
 }
 

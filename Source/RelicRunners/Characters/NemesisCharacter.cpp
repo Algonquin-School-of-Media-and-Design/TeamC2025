@@ -46,63 +46,44 @@ void ANemesisCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
 
-    AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+	if (AbilitySystem)
+	{
+        AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+	}
 }
 
 void ANemesisCharacter::GiveDefenceAbilities()
 {
 	Super::GiveDefenceAbilities();
 
-    if (!DefenceClass)
+    if (AbilitySystem)
     {
-        DefenceClass = AImpunityAbility::StaticClass();
+        AbilitySystem->GiveAbility(FGameplayAbilitySpec(UImpunityAbility::StaticClass(), 1, 0));
+        AbilitySystem->TryActivateAbilityByClass(UImpunityAbility::StaticClass());
+        AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
     }
-
-    if (DefenceClass)
-    {
-        DefenceAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DefenceClass);
-        if (DefenceAbilityInstance)
-        {
-            DefenceAbilityInstance->OwnerActor = this;
-        }
-    }
-
-    if (DefenceAbilityInstance)
-    {
-        DefenceAbilityInstance->ActivateAbility();
-    }
-
-    AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 }
 
 void ANemesisCharacter::GiveUtilityAbilities()
 {
 	Super::GiveUtilityAbilities();
 
-    UtilityClass = AVengefulDance::StaticClass();
-    
     if (AbilitySystem)
     {
-        AbilitySystem->GiveAbility(FGameplayAbilitySpec(AVengefulDance::StaticClass(), 1, 0));
-
-        if (UtilityClass)
-        {
-            UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityClass);
-            if (UtilityAbilityInstance)
-            {
-                UtilityAbilityInstance->OwnerActor = this;
-                UtilityAbilityInstance->ActivateAbility();
-            }
-        }
-	}
-
-    AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+        AbilitySystem->GiveAbility(FGameplayAbilitySpec(UVengefulDance::StaticClass(), 1, 0));
+        AbilitySystem->TryActivateAbilityByClass(UVengefulDance::StaticClass());
+        AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+    }
 }
 
 void ANemesisCharacter::GiveUltimateAbilities()
 {
 	Super::GiveUltimateAbilities();
 
-    AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+	if (AbilitySystem)
+	{
+        AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+	}
+    
 }
 

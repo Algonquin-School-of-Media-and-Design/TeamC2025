@@ -1,40 +1,33 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "RelicRunners/AbilitySystem/AbilityBase.h"
 #include "WarBannerAbility.generated.h"
 
-/**
- * 
- */
 UCLASS()
-class RELICRUNNERS_API AWarBannerAbility : public AAbilityBase
+class RELICRUNNERS_API UWarBannerAbility : public UAbilityBase
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
-	AWarBannerAbility();
+    UWarBannerAbility();
 
-	UFUNCTION(Server, Reliable)
-	void Server_Initialize(AActor* newOwner);
+    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+    virtual FName GetAbilityName() const override { return FName("War Banner"); }
 
-	virtual void ActivateAbility() override;
-	virtual void EndAbility() override;
-	virtual bool CanActivate() const override;
-	virtual FName GetAbilityName() const override;
+protected:
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WarBanner")
+    //TSubclassOf<class AWarBanner> WarBannerTemplate;
 
-	void CancelAbility();
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "WarBanner")
+    class UStaticMeshComponent* BannerSilhouetteMesh;
 
-	UFUNCTION(Server, Reliable)
-	void Server_SpawnBanner();
+private:
+    FTimerHandle BannerDurationTimer;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	class UStaticMeshComponent* BannerSilhouetteMesh;
+    //UPROPERTY()
+    //class AWarBanner* WarBanner;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AWarBanner> WarBannerTemplate;
-
-	class AWarBanner* WarBanner;
+    void SpawnBanner(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo);
 };

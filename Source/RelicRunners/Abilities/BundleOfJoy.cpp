@@ -4,14 +4,10 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Engine/World.h"
 
-ABundleOfJoy::ABundleOfJoy()
+UBundleOfJoy::UBundleOfJoy()
 {
-    PrimaryActorTick.bCanEverTick = true;
-
-    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
     AttractionRadius = 600.f;
     ExplosionRadius = 400.f;
@@ -19,109 +15,111 @@ ABundleOfJoy::ABundleOfJoy()
     DamageAmount = 100.f;
     Duration = 3.f;
 }
-
-void ABundleOfJoy::BeginPlay()
+void UBundleOfJoy::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-    Super::BeginPlay();
-}
-
-void ABundleOfJoy::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-
-    if (bIsActive)
+    if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) // Try to commit the ability
     {
-        FVector Center = GetActorLocation();
-
-        DrawDebugSphere(GetWorld(), Center, 50.f, 16, FColor::Red, false, -1.f, 0, 5.f);
-        DrawDebugCircle(GetWorld(), Center, AttractionRadius, 32, FColor::Purple, false, -1.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-
-        Attract();
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true); // If commit fails, end the ability 
+        return; // Exit early
     }
-}
 
-bool ABundleOfJoy::CanActivate() const
-{
-    return !bIsOnCooldown && !bIsActive;
-}
-
-void ABundleOfJoy::ActivateAbility()
-{
-    if (!CanActivate())
-        return;
-
-    bIsActive = true;
-
-    GetWorld()->GetTimerManager().SetTimer(ExplosionTimer, this, &ABundleOfJoy::Explode, Duration, false);
-}
-
-void ABundleOfJoy::Attract()
-{
-    if (!bIsActive) return;
-
-    FVector Center = GetActorLocation();
-    UWorld* World = GetWorld();
-    if (!World) return;
-
-    TArray<AActor*> OverlappingActors;
-    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
-
-    UKismetSystemLibrary::SphereOverlapActors(World, Center, AttractionRadius, ObjectTypes, ACharacter::StaticClass(), { OwnerActor }, OverlappingActors);
-
-    for (AActor* Actor : OverlappingActors)
+    AActor* AvatarActor = GetAvatarActorFromActorInfo(); // Get the actor this ability belongs to
+    if (!AvatarActor) // If no valid actor
     {
-        if (!Actor) continue;
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true); // End the ability
+        return; 
+    }
 
-        if (ACharacter* Char = Cast<ACharacter>(Actor))
+    AttractionCenter = AvatarActor->GetActorLocation() + AvatarActor->GetActorForwardVector() * 300.f; // Set spawn point 300 units in front of the actor
+
+    // Start repeatedly calling Attract() every tick
+    AvatarActor->GetWorldTimerManager().SetTimer(AttractTimer, this, &UBundleOfJoy::Attract, 0.016f, true);
+
+    // Set a timer to trigger the explosion after the ability duration
+    AvatarActor->GetWorldTimerManager().SetTimer(ExplosionTimer, FTimerDelegate::CreateUObject(this, &UBundleOfJoy::Explode), Duration, false);
+
+}
+
+
+void UBundleOfJoy::Attract()
+{
+    AActor* AvatarActor = GetAvatarActorFromActorInfo(); // Get the actor this ability belongs to
+    if (!AvatarActor) return; // Exit if no valid actor
+
+    UWorld* World = AvatarActor->GetWorld(); // Get the world the actor is in
+    if (!World) return; // Exit if no world
+
+    FVector Center = AttractionCenter; // Set the attraction center 
+
+    DrawDebugCircle(World, Center, AttractionRadius, 32, FColor::Purple, false, 0.1f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false); // Draw the debug circle showing the attraction radius
+
+    TArray<AActor*> OverlappingActors; // Array to store actors within the radius
+    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)); // Only check for pawns
+
+    UKismetSystemLibrary::SphereOverlapActors(World, Center, AttractionRadius, ObjectTypes, ACharacter::StaticClass(), { AvatarActor }, OverlappingActors); // Find all characters within the radius
+
+    for (AActor* Actor : OverlappingActors) // Loop through overlapping actors
+    {
+        if (!Actor) continue; // Skip null actors
+        if (ACharacter* Char = Cast<ACharacter>(Actor)) // Only process characters
         {
-            FVector Dir = (Center - Char->GetActorLocation());
-            Dir.Z = 0.f; 
-            Dir.Normalize();
+            FVector Dir = (Center - Char->GetActorLocation()); // Direction towards the attraction center
+            Dir.Z = 0.f; // Ignore vertical movement
+            Dir.Normalize(); // Normalize direction
 
-            Char->AddMovementInput(Dir, AttractionStrength * World->GetDeltaSeconds());
+            Char->AddMovementInput(Dir, AttractionStrength * World->GetDeltaSeconds()); // Move character toward center
 
-            FRotator TargetRot = Dir.Rotation();
+            FRotator TargetRot = Dir.Rotation(); // Get rotation to face center
             TargetRot.Pitch = 0.f; 
             TargetRot.Roll = 0.f;
-            Char->SetActorRotation(TargetRot);
+            Char->SetActorRotation(TargetRot); // Rotate character toward center
+
         }
-
     }
+
 }
 
 
-void ABundleOfJoy::Explode()
+void UBundleOfJoy::Explode()
 {
-    if (!bIsActive) return;
+    AActor* AvatarActor = GetAvatarActorFromActorInfo(); // Get the actor this ability belongs to
+    if (!AvatarActor) return; // Exit if no actor
 
-    bIsActive = false;
-    bIsOnCooldown = true;
+    UWorld* World = AvatarActor->GetWorld(); // Get the world the actor is in
+    if (!World) return; // Exit if no world
 
-    FVector Center = GetActorLocation();
-    UWorld* World = GetWorld();
-    if (!World) return;
-
-    TArray<AActor*> OverlappingActors;
+    FVector Center = AttractionCenter; // Set the center for the explosion
+    TArray<AActor*> OverlappingActors; // Array to store actors within explosion radius
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)); // Only check for pawns
 
-    UKismetSystemLibrary::SphereOverlapActors(World, Center, ExplosionRadius, ObjectTypes, ACharacter::StaticClass(), { OwnerActor }, OverlappingActors);
+    // Find all characters within the explosion radius
+    UKismetSystemLibrary::SphereOverlapActors(World, Center, ExplosionRadius, ObjectTypes, ACharacter::StaticClass(), { AvatarActor }, OverlappingActors);
 
-    for (AActor* Actor : OverlappingActors)
+    for (AActor* Actor : OverlappingActors) // Loop through overlapping actors
     {
-        if (!Actor) continue;
-        UGameplayStatics::ApplyDamage(Actor, DamageAmount, nullptr, this, nullptr);
+        if (!Actor) continue; // Skip null actors
+        UGameplayStatics::ApplyDamage(Actor, DamageAmount, nullptr, AvatarActor, nullptr); // Apply damage to each actor
     }
 
-    DrawDebugSphere(World, Center, ExplosionRadius, 32, FColor::Red, false, 2.f);
+    DrawDebugSphere(World, Center, ExplosionRadius, 32, FColor::Red, false, 2.f); // Draw debug sphere for explosion radius
 
-    GetWorld()->GetTimerManager().SetTimer(CooldownTimer, [this]() { bIsOnCooldown = false; }, 5.f, false);
+    // End the ability after explosion
+    EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
 
-    Destroy();
 }
 
-void ABundleOfJoy::EndAbility()
+
+void UBundleOfJoy::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-    Explode();
+    AActor* AvatarActor = GetAvatarActorFromActorInfo();
+    if (AvatarActor)
+    {
+        // Clear timers
+        AvatarActor->GetWorldTimerManager().ClearTimer(AttractTimer);
+        AvatarActor->GetWorldTimerManager().ClearTimer(ExplosionTimer);
+    }
+
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

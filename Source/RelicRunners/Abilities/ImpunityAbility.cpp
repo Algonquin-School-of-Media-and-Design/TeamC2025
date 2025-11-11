@@ -1,77 +1,53 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ImpunityAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "TimerManager.h"
 
-AImpunityAbility::AImpunityAbility()
+UImpunityAbility::UImpunityAbility()
 {
     Duration = 5.0f;
     Cooldown = 8.0f;
-
-    PrimaryActorTick.bCanEverTick = false;
 }
 
-void AImpunityAbility::BeginPlay()
+void UImpunityAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-    Super::BeginPlay();
-}
-
-bool AImpunityAbility::CanActivate() const
-{
-    return !bIsOnCooldown && !bIsActive;
-}
-
-void AImpunityAbility::ActivateAbility()
-{
-    if (!CanActivate() || !OwnerActor)
-        return;
-
-    ACharacter* PlayerChar = Cast<ACharacter>(OwnerActor);
-    if (!PlayerChar)
-        return;
-
-    UCharacterMovementComponent* MoveComp = PlayerChar->GetCharacterMovement();
-    if (!MoveComp)
-        return;
-
-    bIsActive = true;
-
-    OriginalSpeed = MoveComp->MaxWalkSpeed;
-    MoveComp->MaxWalkSpeed *= 1.75f;  // Increase speed by 75%
-
-    GetWorld()->GetTimerManager().SetTimer(SpeedResetTimer, this, &AImpunityAbility::ResetSpeed, Duration, false);
-}
-
-void AImpunityAbility::ResetSpeed()
-{
-    if (!OwnerActor)
-        return;
-
-    ACharacter* PlayerChar = Cast<ACharacter>(OwnerActor);
-    if (PlayerChar)
+    if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
     {
-        UCharacterMovementComponent* MoveComp = PlayerChar->GetCharacterMovement();
-        if (MoveComp)
-        {
-            MoveComp->MaxWalkSpeed = OriginalSpeed;
-        }
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+        return;
     }
 
-    EndAbility();
+    ACharacter* AvatarChar = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+    if (!AvatarChar)
+    {
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+        return;
+    }
+
+    bIsActive = true;
+    OriginalSpeed = AvatarChar->GetCharacterMovement()->MaxWalkSpeed;
+    AvatarChar->GetCharacterMovement()->MaxWalkSpeed *= 1.75f;
+    AvatarChar->GetWorldTimerManager().SetTimer(SpeedResetTimer, FTimerDelegate::CreateUObject(this, &UImpunityAbility::EndAbility, Handle, ActorInfo, ActivationInfo, true, false), Duration, false);
 }
 
-void AImpunityAbility::EndAbility()
+void UImpunityAbility::ResetSpeed()
 {
-    Super::EndAbility();
+    ACharacter* AvatarChar = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+    if (AvatarChar)
+    {
+        AvatarChar->GetCharacterMovement()->MaxWalkSpeed = OriginalSpeed;
+    }
+}
 
+void UImpunityAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+    ResetSpeed();
     bIsActive = false;
     bIsOnCooldown = true;
-
-    GetWorld()->GetTimerManager().SetTimer(CooldownTimer, [this]()
-        {
-            bIsOnCooldown = false;
-        }, Cooldown, false);
+    ACharacter* AvatarChar = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+    if (AvatarChar)
+    {
+        AvatarChar->GetWorldTimerManager().SetTimer(CooldownTimer, [this]() { bIsOnCooldown = false; }, Cooldown, false);
+    }
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

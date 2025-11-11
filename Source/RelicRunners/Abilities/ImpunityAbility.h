@@ -10,26 +10,28 @@
  * 
  */
 UCLASS()
-class RELICRUNNERS_API AImpunityAbility : public AAbilityBase
+class RELICRUNNERS_API UImpunityAbility : public UAbilityBase
 {
     GENERATED_BODY()
 
 public:
-    AImpunityAbility();
+    UImpunityAbility();
 
-    virtual void ActivateAbility() override;
-    virtual void EndAbility() override;
-    virtual bool CanActivate() const override;
+    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+
+    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+
     virtual FName GetAbilityName() const override { return FName("Impunity"); }
-    float GetDamageReductionMultiplier() const { return bIsActive ? 0.5f : 1.0f; } // 50% reduction when active 
 
-protected:
-    virtual void BeginPlay() override;
+    float GetDamageReductionMultiplier() const { return bIsActive ? 0.5f : 1.0f; }
 
 private:
-    void ResetSpeed();
+    float OriginalSpeed;
 
     FTimerHandle SpeedResetTimer;
+    FTimerHandle CooldownTimer;
 
-    float OriginalSpeed;
+    bool bIsOnCooldown = false;
+
+    void ResetSpeed();
 };

@@ -49,33 +49,22 @@ void AAresCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
 
-	if (!DamageClass)
+	if (AbilitySystem)
 	{
-		DamageClass = AEarthquakeAbility::StaticClass();
+		AbilitySystem->GiveAbility(FGameplayAbilitySpec(UEarthquakeAbility::StaticClass(), 1, 0));
+		AbilitySystem->TryActivateAbilityByClass(UEarthquakeAbility::StaticClass());
+		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 	}
-
-	if (DamageClass)
-	{
-		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageClass);
-		if (DamageAbilityInstance)
-		{
-			DamageAbilityInstance->OwnerActor = this;
-		}
-	}
-
-	if (DamageAbilityInstance)
-	{
-		DamageAbilityInstance->ActivateAbility();
-	}
-
-	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 }
 
 void AAresCharacter::GiveDefenceAbilities()
 {
 	Super::GiveDefenceAbilities();
 
-	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+	if (AbilitySystem)
+	{
+		AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+	}
 }
 
 void AAresCharacter::GiveUtilityAbilities()
@@ -130,14 +119,20 @@ void AAresCharacter::GiveUtilityAbilities()
 	//	WarBannerAbility->Server_Initialize(this);
 	//}
 
-	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+	if (AbilitySystem)
+	{
+		AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+	}
 }
 
 void AAresCharacter::GiveUltimateAbilities()
 {
 	Super::GiveUltimateAbilities();
 
-	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+	if (AbilitySystem)
+	{
+		AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+	}
 }
 
 

@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,37 +5,34 @@
 #include "BundleOfJoy.generated.h"
 
 UCLASS()
-class RELICRUNNERS_API ABundleOfJoy : public AAbilityBase
+class RELICRUNNERS_API UBundleOfJoy : public UAbilityBase
 {
-	GENERATED_BODY()
-	
-public:	
+    GENERATED_BODY()
 
-	ABundleOfJoy();
-	virtual void ActivateAbility() override;
-	virtual void EndAbility() override;
-	virtual bool CanActivate() const override;
-	virtual FName GetAbilityName() const override { return FName("Bundle Of Joy"); }
+public:
+    UBundleOfJoy();
 
-    virtual void Tick(float DeltaTime) override;
+    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+    virtual FName GetAbilityName() const override { return FName("Bundle Of Joy"); }
 
-    void Explode();
-    void Attract();
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BundleOfJoy")
+    float AttractionRadius = 500.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BundleOfJoy")
-    float AttractionRadius;
+    float ExplosionRadius = 300.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BundleOfJoy")
-    float ExplosionRadius;
+    float AttractionStrength = 800.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BundleOfJoy")
-    float AttractionStrength;
-
+private:
     FTimerHandle ExplosionTimer;
     FTimerHandle AttractTimer;
 
+    UPROPERTY()
+    FVector AttractionCenter;
 
-
-protected:
-    virtual void BeginPlay() override;
+    void Explode();
+    void Attract();
 };

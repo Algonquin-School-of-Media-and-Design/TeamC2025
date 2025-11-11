@@ -5,33 +5,30 @@
 #include "Moonbeam.generated.h"
 
 UCLASS()
-class RELICRUNNERS_API AMoonbeam : public AAbilityBase
+class RELICRUNNERS_API UMoonbeam : public UAbilityBase
 {
     GENERATED_BODY()
 
 public:
-    AMoonbeam();
+    UMoonbeam();
 
-    virtual void ActivateAbility() override;
-    virtual void EndAbility() override;
-    virtual bool CanActivate() const override;
+    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+    virtual FName GetAbilityName() const override { return FName("Moonbeam"); }
 
 protected:
-    // How far the beam goes
     UPROPERTY(EditDefaultsOnly, Category = "Moonbeam")
-    float BeamRange;
+    float BeamRange = 1200.f;
 
-    // Visual thickness for debug 
     UPROPERTY(EditDefaultsOnly, Category = "Moonbeam")
-    float BeamRadius;
+    float BeamRadius = 200.f;
 
-    // How long the debug beam stays visible
     UPROPERTY(EditDefaultsOnly, Category = "Moonbeam")
-    float BeamDuration;
+    float BeamDuration = 3.f;
 
-    // Internal cooldown timer for this ability
+private:
     FTimerHandle CooldownTimerHandle;
+    bool bIsOnCooldown = false;
 
-    void ResetCooldown();
     void SpawnBeamEffect(const FVector& Start, const FVector& End);
 };

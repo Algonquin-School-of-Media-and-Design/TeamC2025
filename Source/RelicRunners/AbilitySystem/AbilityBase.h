@@ -1,8 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "AbilityInterface.h"
+#include "Abilities/GameplayAbility.h"  
 #include "AbilityBase.generated.h"
 
 UENUM(BlueprintType)
@@ -26,48 +25,38 @@ enum class EAbilityTargetType : uint8
 };
 
 UCLASS(Abstract, Blueprintable)
-class RELICRUNNERS_API AAbilityBase : public AActor, public IAbilityInterface
+class RELICRUNNERS_API UAbilityBase : public UGameplayAbility
 {
     GENERATED_BODY()
 
 public:
-    AAbilityBase();
+    UAbilityBase();
 
-    virtual void ActivateAbility() override;
-    virtual void EndAbility() override;
-    virtual bool CanActivate() const override;
-    virtual FName GetAbilityName() const override;
-    
-    UFUNCTION(BlueprintCallable, Category = "Ability|Timing")
-    float GetCooldown() const { return Cooldown; }
+    // Activates the ability, committing it and starting its effects and timers
+    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,const FGameplayAbilityActorInfo* ActorInfo,const FGameplayAbilityActivationInfo ActivationInfo,const FGameplayEventData* TriggerEventData) override;
 
-    UFUNCTION(BlueprintCallable, Category = "Ability|Owner")
-    void SetAbilityOwner(AActor* InOwner) { OwnerActor = InOwner; }
+    // Ends the ability, stops timers, cleans up, and replicates/cancels it
+    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,const FGameplayAbilityActorInfo* ActorInfo,const FGameplayAbilityActivationInfo ActivationInfo,bool bReplicateEndAbility,bool bWasCancelled) override;
+
+    virtual FName GetAbilityName() const { return FName(TEXT("AbilityBase")); }
+
 
 public:
-    UPROPERTY(BlueprintReadWrite, Category = "Ability|State")
-    bool bIsOnCooldown;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|State")
-    bool bCanBeInterrupted;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Config")
+    float Cooldown = 0.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Timing")
-    float Cooldown;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Timing")
-    float Duration;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Config")
+    float Duration = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Combat")
-    float DamageAmount;
+    float DamageAmount = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Combat")
-    float AreaRadius;
+    float AreaRadius = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Combat")
-    float ConeAngle;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability State")
-    bool bIsActive;
+    float ConeAngle = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Info")
     FName AbilityName;
@@ -77,9 +66,5 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Info")
     EAbilityTargetType TargetType;
-
-    FTimerHandle CooldownTimer;
-
-    UPROPERTY(BlueprintReadWrite, Category = "Ability|Owner")
-    AActor* OwnerActor;
 };
+

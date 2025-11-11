@@ -10,42 +10,31 @@
  * 
  */
 UCLASS()
-class RELICRUNNERS_API AEarthquakeAbility : public AAbilityBase
+class RELICRUNNERS_API UEarthquakeAbility : public UAbilityBase
 {
     GENERATED_BODY()
 
-
 public:
-    AEarthquakeAbility();
+    UEarthquakeAbility();
 
-
-    virtual void ActivateAbility() override;
-    virtual void EndAbility() override;
-    virtual bool CanActivate() const override;
+    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
     virtual FName GetAbilityName() const override { return FName("Earthquake"); }
-    virtual void Tick(float DeltaTime) override;
-
 
 protected:
-    virtual void BeginPlay() override;
-
-
-private:
-    void ApplyDamageAndStun();
-
-
-    UPROPERTY(EditDefaultsOnly, Category = "Earthquake")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Earthquake")
     float Radius = 400.0f;
 
-
-    UPROPERTY(EditDefaultsOnly, Category = "Earthquake")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Earthquake")
     float TickRate = 1.0f;
 
-
-    UPROPERTY(EditDefaultsOnly, Category = "Earthquake")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Earthquake")
     float DamagePerTick = 10.0f;
 
-
+private:
     FTimerHandle TickTimerHandle;
     FTimerHandle DurationTimerHandle;
+    bool bIsOnCooldown = false;
+
+    void ApplyDamageAndStun();
 };
