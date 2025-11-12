@@ -20,11 +20,12 @@ void AArtemisCharacter::BeginPlay()
 
 }
 
+// Called when player takes control of this character
 void AArtemisCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-
+	// Get PlayerState and set up ability system
 	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
 	if (PS)
 	{
@@ -33,10 +34,12 @@ void AArtemisCharacter::PossessedBy(AController* NewController)
 	}
 }
 
+// Called when PlayerState is replicated on clients
 void AArtemisCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
+	// Reinitialize ability system
 	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
 	if (PS)
 	{
@@ -44,13 +47,13 @@ void AArtemisCharacter::OnRep_PlayerState()
 		AbilitySystem->InitAbilityActorInfo(PS, this);
 	}
 }
-
 void AArtemisCharacter::GiveDamageAbilities()
 {
 	Super::GiveDamageAbilities();
 
 	if (AbilitySystem)
 	{
+		// Start ability cooldown
 		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 	}
 }
@@ -61,6 +64,7 @@ void AArtemisCharacter::GiveDefenceAbilities()
 
 	if (AbilitySystem)
 	{
+		// Start ability cooldown
 		AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 	}
 }
@@ -71,6 +75,7 @@ void AArtemisCharacter::GiveUtilityAbilities()
 
 	if (AbilitySystem)
 	{
+		// Start ability cooldown
 		AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 	}
 }
@@ -81,7 +86,10 @@ void AArtemisCharacter::GiveUltimateAbilities()
 
 	if (AbilitySystem)
 	{
+		// Give Moonbeam ability
 		AbilitySystem->GiveAbility(FGameplayAbilitySpec(UMoonbeam::StaticClass(), 1, 0));
+
+		// Start ability cooldown
 		AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 	}
 	

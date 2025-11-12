@@ -14,6 +14,7 @@ void AAphroditeCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+	// set cooldown durations
     DamageCooldown = 5.0f;
     DefenceCooldown = 5.0f;
     UtilityCooldown = 5.0f;
@@ -21,10 +22,12 @@ void AAphroditeCharacter::BeginPlay()
 
 }
 
+// Called when player takes control of this character
 void AAphroditeCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
 
+    // Get PlayerState and set up ability system
     ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
     if (PS)
     {
@@ -33,10 +36,12 @@ void AAphroditeCharacter::PossessedBy(AController* NewController)
     }
 }
 
+// Called when PlayerState is replicated on clients
 void AAphroditeCharacter::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
 
+    // Reinitialize ability system
     ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
     if (PS)
     {
@@ -51,8 +56,11 @@ void AAphroditeCharacter::GiveDamageAbilities()
 
     if (AbilitySystem)
     {
-        AbilitySystem->GiveAbility(FGameplayAbilitySpec(UBundleOfJoy::StaticClass(), 1, 0));
+		// Give Bundle of Joy ability 
+        AbilitySystem->GiveAbility(FGameplayAbilitySpec(UBundleOfJoy::StaticClass(), 1, 0));\
+		// Activate Bundle of Joy ability
         AbilitySystem->TryActivateAbilityByClass(UBundleOfJoy::StaticClass());
+		// start ability cooldown
         AbilityPointCounter->StartDamageCooldown(DamageCooldown);
     }
 }
@@ -62,6 +70,7 @@ void AAphroditeCharacter::GiveDefenceAbilities()
 
     if (AbilitySystem)
     {
+		// start ability cooldown
         AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
     }
 }
@@ -72,6 +81,7 @@ void AAphroditeCharacter::GiveUtilityAbilities()
 
     if (AbilitySystem)
     {
+		// start ability cooldown
         AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
     }
 }
@@ -82,6 +92,7 @@ void AAphroditeCharacter::GiveUltimateAbilities()
 
     if (AbilitySystem)
     {
+		// start ability cooldown
         AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
     }
 }

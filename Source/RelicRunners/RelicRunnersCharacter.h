@@ -388,8 +388,6 @@ protected:
 	float UtilityCooldown;
 	float UltimateCooldown;
 
-
-
 	bool IsWarBannerActive = false;
 
 	//Setup
@@ -401,8 +399,6 @@ protected:
 
 	//Ticking
 	void Tick(float DeltaTime);
-
-
 
 	UFUNCTION()
 	void PassiveHealthRegen();

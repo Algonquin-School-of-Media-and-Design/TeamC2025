@@ -13,24 +13,27 @@ void UAbilitySelection::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    // Bind upgrade button clicks
     B_Upgrade1->OnClicked.AddDynamic(this, &UAbilitySelection::Upgrade1Clicked);
     B_Upgrade2->OnClicked.AddDynamic(this, &UAbilitySelection::Upgrade2Clicked);
     B_Upgrade3->OnClicked.AddDynamic(this, &UAbilitySelection::Upgrade3Clicked);
     B_Upgrade4->OnClicked.AddDynamic(this, &UAbilitySelection::Upgrade4Clicked);
 
+    // Get player reference
     APlayerController* PC = GetOwningPlayer();
-    PC = GetOwningPlayer();
     if (PC)
     {
         APawn* Pawn = PC->GetPawn();
         OwningCharacter = Cast<ARelicRunnersCharacter>(Pawn);
     }
 
+	// Show fresh upgrade options
     RefreshUpgrades();
 }
 
 void UAbilitySelection::Upgrade1Clicked()
 {
+    // Spend point and apply upgrade
     OwningCharacter->Server_SpendAbilityPoints();
     BuffStatValue(Buff1);
     RefreshUpgrades();
@@ -38,6 +41,7 @@ void UAbilitySelection::Upgrade1Clicked()
 
 void UAbilitySelection::Upgrade2Clicked()
 {
+    // Spend point and apply upgrade
     OwningCharacter->Server_SpendAbilityPoints();
     BuffStatValue(Buff2);
     RefreshUpgrades();
@@ -45,6 +49,7 @@ void UAbilitySelection::Upgrade2Clicked()
 
 void UAbilitySelection::Upgrade3Clicked()
 {
+    // Spend point and apply upgrade
     OwningCharacter->Server_SpendAbilityPoints();
     BuffStatValue(Buff3);
     RefreshUpgrades();
@@ -52,6 +57,7 @@ void UAbilitySelection::Upgrade3Clicked()
 
 void UAbilitySelection::Upgrade4Clicked()
 {
+    // Spend point and apply upgrade
     OwningCharacter->Server_SpendAbilityPoints();
     BuffStatValue(Buff4);
     RefreshUpgrades();
@@ -59,43 +65,31 @@ void UAbilitySelection::Upgrade4Clicked()
 
 void UAbilitySelection::BuffStatValue(StatBuff Buff)
 {
-
-
+    // Apply stat buff based on type
     if (Buff.StatType == EStats::Health)
-    {
         OwningCharacter->SetPlayerStartingHealth(OwningCharacter->GetPlayerStartingMaxHealth() + Buff.Percentage);
-    }
     if (Buff.StatType == EStats::Luck)
-    {
         OwningCharacter->SetPlayerStartingLuck(OwningCharacter->GetPlayerStartingLuck() + Buff.Percentage);
-    }
     if (Buff.StatType == EStats::Intelligence)
-    {
         OwningCharacter->SetPlayerStartingIntelligence(OwningCharacter->GetPlayerStartingIntelligence() + Buff.Percentage);
-    }
     if (Buff.StatType == EStats::Strength)
-    {
         OwningCharacter->SetPlayerStartingStrength(OwningCharacter->GetPlayerStartingStrength() + Buff.Percentage);
-    }
     if (Buff.StatType == EStats::Armor)
-    {
         OwningCharacter->SetPlayerStartingArmor(OwningCharacter->GetPlayerStartingArmor() + Buff.Percentage);
-    }
     if (Buff.StatType == EStats::Dexterity)
-    {
         OwningCharacter->SetPlayerStartingDexterity(OwningCharacter->GetPlayerStartingDexterity() + Buff.Percentage);
-    }
-
 }
+
 UAbilitySelection::StatBuff UAbilitySelection::RandomStatBuff()
 {
     StatBuff RandomStatBuff;
 
+    // Pick random stat and buff value
     RandomStatBuff.Percentage = FMath::RandRange(3, 5);
     RandomStatBuff.StatType = static_cast<UAbilitySelection::EStats>(FMath::RandRange(0, 5));
     RandomStatBuff.StatImage = nullptr;
 
-
+    // text display UI on buttons 
     switch (RandomStatBuff.StatType)
     {
     case EStats::Health:
@@ -125,6 +119,7 @@ UAbilitySelection::StatBuff UAbilitySelection::RandomStatBuff()
 
 void UAbilitySelection::RefreshUpgrades()
 {
+	// Refresh total stats after upgrade used
     OwningCharacter->GetInventoryComponent()->UpdateTotalEquippedStats(OwningCharacter);
 
     Buff1 = RandomStatBuff();
@@ -139,4 +134,5 @@ void UAbilitySelection::RefreshUpgrades()
     Buff4 = RandomStatBuff();
     TB_Upgrade4->SetText(FText::FromString(Buff4.StatText));
 }
+
 

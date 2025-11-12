@@ -8,9 +8,10 @@
 
 UAbilityBase::UAbilityBase()
 {
-
+    // Set ability to be unique per actor
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
+    // Default values
     Cooldown = 0;
     Duration = 0;
     DamageAmount = 0;
@@ -21,26 +22,13 @@ UAbilityBase::UAbilityBase()
 
 void UAbilityBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-    
-    if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-    {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-
-        return;
-    }
-
-    AActor* OwnerActor = GetAvatarActorFromActorInfo();
-    if (!OwnerActor)
-    {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-
-        return;
-    }
+    // put nothing here
 }
 
-void UAbilityBase::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,const FGameplayAbilityActivationInfo ActivationInfo,bool bReplicateEndAbility, bool bWasCancelled)
+void UAbilityBase::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-   
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
+    // put nothing here
 }
+

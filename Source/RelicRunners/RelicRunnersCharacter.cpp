@@ -919,23 +919,36 @@ void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget, bool bClosePopups =
 void ARelicRunnersCharacter::InventoryUI()
 {
 	if (!Inventory) return;
+
+	// Close other open UIs before opening inventory
 	RemoveOtherUI("Inventory", Cast<APlayerController>(Controller));
+
+	// Toggle inventory visibility
 	ToggleUI(Inventory, true);
 }
 
 void ARelicRunnersCharacter::PauseUI()
 {
 	if (!PauseMenu) return;
+
+	// Close other open UIs before opening pause menu
 	RemoveOtherUI("Pause", Cast<APlayerController>(Controller));
+
+	// Toggle pause menu visibility
 	ToggleUI(PauseMenu);
 }
 
 void ARelicRunnersCharacter::AbilitySystemUI()
 {
 	if (!AbilitySelection || PlayerAbilityPoints < 1) return;
+
+	// Close other open UIs before opening ability selection
 	RemoveOtherUI("Ability", Cast<APlayerController>(Controller));
+
+	// Toggle ability selection visibility
 	ToggleUI(AbilitySelection);
 }
+
 
 void ARelicRunnersCharacter::HideUI(UUserWidget* UIWidget, APlayerController* PlayerController, bool bClosePopups = false)
 {
@@ -963,47 +976,47 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 
 void ARelicRunnersCharacter::DamageAbility()
 {
-
+	// When key is pressed, call proper ability based on class chosen 
 	GiveDamageAbilities();
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
 {
+	// When key is pressed, call proper ability based on class chosen 
 	GiveDefenceAbilities();
 }
 
 void ARelicRunnersCharacter::UtilityAbility()
 {
-
+	// When key is pressed, call proper ability based on class chosen 
 	GiveUtilityAbilities();
 }
 
 void ARelicRunnersCharacter::UltimateAbility()
 {
+	// When key is pressed, call proper ability based on class chosen 
 	GiveUltimateAbilities();
-
 }
 
 void ARelicRunnersCharacter::GiveDamageAbilities()
 {
-
+	// do not put anything here 
 }
 
 void ARelicRunnersCharacter::GiveDefenceAbilities()
 {
-
+	// do not put anything here
 }
 
 void ARelicRunnersCharacter::GiveUtilityAbilities()
 {
-
+	// do not put anything here
 }
 
 void ARelicRunnersCharacter::GiveUltimateAbilities()
 {
-
+	// do not put anything here
 }
-
 
 void ARelicRunnersCharacter::HealthPotions()
 {
@@ -1012,39 +1025,44 @@ void ARelicRunnersCharacter::HealthPotions()
 		int OldHealth = PlayerHealth;
 		int OldPotionCount = HealthPotionCount;
 
+		// Apply potion effects
 		HealthPotion->OnHealthPotionClicked(PlayerHealth, PlayerMaxHealth, HealthPotionCount, HealthGranted);
 
+		// Notify server if health or potion count changed
 		if (PlayerHealth != OldHealth || HealthPotionCount != OldPotionCount)
 		{
 			Server_UseHealthPotion(PlayerHealth, HealthPotionCount);
 		}
 
+		// Refresh HUD display
 		UpdateHUD();
 	}
 }
 
 void ARelicRunnersCharacter::Server_UseHealthPotion_Implementation(int NewHealth, int NewPotionCount)
 {
-
 	if (!HasAuthority())
 		return;
 
+	// Clamp health and potion count
 	PlayerHealth = FMath::Clamp(NewHealth, 0, PlayerMaxHealth);
 	HealthPotionCount = FMath::Max(NewPotionCount, 0);
 
+	// Update HUD for all clients
 	UpdateHUD();
 }
-
 
 void ARelicRunnersCharacter::Server_SpendAbilityPoints_Implementation()
 {
 	if (!HasAuthority())
 		return;
 
+	// Spend one ability point if available
 	if (PlayerAbilityPoints > 0)
 	{
 		PlayerAbilityPoints--;
 
+		// Notify client about the change
 		Client_OnAbilityPointsUpdated(PlayerAbilityPoints);
 
 		UpdateHUD();
@@ -1057,7 +1075,7 @@ void ARelicRunnersCharacter::Client_OnAbilityPointsUpdated_Implementation(int32 
 	if (!PlayerController)
 		return;
 
-	// Update UI locally on the client
+	// Hide ability selection UI when no points left
 	if (NewAbilityPoints == 0 && AbilitySelection)
 	{
 		AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
@@ -1066,6 +1084,7 @@ void ARelicRunnersCharacter::Client_OnAbilityPointsUpdated_Implementation(int32 
 		PlayerController->SetShowMouseCursor(false);
 	}
 }
+
 
 void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
 {

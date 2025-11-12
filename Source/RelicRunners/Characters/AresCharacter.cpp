@@ -13,6 +13,7 @@ void AAresCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// set cooldown durations
 	DamageCooldown = 5.0f;
 	DefenceCooldown = 5.0f;
 	UtilityCooldown = 5.0f;
@@ -20,11 +21,12 @@ void AAresCharacter::BeginPlay()
 
 }
 
+// Called when player takes control of this character
 void AAresCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-
+	// Get PlayerState and set up ability system
 	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
 	if (PS)
 	{
@@ -33,10 +35,12 @@ void AAresCharacter::PossessedBy(AController* NewController)
 	}
 }
 
+// Called when PlayerState is replicated on clients
 void AAresCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
+	// Reinitialize ability system
 	ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
 	if (PS)
 	{
@@ -51,8 +55,11 @@ void AAresCharacter::GiveDamageAbilities()
 
 	if (AbilitySystem)
 	{
+		// Give Earthquake ability
 		AbilitySystem->GiveAbility(FGameplayAbilitySpec(UEarthquakeAbility::StaticClass(), 1, 0));
+		// Activate Earthquake ability 
 		AbilitySystem->TryActivateAbilityByClass(UEarthquakeAbility::StaticClass());
+		// start ability cooldown
 		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 	}
 }
@@ -63,6 +70,7 @@ void AAresCharacter::GiveDefenceAbilities()
 
 	if (AbilitySystem)
 	{
+		// start ability cooldown
 		AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 	}
 }
@@ -121,6 +129,7 @@ void AAresCharacter::GiveUtilityAbilities()
 
 	if (AbilitySystem)
 	{
+		//start ability cooldown
 		AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 	}
 }
@@ -131,6 +140,7 @@ void AAresCharacter::GiveUltimateAbilities()
 
 	if (AbilitySystem)
 	{
+		// start ability cooldown
 		AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 	}
 }

@@ -10,6 +10,7 @@ void ANemesisCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// set cooldown durations
     DamageCooldown = 5.0f;
     DefenceCooldown = 5.0f;
     UtilityCooldown = 5.0f;
@@ -17,23 +18,12 @@ void ANemesisCharacter::BeginPlay()
 
 }
 
+// Called when player takes control of this character
 void ANemesisCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
 
-    
-    ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
-    if (PS)
-    {
-        AbilitySystem = PS->GetAbilitySystemComponent(); 
-        AbilitySystem->InitAbilityActorInfo(PS, this);   
-    }
-}
-
-void ANemesisCharacter::OnRep_PlayerState()
-{
-    Super::OnRep_PlayerState();
-
+    // Get PlayerState and set up ability system
     ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
     if (PS)
     {
@@ -42,48 +32,76 @@ void ANemesisCharacter::OnRep_PlayerState()
     }
 }
 
+// Called when PlayerState is replicated on clients
+void ANemesisCharacter::OnRep_PlayerState()
+{
+    Super::OnRep_PlayerState();
+
+    // Reinitialize ability system
+    ARelicRunnersPlayerState* PS = GetPlayerState<ARelicRunnersPlayerState>();
+    if (PS)
+    {
+        AbilitySystem = PS->GetAbilitySystemComponent();
+        AbilitySystem->InitAbilityActorInfo(PS, this);
+    }
+}
+
+
 void ANemesisCharacter::GiveDamageAbilities()
 {
-	Super::GiveDamageAbilities();
+    Super::GiveDamageAbilities();
 
-	if (AbilitySystem)
-	{
+    if (AbilitySystem)
+    {
+		// start ability cooldown
         AbilityPointCounter->StartDamageCooldown(DamageCooldown);
-	}
+    }
 }
 
 void ANemesisCharacter::GiveDefenceAbilities()
 {
-	Super::GiveDefenceAbilities();
+    Super::GiveDefenceAbilities();
 
     if (AbilitySystem)
     {
+		// Give Impunity ability
         AbilitySystem->GiveAbility(FGameplayAbilitySpec(UImpunityAbility::StaticClass(), 1, 0));
+
+		// Activate Impunity ability
         AbilitySystem->TryActivateAbilityByClass(UImpunityAbility::StaticClass());
+
+		// Start ability cooldown
         AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
     }
 }
 
 void ANemesisCharacter::GiveUtilityAbilities()
 {
-	Super::GiveUtilityAbilities();
+    Super::GiveUtilityAbilities();
 
     if (AbilitySystem)
     {
+		// Give Vengeful Dance ability
         AbilitySystem->GiveAbility(FGameplayAbilitySpec(UVengefulDance::StaticClass(), 1, 0));
+
+		// Activate Vengeful Dance ability
         AbilitySystem->TryActivateAbilityByClass(UVengefulDance::StaticClass());
+
+        // Start ability cooldown
         AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
     }
 }
 
 void ANemesisCharacter::GiveUltimateAbilities()
 {
-	Super::GiveUltimateAbilities();
+    Super::GiveUltimateAbilities();
 
-	if (AbilitySystem)
-	{
+    if (AbilitySystem)
+    {
+		// Start ability cooldown
         AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
-	}
-    
+    }
 }
+
+
 
