@@ -25,8 +25,17 @@ EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& 
 		return EBTNodeResult::Failed;
 	}
 
-	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+	
 	AActor* target = Cast<AActor>(BlackBoard->GetValueAsObject(TargetActorKey.SelectedKeyName));
+
+	//This may seem like a reduntaded check but I already did this to my self once and on the first test non the less
+	if (target == Cast<AActor>(ControlledPawn))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Target actor is the same as controlled pawn in surrounding target task"));
+		return EBTNodeResult::Failed;
+	}
+
+	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 	FNavLocation moveLocation;
 
 	FVector targetLocation = target->GetActorLocation();
