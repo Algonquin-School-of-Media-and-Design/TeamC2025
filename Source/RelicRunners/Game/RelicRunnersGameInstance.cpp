@@ -97,7 +97,6 @@ void URelicRunnersGameInstance::Shutdown()
 {
     Super::Shutdown();
 
-    //Leave any remaining sessions
     LeaveSession();
 }
 
@@ -275,7 +274,6 @@ void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool
     {
         PendingHostAfterLeave = 0;
 
-        //Attempt host now that session was destroyed
         HostGame();
         return;
     }
@@ -287,7 +285,7 @@ void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool
     }
 }
 
-void URelicRunnersGameInstance::JoinGame(int32 SessionIndex)
+void URelicRunnersGameInstance::JoinGame(int SessionIndex)
 {
     if (!SessionInterface.IsValid() || !SessionSearch.IsValid() || SessionIndex < 0 || SessionIndex >= SessionSearch->SearchResults.Num()) return;
 
@@ -315,7 +313,6 @@ void URelicRunnersGameInstance::OnSessionDestroyedThenJoin(FName SessionName, bo
 {
     UE_LOG(LogTemp, Log, TEXT("OnSessionDestroyedThenJoin: %s success=%d"), *SessionName.ToString(), bWasSuccessful);
 
-    //Unbind to be tidy
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
@@ -349,7 +346,6 @@ void URelicRunnersGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoin
 {
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
-        //Try game port first
         FString ConnectInfo;
         if (!Sess->GetResolvedConnectString(SessionName, ConnectInfo, NAME_GamePort) || ConnectInfo.IsEmpty())
         {
@@ -367,7 +363,6 @@ void URelicRunnersGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoin
         }
     }
 
-    //Unbind join delegate
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnJoinSessionCompleteDelegates.RemoveAll(this);
@@ -407,5 +402,6 @@ void URelicRunnersGameInstance::StartSessionGame()
         }
     }
 
+    // For host
     World->SeamlessTravel(TravelURL);
 }

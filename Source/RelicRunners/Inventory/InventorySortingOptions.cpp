@@ -24,10 +24,10 @@ FString UInventorySortingOptions::GetSortingMethodDisplayName(EInventorySorting 
 {
 	switch (Method)
 	{
-	case EInventorySorting::SortByItemType:		return TEXT("Item Type");
-	case EInventorySorting::SortByRarity:		return TEXT("Rarity");
-	case EInventorySorting::SortByLevel:		return TEXT("Level");
-	default: return TEXT("Sort");
+		case EInventorySorting::SortByItemType:		return TEXT("Item Type");
+		case EInventorySorting::SortByRarity:		return TEXT("Rarity");
+		case EInventorySorting::SortByLevel:		return TEXT("Level");
+		default: return TEXT("Sort");
 	}
 }
 
@@ -55,7 +55,8 @@ void UInventorySortingOptions::NativeTick(const FGeometry& MyGeometry, float InD
 	FVector2D CurrentMousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
 	float Distance = FVector2D::Distance(CurrentMousePos, InitialScreenPosition);
 
-	if (Distance > 250.0f) // Adjust as needed
+	float PixelDistance = 250.0f;
+	if (Distance > PixelDistance)
 	{
 		ClosePopup();
 		return;
@@ -84,9 +85,9 @@ void UInventorySortingOptions::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	B_SortByType->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByItemTypeClicked);
-	B_SortByRarity->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByRarityClicked);
-	B_SortByLevel->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByLevelClicked);
+	if (B_SortByType) B_SortByType->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByItemTypeClicked);
+	if (B_SortByRarity) B_SortByRarity->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByRarityClicked);
+	if (B_SortByLevel) B_SortByLevel->OnClicked.AddDynamic(this, &UInventorySortingOptions::SortByLevelClicked);
 }
 
 void UInventorySortingOptions::SortByItemTypeClicked()

@@ -30,6 +30,14 @@ class RELICRUNNERS_API UInventoryToolTip : public UUserWidget
 
 public:
 
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	//Functions
+	void Setup(struct FItemData& ItemData, const FLinearColor& RarityColor);
+	void Setup(struct FItemData& ItemData, const FLinearColor& RarityColor, struct FItemData& ItemDataEquipped);
+	void Setup(class UItemObject* HoveredItem, const FLinearColor& HoveredColor, class UItemObject* EquippedItem);
+
+	//UI Elements
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_LevelTooltip;
 
@@ -65,7 +73,6 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_GoldTooltip_2;
-
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_SlotsTooltip;
@@ -306,10 +313,4 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UHorizontalBox* HB_Slots_2;
-
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-
-	void Setup(struct FItemData& ItemData, const FLinearColor& RarityColor);
-	void Setup(struct FItemData& ItemData, const FLinearColor& RarityColor, struct FItemData& ItemDataEquipped);
-	void Setup(class UItemObject* HoveredItem, const FLinearColor& HoveredColor, class UItemObject* EquippedItem);
 };

@@ -26,72 +26,72 @@ class RELICRUNNERS_API URelicRunnersGameInstance : public UGameInstance
     GENERATED_BODY()
 
 public:
+
     virtual void Init() override;
     virtual void Shutdown() override;
 
-    UFUNCTION(BlueprintCallable)
-    void BackToMainMenu();
-
-    UFUNCTION(BlueprintCallable)
-    void StartSessionGame();
-
-    void ResetToDefaults();
-
-    UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Input")
-    class UKeybinds* Keys;
-
-    UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Input")
-    class UKeybinds* DefaultKeys;
-
-    UPROPERTY()
-    TArray<FUniqueNetIdRepl> SavedPlayers;
-
-    UFUNCTION(BlueprintCallable)
-    void ApplyKeybindings();
-
+    //Sessions
     UFUNCTION(BlueprintCallable)
     void CreateNewSession();
     UFUNCTION(BlueprintCallable)
-    void HostGame();
-    void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
-
-    void FindGames(class UJoinUserWidget* UserWidget);
-    void OnFindSessionsComplete(bool bWasSuccessful);
-
+    void StartSessionGame();
     UFUNCTION(BlueprintCallable)
-    void JoinGame(int32 SessionIndex);
-
-    UPROPERTY(BlueprintReadOnly)
-    FString SavedHostAddress;
-
-    void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-
+    void HostGame();
+    UFUNCTION(BlueprintCallable)
+    void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+    UFUNCTION(BlueprintCallable)
+    void BackToMainMenu();
+    UFUNCTION(BlueprintCallable)
+    void FindGames(class UJoinUserWidget* UserWidget);
+    UFUNCTION(BlueprintCallable)
+    void OnFindSessionsComplete(bool bWasSuccessful);
+    UFUNCTION(BlueprintCallable)
+    void JoinGame(int SessionIndex);
+    UFUNCTION(BlueprintCallable)
     void OnSessionDestroyedThenJoin(FName SessionName, bool bWasSuccessful);
-
     UFUNCTION(BlueprintCallable)
     void LeaveSession(bool bQueueHost = false);
+    UFUNCTION(BlueprintCallable)
     void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+    void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
+    //Getters and Setters
     UFUNCTION(BlueprintCallable)
     void SetCharacterName(const FString& NewName) { PlayerName = NewName; }
-
     UFUNCTION(BlueprintCallable)
     FString GetCharacterName() const { return PlayerName; }
 
+    //Keybinds
+    UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Input")
+    class UKeybinds* Keys;
+    UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Input")
+    class UKeybinds* DefaultKeys;
+    UFUNCTION(BlueprintCallable)
+    void ResetToDefaults();
+    UFUNCTION(BlueprintCallable)
+    void ApplyKeybindings();
+
+    //Properties
+    UPROPERTY()
+    TArray<FUniqueNetIdRepl> SavedPlayers;
+    UPROPERTY(BlueprintReadOnly)
+    FString SavedHostAddress;
+    UPROPERTY()
+    FString PlayerName;
+    UPROPERTY()
+    TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
+    UPROPERTY()
+    int32 PendingHostAfterLeave = 0;
+    UPROPERTY()
+    int32 PendingJoinIndex = -1;
+    UPROPERTY()
+    FString PendingTravelTargetMap;
     TSharedPtr<class FOnlineSessionSearch> SessionSearch;
     UPROPERTY()
     TMap<FUniqueNetIdRepl, FPendingClientTravel> PendingClientTravels;
     TWeakPtr<class IOnlineSession, ESPMode::ThreadSafe> SessionInterface;
 
-    FString PlayerName;
 private:
-
-    TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
-
-    int32 PendingHostAfterLeave = 0;
-    int32 PendingJoinIndex = -1;
-    FString PendingTravelTargetMap;
-
 
 
 };

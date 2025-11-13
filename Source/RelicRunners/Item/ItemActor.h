@@ -34,56 +34,39 @@ class RELICRUNNERS_API AItemActor : public AActor, public IInteractInterface
     GENERATED_BODY()
 
 public:
+
     AItemActor();
 
+    //Functions
     void InitializeTooltipWidget();
+    UFUNCTION(BlueprintCallable)
+    void Initialize(const FItemData& InItemData);
+    void SetupVisuals();
+    UFUNCTION()
+    void OnRep_ItemData();
+    UFUNCTION(Server, Reliable)
+    void Server_HandlePickup(class ARelicRunnersCharacter* Character);
+    void HandlePickup(class ARelicRunnersCharacter* Char);
 
-    // Visual mesh for the dropped item
+    //Properties
     UPROPERTY()
     UStaticMeshComponent* StaticMeshComponent;
-
-    // The actual item data struct (replicated)
     UPROPERTY(ReplicatedUsing = OnRep_ItemData)
     struct FItemData ItemData;
-
-    // Fog effect around the item
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
     class ULocalFogVolumeComponent* Fog;
-
-    // Tooltip widget shown in world
     UPROPERTY(VisibleAnywhere)
     class UWidgetComponent* TooltipWidgetComponent;
-
-    // Tooltip class to instantiate
     UPROPERTY(EditAnywhere)
     TSubclassOf<UUserWidget> TooltipWidgetClass;
 
-    // Initialize item data on spawn
-    UFUNCTION(BlueprintCallable)
-    void Initialize(const FItemData& InItemData);
-
-    // Setup mesh, fog, tooltip based on ItemData
-    void SetupVisuals();
-
+protected:
     // IInteractInterface overrides
     virtual void ShowTooltip_Implementation(bool bShow) override;
     virtual void Interact_Implementation(class ARelicRunnersCharacter* Char) override;
     virtual struct FItemData GetItemData_Implementation() override;
 
-    UFUNCTION(Server, Reliable)
-    void Server_HandlePickup(class ARelicRunnersCharacter* Character);
-
-    void HandlePickup(class ARelicRunnersCharacter* Char);
-protected:
-    virtual void BeginPlay() override;
-
-    // Called when replicated item data arrives on clients
-    UFUNCTION()
-    void OnRep_ItemData();
-
-    // Replication
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-public:
     virtual void Tick(float DeltaTime) override;
+    virtual void BeginPlay() override;
 };

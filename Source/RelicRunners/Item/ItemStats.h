@@ -42,7 +42,6 @@ public:
         return A.ItemData.Level > B.ItemData.Level;
     }
 
-
     struct FRarityData
     {
         FString Name;
@@ -51,8 +50,7 @@ public:
         float Chance;
 
         FRarityData() {}
-        FRarityData(const FString& InName, const FLinearColor& InColor, float InMultiplier, float InChance)
-            : Name(InName), Color(InColor), Multiplier(InMultiplier), Chance(InChance) {}
+        FRarityData(const FString& InName, const FLinearColor& InColor, float InMultiplier, float InChance) : Name(InName), Color(InColor), Multiplier(InMultiplier), Chance(InChance) {}
     };
 
     static const TMap<FString, FRarityData>& GetRarityDataMap()
@@ -105,7 +103,7 @@ public:
             return nullptr;
         }
 
-        UItemObject* Item = NewObject<UItemObject>(Outer); // Safe ownership for networking & GC
+        UItemObject* Item = NewObject<UItemObject>(Outer);
         Item->SetItemData(ItemData);
         return Item;
     }

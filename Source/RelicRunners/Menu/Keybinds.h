@@ -78,9 +78,9 @@ static FString GetReadableKeyName(const FKey& Key)
         {TEXT("Down"), TEXT("v")},
         {TEXT("Left"), TEXT("<")},
         {TEXT("Right"), TEXT(">")},
-        {TEXT("Middle Mouse Button"), TEXT("MButton")},
-        {TEXT("Right Mouse Button"), TEXT("RButton")},
-        {TEXT("Left Mouse Button"), TEXT("LButton")},
+        {TEXT("Middle Mouse Button"), TEXT("MMB")},
+        {TEXT("Right Mouse Button"), TEXT("RMB")},
+        {TEXT("Left Mouse Button"), TEXT("LMB")},
     };
 
     if (const FString* Replacement = KeyReplacements.Find(Name))

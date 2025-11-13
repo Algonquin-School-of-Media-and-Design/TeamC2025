@@ -38,28 +38,6 @@ void UInventoryComponent::BeginPlay()
     UE_LOG(LogTemp, Warning, TEXT("InventoryComponent BeginPlay on %s (Role: %d)"), *GetOwner()->GetName(), (int32)GetOwnerRole());
 }
 
-bool UInventoryComponent::TryChangeGold(int32 Delta)
-{
-    const int32 NewGold = Gold + Delta;
-    if (NewGold < 0)
-    {
-        return false; // would go negative
-    }
-
-    Gold = NewGold;
-
-    // Notify UI
-    OnGoldChanged.Broadcast(Gold);
-    OnInventoryChanged.Broadcast(); // reuse existing refresh
-    return true;
-}
-
-void UInventoryComponent::OnRep_Gold()
-{
-    OnGoldChanged.Broadcast(Gold);
-    OnInventoryChanged.Broadcast();
-}
-
 bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
     bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
@@ -94,7 +72,6 @@ void UInventoryComponent::AddItem(UItemObject* Item)
 
 void UInventoryComponent::OnRep_SortingMethod()
 {
-    // This runs on clients when CurrentSortingMethod is replicated
     HandleSortingNow(); // Show sorted inventory on client UI
 }
 
@@ -124,12 +101,11 @@ void UInventoryComponent::SortInventoryByCurrentMethod()
     }
 
     HandleSortingNow();
-    OnInventoryChanged.Broadcast(); // Notify UI listeners
+    OnInventoryChanged.Broadcast();
 }
 
 void UInventoryComponent::Server_SortInventory_Implementation(EInventorySorting Method)
 {
-    // Update sort method and sort server-side
     SetSortingMethod(Method);
 }
 
@@ -138,14 +114,15 @@ void UInventoryComponent::HandleSortingNow()
     TArray<UItemObject*>& Items = InventoryItems;
 
     const TMap<FString, ItemStats::FRarityData>& RarityMap = ItemStats::GetRarityDataMap();
-    TMap<FString, int32> RarityRank;
+    TMap<FString, int> RarityRank;
 
-    int32 Index = 0;
+    int Index = 0;
     for (const auto& Elem : RarityMap)
     {
         RarityRank.Add(Elem.Key, Index++);
     }
 
+    //Different sorting methods
     switch (CurrentSortingMethod)
     {
     case EInventorySorting::SortByItemType:
@@ -154,8 +131,8 @@ void UInventoryComponent::HandleSortingNow()
                 if (A.ItemData.ItemType != B.ItemData.ItemType)
                     return A.ItemData.ItemType < B.ItemData.ItemType;
 
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
+                int ARank = RarityRank.FindRef(A.ItemData.Rarity);
+                int BRank = RarityRank.FindRef(B.ItemData.Rarity);
 
                 if (ARank != BRank)
                     return ARank > BRank;
@@ -167,8 +144,8 @@ void UInventoryComponent::HandleSortingNow()
     case EInventorySorting::SortByRarity:
         Items.Sort([&RarityRank](UItemObject& A, UItemObject& B)
             {
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
+                int ARank = RarityRank.FindRef(A.ItemData.Rarity);
+                int BRank = RarityRank.FindRef(B.ItemData.Rarity);
 
                 if (ARank != BRank)
                     return ARank > BRank;
@@ -186,8 +163,8 @@ void UInventoryComponent::HandleSortingNow()
                 if (A.ItemData.Level != B.ItemData.Level)
                     return A.ItemData.Level > B.ItemData.Level;
 
-                int32 ARank = RarityRank.FindRef(A.ItemData.Rarity);
-                int32 BRank = RarityRank.FindRef(B.ItemData.Rarity);
+                int ARank = RarityRank.FindRef(A.ItemData.Rarity);
+                int BRank = RarityRank.FindRef(B.ItemData.Rarity);
 
                 if (ARank != BRank)
                     return ARank > BRank;
@@ -199,7 +176,7 @@ void UInventoryComponent::HandleSortingNow()
         break;
     }
 
-    OnInventoryChanged.Broadcast(); // Update UI after sorting
+    OnInventoryChanged.Broadcast();
 }
 
 void UInventoryComponent::EquipItem(UItemObject* Item)
@@ -215,7 +192,7 @@ void UInventoryComponent::EquipItem(UItemObject* Item)
         {
             if (Entry.Item)
             {
-                AddItem(Entry.Item); // Add previous item to inventory
+                AddItem(Entry.Item);
             }
             Entry.Item = Item;
             bFound = true;
@@ -254,7 +231,6 @@ void UInventoryComponent::OnRep_Inventory()
 
 void UInventoryComponent::OnRep_EquippedItems()
 {
-
     OnEquipmentChanged.Broadcast();
 }
 
@@ -262,7 +238,7 @@ void UInventoryComponent::UnequipItem(UItemObject* Item)
 {
     if (!Item) return;
 
-    for (int32 i = 0; i < EquippedItems.Num(); ++i)
+    for (int i = 0; i < EquippedItems.Num(); ++i)
     {
         if (EquippedItems[i].Item == nullptr) continue;
 
@@ -305,7 +281,6 @@ UItemObject*& UInventoryComponent::GetEquippedItemReference(const FString& ItemT
         }
     }
 
-    // Add and return new reference
     EquippedItems.Add(FEquippedItemEntry(ItemType, nullptr));
     return EquippedItems.Last().Item;
 }
@@ -319,14 +294,11 @@ void UInventoryComponent::UpdateTotalEquippedStats(ARelicRunnersCharacter* Char)
     if (Char->HasAuthority())
     {
         Char->Server_SetMaxHealth(Stats.TotalHealth);
-
-        // Notify owning client
         Char->Client_UpdateEquippedStats(Stats);
     }
 
-    // Store for local access/UI
     CachedEquippedStats = Stats;
-    OnStatsChanged.Broadcast(Stats); // Works only on server/UI
+    OnStatsChanged.Broadcast(Stats);
 }
 
 void UInventoryComponent::SwapItems(UItemObject* ItemA, UItemObject* ItemB)
@@ -334,8 +306,8 @@ void UInventoryComponent::SwapItems(UItemObject* ItemA, UItemObject* ItemB)
     if (!ItemA || !ItemB)
         return;
 
-    int32 IndexA = InventoryItems.IndexOfByKey(ItemA);
-    int32 IndexB = InventoryItems.IndexOfByKey(ItemB);
+    int IndexA = InventoryItems.IndexOfByKey(ItemA);
+    int IndexB = InventoryItems.IndexOfByKey(ItemB);
 
     if (IndexA != INDEX_NONE && IndexB != INDEX_NONE)
     {
@@ -400,6 +372,4 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME(UInventoryComponent, InventoryItems);
     DOREPLIFETIME(UInventoryComponent, EquippedItems);
     DOREPLIFETIME(UInventoryComponent, CurrentSortingMethod);
-    DOREPLIFETIME(UInventoryComponent, Gold);
-
 }

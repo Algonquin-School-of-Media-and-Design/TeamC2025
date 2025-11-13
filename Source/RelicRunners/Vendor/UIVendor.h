@@ -48,12 +48,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Vendor")
 	void SellSelectedFromPlayer();
-	
-	UFUNCTION(BlueprintCallable, Category = "Vendor")
-	void BuyByGuid(const FGuid& Guid);
-
-	UFUNCTION(BlueprintCallable, Category = "Vendor")
-	void SellByGuid(const FGuid& Guid);
 
 
 protected:
@@ -100,7 +94,6 @@ private:
 	void RefreshAll();
 	void RefreshVendorStock();
 	void RefreshPlayerInventory();
-	void RefreshGold();
 
 	// Buttons
 	UFUNCTION() void OnBuyClicked();
@@ -116,6 +109,4 @@ private:
 	void ReselectPlayerByGuid(const FGuid& Guid);
 
 	void UpdateButtonStates();
-
-	void TryAnnotateVendorTooltipsWithPrice();
 };

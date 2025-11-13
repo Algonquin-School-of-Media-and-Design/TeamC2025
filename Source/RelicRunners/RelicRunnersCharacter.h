@@ -142,9 +142,6 @@ public:
 	void Server_UseHealthPotion(int NewHealth, int NewPotionCount);
 
 
-
-	// === Ability Slots ===
-	// Offensive / Damage ability slot (Moonbeam will be assigned here)
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TSubclassOf<AAbilityBase> DamageAbilityClass;
 
@@ -209,10 +206,6 @@ public:
 	class UInventoryComponent* GetInventoryComponent() { return InventoryComponent; };
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void SetInventoryComponent(UInventoryComponent* InvComp);
-
-	// Currency cheats
-	UFUNCTION(Exec) void AddGold(int32 Amount = 10);
-	UFUNCTION(Exec) void SpendGold(int32 Amount = 10);
 
 	//Update functions
 	void UpdateItemVisuals(UObject* MeshAsset, const FString& ItemType);

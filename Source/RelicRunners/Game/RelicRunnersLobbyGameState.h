@@ -12,19 +12,11 @@ class ARelicRunnersLobbyGameState : public AGameState
     GENERATED_BODY()
 
 public:
-    // Called whenever the player array changes
     virtual void AddPlayerState(APlayerState* PlayerState) override;
     virtual void RemovePlayerState(APlayerState* PlayerState) override;
-
-    // Called on clients when replicated player array updates
-    UFUNCTION()
-    void OnRep_PlayerArray();
-
-    // Helper to update the preview actors
     void RefreshLobbyPreviews();
 
 protected:
-    // Local-only preview actors (not replicated)
     UPROPERTY()
     TArray<class ALobbyPreview*> PreviewActors;
 };

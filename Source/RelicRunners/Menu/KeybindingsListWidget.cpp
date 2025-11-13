@@ -48,8 +48,7 @@ void UKeybindingsListWidget::OnBindButtonClicked()
         Settings->StartRebinding(this);
     }
 
-    if (TB_Bind)
-        TB_Bind->SetText(FText::FromString(TEXT("???")));
+    if (TB_Bind) TB_Bind->SetText(FText::FromString(TEXT("???")));
 }
 
 UKeybindingsListData* UKeybindingsListWidget::GetKeybindData() const
@@ -59,8 +58,7 @@ UKeybindingsListData* UKeybindingsListWidget::GetKeybindData() const
 
 void UKeybindingsListWidget::RefreshVisual()
 {
-    if (!KeybindData || !TB_Bind)
-        return;
+    if (!KeybindData || !TB_Bind) return;
 
     FText DisplayText = KeybindData->Keybind.IsValid() ? FText::FromString(KeybindData->ReadableBind) : FText::FromString(TEXT("None"));
     TB_Bind->SetText(DisplayText);

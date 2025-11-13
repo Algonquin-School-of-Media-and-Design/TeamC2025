@@ -166,7 +166,6 @@ void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 	const FClassData& Info = ClassDataAsset->Classes[ClassKey];
 	const FClassData MaxValues = ClassDataAsset->GetMaxStats();
 
-	// Text updates
 	if (TB_ClassName) TB_ClassName->SetText(FText::FromName(Info.ClassName));
 	if (TB_ClassRole) TB_ClassRole->SetText(FText::FromString(Info.Role));
 	if (TB_Ability1)  TB_Ability1->SetText(FText::FromString(Info.Ability1));
@@ -174,11 +173,7 @@ void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 	if (TB_Ability3)  TB_Ability3->SetText(FText::FromString(Info.Ability3));
 	if (TB_Ability4)  TB_Ability4->SetText(FText::FromString(Info.Ability4));
 
-	// Safe normalization helper lambda
-	auto Normalize = [](float Value, float Max)
-		{
-			return (Max > 0.f) ? (Value / Max) : 0.f;
-		};
+	auto Normalize = [](float Value, float Max) { return (Max > 0.f) ? (Value / Max) : 0.f; };
 
 	// Normalized progress bars
 	if (HealthBar)       HealthBar->SetPercent(Normalize(Info.Health, MaxValues.Health)); TB_Health->SetText(FText::FromString(FString::FromInt(Info.Health)));
@@ -200,7 +195,6 @@ void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 			}
 			else
 			{
-				// If client, call a server RPC
 				if (ARelicRunnersPlayerController* RPC_PC = Cast<ARelicRunnersPlayerController>(PC))
 				{
 					RPC_PC->Server_SetSelectedClass(ClassKey);
@@ -217,7 +211,6 @@ void UJoinUserWidget::HandleEntryGenerated(UUserWidget& EntryWidget)
 		SessionWidget->OnSessionClicked.BindUObject(this, &UJoinUserWidget::HandleSessionClicked);
 	}
 }
-
 
 void UJoinUserWidget::SetParentMenu(UMainMenuWidget* InParentMenu)
 {
@@ -269,7 +262,6 @@ void UJoinUserWidget::UpdateFindGamesButtonVisibility()
 		return;
 	}
 
-	// Sometimes PlayerArray replication is delayed
 	const int32 NumPlayers = GS->PlayerArray.Num();
 	if (NumPlayers == 0)
 	{
@@ -279,13 +271,12 @@ void UJoinUserWidget::UpdateFindGamesButtonVisibility()
 
 	UE_LOG(LogTemp, Log, TEXT("[UpdateFindGamesButtonVisibility] NumPlayers: %d"), NumPlayers);
 
-	// Update UI visibility
-	const bool bAlone = (NumPlayers <= 1);
+	const bool Alone = (NumPlayers <= 1);
 
 	if (FindGames)
 	{
-		FindGames->SetVisibility(bAlone ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-		FindGames->SetIsEnabled(bAlone);
+		FindGames->SetVisibility(Alone ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+		FindGames->SetIsEnabled(Alone);
 	}
 
 	if (NumPlayers > 1)
@@ -315,10 +306,8 @@ void UJoinUserWidget::StartGameButtonClicked()
 	if (!PC)
 		return;
 
-	// Ask the server (host) to start the session and travel
 	if (PC->HasAuthority())
 	{
-		// We're already the server (listen server)
 		if (URelicRunnersGameInstance* GI = PC->GetGameInstance<URelicRunnersGameInstance>())
 		{
 			GI->StartSessionGame();
@@ -326,7 +315,6 @@ void UJoinUserWidget::StartGameButtonClicked()
 	}
 	else
 	{
-		// Client - send request to the host
 		if (ARelicRunnersPlayerController* MyPC = Cast<ARelicRunnersPlayerController>(PC))
 		{
 			MyPC->Server_RequestStartGame();
@@ -339,7 +327,6 @@ void UJoinUserWidget::HandleSessionClicked(USessionListItemData* ClickedSession)
 	LastSelectedItem = ClickedSession;
 	ShowJoinButton(true);
 
-	// Reset all items to white
 	if (SessionTileView)
 	{
 		for (UObject* Item : SessionTileView->GetListItems())
@@ -408,7 +395,6 @@ void UJoinUserWidget::OnFindSessionsComplete(FString Str)
 	{
 		SessionTileView->AddItem(NewSessionItem);
 
-		// After adding, try to get its entry widget
 		if (USessionListItemWidget* Entry = Cast<USessionListItemWidget>(SessionTileView->GetEntryWidgetFromItem(NewSessionItem)))
 		{
 			Entry->OnSessionClicked.BindUObject(this, &UJoinUserWidget::HandleSessionClicked);

@@ -37,20 +37,6 @@ void UIVendor::Init(AVendor* InVendor, ARelicRunnersCharacter* InPlayer)
 	RefreshAll();
 }
 
-void UIVendor::SellByGuid(const FGuid& Guid)
-{
-	if (!VendorActor || !PlayerChar) return;
-
-	UE_LOG(LogTemp, Verbose, TEXT("[VendorUI] SellByGuid -> Server_SellItemByGuid(%s)"), *Guid.ToString());
-	VendorActor->Server_SellItemByGuid(Guid, PlayerChar);
-
-	// local polish
-	RefreshVendorStock();
-	RefreshPlayerInventory();
-	RefreshGold();
-	UpdateButtonStates();
-}
-
 void UIVendor::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -95,11 +81,9 @@ void UIVendor::BindInventoryDelegates()
 {
 	if (!PlayerInv) return;
 
-	PlayerInv->OnGoldChanged.RemoveAll(this);
 	PlayerInv->OnInventoryChanged.RemoveAll(this);
 	PlayerInv->OnEquipmentChanged.RemoveAll(this);
 
-	PlayerInv->OnGoldChanged.AddDynamic(this, &UIVendor::OnGoldChanged);
 	PlayerInv->OnInventoryChanged.AddDynamic(this, &UIVendor::OnInventoryChanged);
 	PlayerInv->OnEquipmentChanged.AddDynamic(this, &UIVendor::OnEquipmentChanged);
 }
@@ -108,14 +92,12 @@ void UIVendor::UnbindInventoryDelegates()
 {
 	if (!PlayerInv) return;
 
-	PlayerInv->OnGoldChanged.RemoveAll(this);
 	PlayerInv->OnInventoryChanged.RemoveAll(this);
 	PlayerInv->OnEquipmentChanged.RemoveAll(this);
 }
 
 void UIVendor::OnGoldChanged(int32 /*NewGold*/)
 {
-	RefreshGold();
 	UpdateButtonStates();
 }
 
@@ -147,17 +129,8 @@ void UIVendor::HandlePlayerItemClicked(UObject* ClickedItem)
 // Refresh
 void UIVendor::RefreshAll()
 {
-	RefreshGold();
 	RefreshVendorStock();
 	RefreshPlayerInventory();
-}
-
-void UIVendor::RefreshGold()
-{
-	if (TB_Gold && PlayerInv)
-	{
-		TB_Gold->SetText(FText::AsNumber(PlayerInv->GetGold()));
-	}
 }
 
 void UIVendor::RefreshVendorStock()
@@ -243,7 +216,6 @@ void UIVendor::OnBuyClicked()
 	// Local polish
 	RefreshVendorStock();
 	RefreshPlayerInventory();
-	RefreshGold();
 	UpdateButtonStates();
 }
 
@@ -264,7 +236,6 @@ void UIVendor::OnSellClicked()
 	// Local polish
 	RefreshVendorStock();
 	RefreshPlayerInventory();
-	RefreshGold();
 	UpdateButtonStates();
 }
 
@@ -396,26 +367,4 @@ void UIVendor::BuySelectedFromVendor()
 void UIVendor::SellSelectedFromPlayer()
 {
 	OnSellClicked();
-}
-
-
-void UIVendor::BuyByGuid(const FGuid& Guid)
-{
-	if (!VendorActor || !PlayerChar) return;
-
-	const int32 Index = FindVendorIndexByGuid(CachedStock, Guid);
-	if (Index == INDEX_NONE)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[VendorUI] BuyByGuid: item %s not found in CachedStock."), *Guid.ToString());
-		return;
-	}
-
-	UE_LOG(LogTemp, Verbose, TEXT("[VendorUI] BuyByGuid -> Server_BuyItemByIndex(%d)"), Index);
-	VendorActor->Server_BuyItemByIndex(Index, PlayerChar);
-
-	// local polish
-	RefreshVendorStock();
-	RefreshPlayerInventory();
-	RefreshGold();
-	UpdateButtonStates();
 }

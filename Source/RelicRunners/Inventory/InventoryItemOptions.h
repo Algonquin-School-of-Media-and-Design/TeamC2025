@@ -27,27 +27,31 @@ class RELICRUNNERS_API UInventoryItemOptions : public UUserWidget
 {
     GENERATED_BODY()
 public:
-    /** Sets up the popup with the given item data */
+
+    //Functions
     UFUNCTION(BlueprintCallable, Category = "Item Options")
     void Setup(class UItemObject* InItem);
+    void ConfigureButtons(bool ShowEquip, bool ShowUnequip, bool ShowSell, bool ShowBuy);
+    void ClosePopup();
+    static void CloseAnyOpenPopup();
+    UFUNCTION()
+    void OnEquipClicked();
+    UFUNCTION()
+    void OnUnequipClicked();
+    UFUNCTION()
+    void OnDropClicked();
+    UFUNCTION()
+    void OnBuyClicked();
+    UFUNCTION()
+    void OnSellClicked();
+
+protected:
 
     virtual void NativeConstruct() override;
     virtual void NativeDestruct() override;
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-    void ConfigureButtons(bool bShowEquip, bool bShowUnequip);
-    void ClosePopup();
-    static void CloseAnyOpenPopup();
-protected:
 
-    UFUNCTION()
-    void OnEquipClicked();
-
-    UFUNCTION()
-    void OnUnequipClicked();
-
-    UFUNCTION()
-    void OnDropClicked();
-
+    //UI Elements
     UPROPERTY(meta = (BindWidget))
     class UButton* EquipButton;
 
@@ -58,21 +62,16 @@ protected:
     class UButton* DropButton;
 
     UPROPERTY(meta = (BindWidget))
-    UButton* BuyButton = nullptr;           
+    class UButton* BuyButton;
 
     UPROPERTY(meta = (BindWidget))
-    UButton* SellButton = nullptr;          
-
-    UPROPERTY(Transient, BlueprintReadWrite, Category = "Vendor", meta = (AllowPrivateAccess = "true"))
-    UIVendor* VendorWidgetRef = nullptr;    
-
-    UFUNCTION() void OnBuyClicked_Buy();
-    UFUNCTION() void OnSellClicked_Sell();
+    class UButton* SellButton;
 
 private:
+
+    //Properties
     FVector2D InitialScreenPosition;
     static class UInventoryItemOptions* CurrentPopup;
-
     UPROPERTY()
     class UItemObject* Item;
 };

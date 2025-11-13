@@ -45,14 +45,10 @@ struct FEquippedItemEntry
 
     UPROPERTY(BlueprintReadWrite)
     FString ItemType;
-
     UPROPERTY(BlueprintReadWrite)
     UItemObject* Item = nullptr;
-
     FEquippedItemEntry() {}
-
-    FEquippedItemEntry(const FString& InItemType, UItemObject* InItem)
-        : ItemType(InItemType), Item(InItem) {}
+    FEquippedItemEntry(const FString& InItemType, UItemObject* InItem) : ItemType(InItemType), Item(InItem) {}
 };
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -61,104 +57,65 @@ class RELICRUNNERS_API UInventoryComponent : public UActorComponent
     GENERATED_BODY()
 
 public:
+
     UInventoryComponent();
 
-    // Inventory
+    //Properties
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Inventory, Category="Inventory", meta=(AllowPrivateAccess = "true"))
     TArray<UItemObject*> InventoryItems;
-
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_EquippedItems, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
     TArray<FEquippedItemEntry> EquippedItems;
+    UPROPERTY(ReplicatedUsing = OnRep_SortingMethod)
+    EInventorySorting CurrentSortingMethod;
 
-    TArray<FEquippedItemEntry> GetEquippedItems() { return EquippedItems; };
-
-    // Inventory logic
+    //Functions
     UFUNCTION(BlueprintCallable)
     void AddItem(UItemObject* Item);
-
     void SortInventoryByCurrentMethod();
-
     UFUNCTION(BlueprintCallable)
     void SwapItems(UItemObject* ItemA, UItemObject* ItemB);
-
     UFUNCTION(Server, Reliable)
     void Server_SortInventory(EInventorySorting NewMethod);
-
     void SetSortingMethod(EInventorySorting NewMethod);
-
     void HandleSortingNow();
-
     UFUNCTION(BlueprintCallable)
     void EquipItem(UItemObject* Item);
-
     UFUNCTION()
     void OnRep_Inventory();
-
     UFUNCTION()
     void OnRep_EquippedItems();
-
     UFUNCTION(BlueprintCallable)
     void UnequipItem(UItemObject* Item);
+    void UpdateTotalEquippedStats(class ARelicRunnersCharacter* Char);
+    void UpdateTotalEquippedStats(class AEnemyCharacterAI* Char);
+    FEquippedStatsSummary CalculateEquippedStats() const;
+    FEquippedStatsSummary CachedEquippedStats;
+    UFUNCTION()
+    void OnRep_SortingMethod();
 
-    // Access equipped item
+    //Getters and Setters
+    TArray<FEquippedItemEntry> GetEquippedItems() { return EquippedItems; };
     UFUNCTION(BlueprintCallable)
     UItemObject* GetEquippedItemByType(const FString& ItemType) const;
     UFUNCTION(BlueprintCallable)
     UItemObject*& GetEquippedItemReference(const FString& ItemType);
-
-    void UpdateTotalEquippedStats(class ARelicRunnersCharacter* Char);
-
-    void UpdateTotalEquippedStats(class AEnemyCharacterAI* Char);
-
-    // Stats summary
-    FEquippedStatsSummary CalculateEquippedStats() const;
-
-    FEquippedStatsSummary CachedEquippedStats;
     FEquippedStatsSummary GetCachedEquippedStats() { return CachedEquippedStats; }
+    EInventorySorting GetCurrentSortingMethod() { return CurrentSortingMethod; }
 
     // Delegates
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStatsChanged, const FEquippedStatsSummary&, NewStats);
     UPROPERTY(BlueprintAssignable)
     FOnStatsChanged OnStatsChanged;
-
     DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
     UPROPERTY(BlueprintAssignable)
     FOnInventoryChanged OnInventoryChanged;
-
     DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEquipmentChanged);
     UPROPERTY(BlueprintAssignable)
     FOnEquipmentChanged OnEquipmentChanged;
 
-    // Currency 
-    UPROPERTY(ReplicatedUsing = OnRep_Gold, EditAnywhere, BlueprintReadOnly, Category = "Currency")
-    int32 Gold = 100; // start value for testing
-
-    UFUNCTION(BlueprintCallable, Category = "Currency")
-    bool TryChangeGold(int32 Delta);         // + adds, - spends (fails if < 0)
-
-    UFUNCTION(BlueprintPure, Category = "Currency")
-    int32 GetGold() const { return Gold; }
-
-    UFUNCTION()
-    void OnRep_Gold();
-
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
-    UPROPERTY(BlueprintAssignable)
-    FOnGoldChanged OnGoldChanged;
-
-    // Replication
-    UPROPERTY(ReplicatedUsing = OnRep_SortingMethod)
-    EInventorySorting CurrentSortingMethod;
-    
-    UFUNCTION()
-    void OnRep_SortingMethod();
-
-    EInventorySorting GetCurrentSortingMethod() { return CurrentSortingMethod; }
-
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 protected:
     virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
     
 };
