@@ -3,9 +3,9 @@
 #include "BTTask_SurroundTarget.h"
 #include "AIController.h"
 #include "NavigationSystem.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
-
-
+#include "GameFramework/Character.h"
 
 EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
@@ -26,11 +26,11 @@ EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& 
 	}
 
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-	FAIMoveRequest requestLocation;
 	AActor* target = Cast<AActor>(BlackBoard->GetValueAsObject(TargetActorKey.SelectedKeyName));
 	FNavLocation moveLocation;
 
-	FVector worldLocation = target->GetActorLocation() + (target->GetActorLocation() - ControlledPawn->GetActorLocation()).GetSafeNormal() * SeparationDistance;
+	FVector targetLocation = target->GetActorLocation();
+	FVector worldLocation = targetLocation + ((targetLocation - ControlledPawn->GetActorLocation()).GetSafeNormal() * SeparationDistanceBetweenTarget);
 
 	//finding the close navmesh point to the world point (mainly if their is a wall between the enemy and target or something like that)
 	if (!NavSys->ProjectPointToNavigation(worldLocation, moveLocation, NavExtent))
@@ -38,6 +38,86 @@ EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& 
 		return EBTNodeResult::Failed;
 	}
 
+	FAIMoveRequest requestLocation;
+	requestLocation.SetGoalLocation(moveLocation);
+	requestLocation.SetAcceptanceRadius(MoveToAcceptanceRadius);
+
+
+	FNavPathSharedPtr navPath;
+	EPathFollowingRequestResult::Type moveResult = OwnerController->MoveTo(requestLocation, &navPath);
+
+	if (moveResult == EPathFollowingRequestResult::RequestSuccessful)
+	{
+		OwnerController->ReceiveMoveCompleted.AddDynamic(this, &UBTTask_SurroundTarget::OnSeparationLocationReached);
+		return EBTNodeResult::InProgress;
+	}
+
+	return EBTNodeResult::Failed;
+}
+
+void UBTTask_SurroundTarget::OnSeparationLocationReached(FAIRequestID RequestID, EPathFollowingResult::Type Result)
+{
+	TArray<AActor*> overlappingActors;
+	TArray<AActor*> ignoredActors;
+	ignoredActors.Add(ControlledPawn);
+	ignoredActors.Add(Cast<AActor>(BlackBoard->GetValueAsObject(TargetActorKey.SelectedKeyName)));
+
+	bool sphereResult = UKismetSystemLibrary::SphereOverlapActors(GetWorld(), ControlledPawn->GetActorLocation(), SeparationDistanceBetweenFriendly, FriendlyObjectTypes, nullptr, ignoredActors, overlappingActors);
+
+	if (!sphereResult || overlappingActors.Num() == 0)
+	{
+		FinishLatentTask(*OwnerComponent, EBTNodeResult::Failed);
+		return;
+	}
+	
+	//using a weighted average to find the direction to move away from other enemies with the weight being the inverse of the distance to the other enemy so that closer enemies have more influence
+	float totalWeights = 0.f;
+	FVector moveDirection = FVector::ZeroVector;
+	float closestDistance = TNumericLimits<float>::Max();
+
+	for (AActor* actor : overlappingActors)
+	{
+		if (!actor->Tags.Contains("Enemy"))
+		{
+			continue;
+		}
+
+		float distance = FVector::Dist(actor->GetActorLocation(), ControlledPawn->GetActorLocation());
+
+		if (distance > 0.f)
+		{
+			float weight = 1.f / distance;
+			FVector direction = (ControlledPawn->GetActorLocation() - actor->GetActorLocation()).GetSafeNormal();
+
+			moveDirection += direction * weight;
+			totalWeights += weight;
+
+			if (distance < closestDistance)
+			{
+				closestDistance = distance;
+			}
+		}
+	}
+
+	if (moveDirection == FVector::ZeroVector)
+	{
+		FinishLatentTask(*OwnerComponent, EBTNodeResult::Failed);
+		return;
+	}
+
+	moveDirection /= totalWeights;
+	FVector worldMoveLocation = (moveDirection.GetSafeNormal() * FMath::Max(0, (SeparationDistanceBetweenFriendly - closestDistance))) + ControlledPawn->GetActorLocation();
+
+	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+	FNavLocation moveLocation;
+
+	if (!NavSys->ProjectPointToNavigation(worldMoveLocation, moveLocation, NavExtent))
+	{
+		FinishLatentTask(*OwnerComponent, EBTNodeResult::Failed);
+		return;
+	}
+
+	FAIMoveRequest requestLocation;
 	requestLocation.SetGoalLocation(moveLocation);
 
 	FNavPathSharedPtr navPath;
@@ -45,20 +125,15 @@ EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& 
 
 	if (moveResult == EPathFollowingRequestResult::Failed)
 	{
-		return EBTNodeResult::Failed;
+		FinishLatentTask(*OwnerComponent, EBTNodeResult::Failed);
+		return;
 	}
 
-	OwnerController->ReceiveMoveCompleted.AddDynamic(this, &UBTTask_SurroundTarget::OnSeparationLocationReached);
-
-	return EBTNodeResult::InProgress;
-}
-
-void UBTTask_SurroundTarget::OnSeparationLocationReached(FAIRequestID RequestID, EPathFollowingResult::Type Result)
-{
 	FinishLatentTask(*OwnerComponent, EBTNodeResult::Succeeded);
+	OwnerController->ReceiveMoveCompleted.AddDynamic(this, &UBTTask_SurroundTarget::OnSeparationLocationReached);
 }
-
 
 void UBTTask_SurroundTarget::OnFinishedMoving(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
+	FinishLatentTask(*OwnerComponent, EBTNodeResult::Succeeded);
 }

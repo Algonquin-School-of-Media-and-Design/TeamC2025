@@ -39,6 +39,7 @@ AEnemyCharacter::AEnemyCharacter() : ACharacter()
 
 	bReplicates = true;
 	SetReplicateMovement(true);
+	Tags.Add("Enemy");
 }
 
 void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

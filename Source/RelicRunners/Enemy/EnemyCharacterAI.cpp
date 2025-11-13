@@ -110,6 +110,8 @@ AEnemyCharacterAI::AEnemyCharacterAI()
 
 	bReplicates = true;
 	SetReplicateMovement(true);
+
+	Tags.Add("Enemy");
 }
 
 void AEnemyCharacterAI::OnRep_CurrentHealth()
