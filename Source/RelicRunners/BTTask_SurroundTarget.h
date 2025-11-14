@@ -8,9 +8,6 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "BTTask_SurroundTarget.generated.h"
 
-//struct FPathFollowingResult;
-//struct FAIRequestID;
-
 class APawn;
 class AAIController;
 class UBlackboardComponent;

@@ -5,7 +5,7 @@
 #include "NavigationSystem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "GameFramework/Character.h"
+#include "DrawDebugHelpers.h"
 
 EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
@@ -39,8 +39,10 @@ EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& 
 	FNavLocation moveLocation;
 
 	FVector targetLocation = target->GetActorLocation();
-	FVector worldLocation = targetLocation + ((targetLocation - ControlledPawn->GetActorLocation()).GetSafeNormal() * SeparationDistanceBetweenTarget);
+	FVector worldLocation = targetLocation + ((ControlledPawn->GetActorLocation() - targetLocation ).GetSafeNormal() * SeparationDistanceBetweenTarget);
 
+	//DrawDebugLine(GetWorld(), targetLocation, targetLocation + (ControlledPawn->GetActorLocation() - targetLocation).GetSafeNormal() * 150, FColor::Blue, false, 10);
+	//UE_LOG(LogTemp, Log, TEXT("%f"), (ControlledPawn->GetActorLocation() - targetLocation).GetSafeNormal());
 	//finding the close navmesh point to the world point (mainly if their is a wall between the enemy and target or something like that)
 	if (!NavSys->ProjectPointToNavigation(worldLocation, moveLocation, NavExtent))
 	{
@@ -66,6 +68,8 @@ EBTNodeResult::Type UBTTask_SurroundTarget::ExecuteTask(UBehaviorTreeComponent& 
 
 void UBTTask_SurroundTarget::OnSeparationLocationReached(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
+	OwnerController->ReceiveMoveCompleted.RemoveDynamic(this, &UBTTask_SurroundTarget::OnSeparationLocationReached);
+
 	TArray<AActor*> overlappingActors;
 	TArray<AActor*> ignoredActors;
 	ignoredActors.Add(ControlledPawn);
@@ -132,17 +136,18 @@ void UBTTask_SurroundTarget::OnSeparationLocationReached(FAIRequestID RequestID,
 	FNavPathSharedPtr navPath;
 	EPathFollowingRequestResult::Type moveResult = OwnerController->MoveTo(requestLocation, &navPath);
 
-	if (moveResult == EPathFollowingRequestResult::Failed)
+	if (moveResult == EPathFollowingRequestResult::RequestSuccessful)
 	{
-		FinishLatentTask(*OwnerComponent, EBTNodeResult::Failed);
+		OwnerController->ReceiveMoveCompleted.AddDynamic(this, &UBTTask_SurroundTarget::OnFinishedMoving);
 		return;
 	}
 
-	FinishLatentTask(*OwnerComponent, EBTNodeResult::Succeeded);
-	OwnerController->ReceiveMoveCompleted.AddDynamic(this, &UBTTask_SurroundTarget::OnSeparationLocationReached);
+	FinishLatentTask(*OwnerComponent, EBTNodeResult::Failed);
+	
 }
 
 void UBTTask_SurroundTarget::OnFinishedMoving(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
+	OwnerController->ReceiveMoveCompleted.RemoveDynamic(this, &UBTTask_SurroundTarget::OnFinishedMoving);
 	FinishLatentTask(*OwnerComponent, EBTNodeResult::Succeeded);
 }
