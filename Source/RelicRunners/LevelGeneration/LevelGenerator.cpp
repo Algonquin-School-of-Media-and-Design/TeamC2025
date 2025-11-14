@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "LevelGenerator.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -13,11 +12,14 @@
 /*
 TODO:
 Teleport every player to the starting point when the level starts
+Setup Lava spawning
 */
 
 ALevelGenerator::ALevelGenerator() :
 	ObjectiveType(0),
 	TileScale(1.0f),
+	LevelChangeTrigger(nullptr),
+	TargetLevel(nullptr),
 	GenerationIsRandom(true),
 	LevelTexture(nullptr),
 	SpawnWidth(2),
@@ -27,9 +29,8 @@ ALevelGenerator::ALevelGenerator() :
 	CenterForceFull(0),
 	BorderForceFull(0),
 	MaxKeyTileAmount(1),
-	MaxShopAmount(1),
-	LevelStartPackedLevel(nullptr),
-	LevelEndPackedLevel(nullptr),
+	LevelStartPackedActor(nullptr),
+	LevelEndPackedActor(nullptr),
 	FullPiece(nullptr),
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
@@ -62,6 +63,7 @@ void ALevelGenerator::PostInitializeComponents()
 
 	if (HasAuthority())
 	{
+		//If spawning a level with a texture.
 		if (LevelTexture && LevelTexture->GetPlatformData() && !GenerationIsRandom)
 		{
 			if (LevelTexture->CompressionSettings != TC_VectorDisplacementmap)
@@ -70,50 +72,60 @@ void ALevelGenerator::PostInitializeComponents()
 				("Warning!! Texture uses incompatible Compression Setting. Go into the texture's setting, find the *Compression Settings* option and set it to *VectorDisplacementMap.*")));
 				return;
 			}
+			//Find mipmap data from the texture.
 			FTexture2DMipMap& MipMap = LevelTexture->GetPlatformData()->Mips[0];
 			void* Data = MipMap.BulkData.Lock(LOCK_READ_ONLY);
 
+			//Use the mipmap data to find the width and depth of the texture.
 			FColor* FormattedImageData = static_cast<FColor*>(Data);
 			int32 textureWidth = MipMap.SizeX;
 			int32 textureDepth = MipMap.SizeY;
 
+			//Initialize the floor based on each pixel in the texture.
 			for (int y = 0; y < textureDepth; y++)
 			{
 				for (int x = 0; x < textureWidth; x++)
 				{
+					//Get the colour of the currently checked pixel of the texture.
 					FColor PixelColor = FormattedImageData[y * textureWidth + x];
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Value: %i, HEX: "), y * textureWidth + x) + PixelColor.ToHex());
 
 					FSFloorValues newFloorValues;
+					//If current index has a white pixel, set it to unwalkable. Any other colour sets it to walkable.
 					newFloorValues.IsFullTile = (PixelColor.ToHex() != FString("ffffffff")); //"ffffffff" -> Hex code for the colour white
 
-					InitializeModularObstacle(newFloorValues);
-
+					//Add the currently created Floor tile to the array.
 					FloorValuesArray.Add(newFloorValues);
 				}
 			}
 
+			//Initialize the shape of the floor tile and the modular obstacles based on each specified colour
 			for (int y = 0; y < textureDepth; y++)
 			{
 				for (int x = 0; x < textureWidth; x++)
 				{
+					//Initialize the floor's shape based on the variable set above.
 					CheckFloor(x, y, textureWidth, textureDepth);
 
+					//Spawn the modular obstacles based on each specified colour
 					FColor PixelColor = FormattedImageData[y * textureWidth + x];
 					Server_SpawnFloorObstaclesByColour(x, y, textureWidth, PixelColor);
 				}
 			}
 			//add director
 
+			//Spawn the floor with the instanced static mesh component.
 			CreateFloor();
 
 			MipMap.BulkData.Unlock();
 		}
 		else
 		{
+			//Initialize the starting and ending tiles.
 			int startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 			int endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 
+			//If somehow both are at the exact same index, reinitialize starting and ending tiles
 			while (startingIndex == endingIndex)
 			{
 				startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
@@ -124,23 +136,27 @@ void ALevelGenerator::PostInitializeComponents()
 			{
 				for (int x = 0; x < SpawnWidth; x++)
 				{
+					//Initialize each tile and set them to either walkable or non-walkable.
 					GenerateFloor(x, y);
 				}
 			}
 
 			if (SpawnDepth * SpawnWidth > 1)
 			{
+				//Override starting and ending tiles initialized above and create a path from one to the other.
 				SetStartingAndEndingPoints(startingIndex, endingIndex);
 
 				FindStartToEndPath(startingIndex, endingIndex, SpawnWidth);
 			}
 
+			//Override previously initialized tiles with key tiles
 			for (int i = 0; i < MaxKeyTileAmount; i++)
 			{
 				int keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 
 				int whileLoopLimit = 0;
 
+				//If the currently selected tile can be overriden, do that, if not, find another tile. Repeat 10 time. if failed every time, give up.
 				while (FloorValuesArray[keyTileIndex].FloorObstacle > EFloorObstacle::Basic)
 				{
 					keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
@@ -153,6 +169,7 @@ void ALevelGenerator::PostInitializeComponents()
 					}
 				}
 
+				//If it can, override the currently selected tile with the key tile and create a path from the starting tile to it.
 				if (whileLoopLimit < 10)
 				{
 					SetKeyTile(keyTileIndex);
@@ -165,8 +182,10 @@ void ALevelGenerator::PostInitializeComponents()
 			{
 				for (int x = 0; x < SpawnWidth; x++)
 				{
+					//Spawn the floor tiles with the instanced static mesh component.
 					CheckFloor(x, y, SpawnWidth, SpawnDepth);
 
+					//Spawn each modular obstacle based on previously defined variable.
 					Server_SpawnFloorObstacles(x, y, SpawnWidth);
 				}
 			}
@@ -176,8 +195,9 @@ void ALevelGenerator::PostInitializeComponents()
 			CreateFloor();
 
 		}
-		ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
 
+		//Set the gamestate's objective type in order to help keep track of remaining objectives if it is set to anything.
+		ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
 		if (gameState)
 		{
 			gameState->Multicast_SetObjectiveType(ObjectiveType);
@@ -205,6 +225,7 @@ void ALevelGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//Navmesh stuff. Thanks Konstantin
 	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	if (NavSys)
 	{
@@ -217,8 +238,10 @@ void ALevelGenerator::GenerateFloor(int x, int y)
 {
 	if (FloorValuesArray.Num() == x + (SpawnWidth * y))
 	{
+		//Set current tile as walkable or non-walkable
 		InitializeFloor();
 
+		//If initialized, force radius of tiles in the center to walkable
 		if (CenterForceFull > 0)
 		{
 			if (((x - CenterForceFull) >= 0 && (x + CenterForceFull) <= SpawnWidth - 1)
@@ -228,6 +251,7 @@ void ALevelGenerator::GenerateFloor(int x, int y)
 			}
 		}
 
+		//If initialized, force border to walkable
 		if (BorderForceFull > 0)
 		{
 			if (((x - BorderForceFull) < 0 || (x + BorderForceFull) > SpawnWidth - 1)
@@ -242,6 +266,7 @@ void ALevelGenerator::GenerateFloor(int x, int y)
 
 void ALevelGenerator::InitializeFloor()
 {
+	//Based on the percentage, set floor tile to walkable or non-walkable.
 	FSFloorValues newFloorValues;
 	float randomFloor = FMath::RandRange(0.1f, 100.0f);
 
@@ -255,6 +280,8 @@ void ALevelGenerator::InitializeFloor()
 
 		InitializeModularObstacle(newFloorValues);
 	}
+
+	//Add initialized floor to array
 	FloorValuesArray.Add(newFloorValues);
 }
 
@@ -293,7 +320,6 @@ void ALevelGenerator::SetKeyTile(int index)
 	FloorValuesArray[index].FloorObstacle = EFloorObstacle::KeyTile;
 	FloorValuesArray[index].randomFloorToSpawn = 0;
 	FloorValuesArray[index].obstacleYaw = FMath::RandRange(0, 3) * 90;
-
 }
 
 void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex, int width)
@@ -308,6 +334,7 @@ void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex, int
 
 	bool bReachEndY = currentY == targetY;
 
+	//To avoid repetition, randomly picks between moving horizontally or vertically closer to the target
 	while (!(bReachEndX && bReachEndY))
 	{
 		float random = FMath::FRandRange(0.0f, 100.0f);
@@ -348,7 +375,7 @@ void ALevelGenerator::InitializeModularObstacle(FSFloorValues& floorValue)
 	{
 		floorValue.FloorObstacle = EFloorObstacle::Basic;
 
-		floorValue.randomFloorToSpawn = FMath::RandRange(0, PackedLevelArray.Num() - 1);
+		floorValue.randomFloorToSpawn = FMath::RandRange(0, PackedActorArray.Num() - 1);
 
 		floorValue.obstacleYaw = FMath::RandRange(0, 3) * 90;
 	}
@@ -375,7 +402,6 @@ void ALevelGenerator::CheckFloor(int x, int y, int width, int depth)
 	}
 
 	SetFloorShape(x, y, width);
-
 }
 
 void ALevelGenerator::FloorCheckTopNeighbours(bool checkLeft, bool checkRight, int indexOffset, int x, int y, int width)
@@ -722,37 +748,45 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 	switch (FloorValuesArray[index].FloorObstacle)
 	{
 	case EFloorObstacle::Basic:
-		if (PackedLevelArray[FloorValuesArray[index].randomFloorToSpawn] != nullptr)
+		if (PackedActorArray[FloorValuesArray[index].randomFloorToSpawn] != nullptr)
 		{
-			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedLevelArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
+			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedActorArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
 		break;
 	case EFloorObstacle::KeyTile:
 		if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::CaptureTheFlag))
 		{
-			if (!CapturableFlagPackedLevel.IsEmpty())
+			if (!CapturableFlagPackedActorArray.IsEmpty())
 			{
-				int randIndex = FMath::RandRange(0, CapturableFlagPackedLevel.Num() - 1);
+				int randIndex = FMath::RandRange(0, CapturableFlagPackedActorArray.Num() - 1);
 
-				if (CapturableFlagPackedLevel[randIndex] != nullptr)
+				if (CapturableFlagPackedActorArray[randIndex] != nullptr)
 				{
-					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(CapturableFlagPackedLevel[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
+					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(CapturableFlagPackedActorArray[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
 				}
 			}
 		}
 		break;
-	case EFloorObstacle::Shop:
-		break;
 	case EFloorObstacle::Start:
-		if (LevelStartPackedLevel != nullptr)
+		if (LevelStartPackedActor != nullptr)
 		{
-			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelStartPackedLevel, posOffset, FRotator(0.0f, yaw, 0.0f));
+			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelStartPackedActor, posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
 		break;
 	case EFloorObstacle::End:
-		if (LevelEndPackedLevel != nullptr)
+		if (LevelEndPackedActor != nullptr)
 		{
-			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelEndPackedLevel, posOffset, FRotator(0.0f, yaw, 0.0f));
+			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelEndPackedActor, posOffset, FRotator(0.0f, yaw, 0.0f));
+		}
+
+		if (LevelChangeTrigger != nullptr)
+		{
+			ALevelChangeTrigger* levelChangeActor = GetWorld()->SpawnActor<ALevelChangeTrigger>(LevelChangeTrigger, posOffset, FRotator(0.0f, yaw, 0.0f));
+
+			if (!TargetLevel.IsNull())
+			{
+				levelChangeActor->Server_SetTargetLevel(FName(TargetLevel.GetAssetName()));
+			}
 		}
 		break;
 	}
@@ -775,6 +809,19 @@ void ALevelGenerator::SpawnFloorObstaclesByColour(int x, int y, int width, FColo
 			TileColourToPackedActor.Find(colour)->ObstacleYaw * 90;
 
 		APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(TileColourToPackedActor.Find(colour)->ObstacleActor, posOffset, FRotator(0.0f, obstacleYaw, 0.0f));
+
+		if (TileColourToPackedActor.Find(colour)->FloorObstacle != EFloorObstacle::End)
+			return;
+
+		if (LevelChangeTrigger == nullptr)
+			return;
+
+		ALevelChangeTrigger* levelChangeActor = GetWorld()->SpawnActor<ALevelChangeTrigger>(LevelChangeTrigger, posOffset, FRotator(0.0f, obstacleYaw, 0.0f));
+
+		if (TargetLevel.IsNull())
+			return;
+
+		levelChangeActor->Server_SetTargetLevel(FName(TargetLevel.GetAssetName()));
 	}
 }
 

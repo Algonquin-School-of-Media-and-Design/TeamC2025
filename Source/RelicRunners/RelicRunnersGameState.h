@@ -16,10 +16,10 @@ UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true
 enum class EObjectiveType : uint8
 {
 	None = 0 UMETA(Hidden),
-	CaptureTheFlag = 1<<1,
-	DefeatAllEnemies = 1<<2,
-	DeliverPackage = 1<<3,
-	DefendTheCrystal = 1<<4,
+	CaptureTheFlag = 1 << 0,
+	DefeatAllEnemies = 1 << 1,
+	DeliverPackage = 1 << 2,
+	DefendTheCrystal = 1 << 3,
 };
 ENUM_CLASS_FLAGS(EObjectiveType);
 
@@ -28,9 +28,9 @@ inline bool operator== (int num, EObjectiveType type)
 	return num == static_cast<uint8>(type);
 }
 
-inline bool operator|= (int a, EObjectiveType b)
+inline bool operator|= (int num, EObjectiveType type)
 {
-	return a |= static_cast<uint8>(b);
+	return num |= static_cast<uint8>(type);
 }
 
 

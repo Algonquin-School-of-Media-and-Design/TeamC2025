@@ -38,16 +38,15 @@ void ACapturableFlag::BeginPlay()
 
 	if (gameState)
 	{
+		//Increment the Replicated Objective variable in the Gamestate for every flag that is spawned
 		gameState->Multicast_IncrementObjective();
-	}
-	
+	}	
 }
 
 // Called every frame
 void ACapturableFlag::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACapturableFlag::Interact_Implementation(ARelicRunnersCharacter* Char)
@@ -71,8 +70,11 @@ void ACapturableFlag::HandleInteracted(ARelicRunnersCharacter* Char)
 
 	if (gameState)
 	{
+		//Decrement the Replicated Objective variable in the Gamestate
 		gameState->Multicast_DecrementObjective();
 	}
+
+	//Disable further interactions
 	isActive = true;
 
 	FString text = HasAuthority() ? "Server: " : "Client: ";
