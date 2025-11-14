@@ -57,7 +57,7 @@ void AAphroditeCharacter::GiveDamageAbilities()
     if (AbilitySystem)
     {
 		// Give Bundle of Joy ability 
-        AbilitySystem->GiveAbility(FGameplayAbilitySpec(UBundleOfJoy::StaticClass(), 1, 0));\
+        AbilitySystem->GiveAbility(FGameplayAbilitySpec(UBundleOfJoy::StaticClass(), 1, 0));
 		// Activate Bundle of Joy ability
         AbilitySystem->TryActivateAbilityByClass(UBundleOfJoy::StaticClass());
 		// start ability cooldown

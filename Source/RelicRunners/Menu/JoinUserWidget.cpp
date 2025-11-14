@@ -202,6 +202,12 @@ void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 			}
 		}
 	}
+
+	URelicRunnersGameInstance* GameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	if (GameInstance)
+	{
+		GameInstance->SetSelectedClass(ClassKey);
+	}
 }
 
 void UJoinUserWidget::HandleEntryGenerated(UUserWidget& EntryWidget)

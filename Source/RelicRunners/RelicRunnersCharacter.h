@@ -18,12 +18,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "AbilitySystem/AbilityBase.h"
-#include "AbilitySystem/ImpunityAbility.h"
-#include "AbilitySystem/EarthquakeAbility.h"
-#include "Abilities/VengefulDance.h"
+
+#include "AbilitySystem/AbilityBase.h"  
+#include "Abilities/Moonbeam.h"       
+#include "Abilities/WarBannerAbility.h"
+#include "Abilities/ImpunityAbility.h"
+#include "Abilities/EarthquakeAbility.h"
 #include "Abilities/BundleOfJoy.h"
-#include "Logging/LogMacros.h"
+#include "Abilities/VengefulDance.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
+#include "AttributeSet.h"
+
 #include "RelicRunnersCharacter.generated.h"
 
 enum class EInventorySorting : uint8;
@@ -140,13 +146,6 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_UseHealthPotion(int NewHealth, int NewPotionCount);
-
-
-	UPROPERTY(EditAnywhere, Category = "Abilities")
-	TSubclassOf<AAbilityBase> DamageAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* DamageAbilityInstance;
 
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
@@ -293,25 +292,6 @@ protected:
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> UtilityAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* UtilityAbilityInstance;
-
-	//Defence Ability (Impunity Ability)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> DefenceAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* DefenceAbilityInstance;
-
-	// Ultimate Ability (Earthquake Ability)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TSubclassOf<AAbilityBase> UltimateAbilityClass;
-
-	UPROPERTY()
-	AAbilityBase* UltimateAbilityInstance;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;
@@ -403,12 +383,16 @@ protected:
 	float UtilityCooldown = 5.f;
 	float UltimateCooldown = 10.f;
 
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AWarBannerAbility> WarBannerAbilityTemplate;
-	class AWarBannerAbility* WarBannerAbility;
+	UPROPERTY()
+	UAttributeSet* Attributes;
 
-	bool IsWarBannerActive = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	UAbilitySystemComponent* AbilitySystem;
+
+	virtual void GiveDamageAbilities();
+	virtual void GiveDefenceAbilities();
+	virtual void GiveUtilityAbilities();
+	virtual void GiveUltimateAbilities();
 
 	//Setup
 	virtual void BeginPlay();
@@ -423,6 +407,8 @@ protected:
 	FTimerHandle HealthRegenTimerHandle;
 
 public:
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystem; }
+
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/

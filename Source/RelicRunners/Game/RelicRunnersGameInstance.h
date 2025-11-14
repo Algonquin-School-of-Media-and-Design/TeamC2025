@@ -60,6 +60,7 @@ public:
     void SetCharacterName(const FString& NewName) { PlayerName = NewName; }
     UFUNCTION(BlueprintCallable)
     FString GetCharacterName() const { return PlayerName; }
+    void SetSelectedClass(FName NewClass) { SelectedClass = NewClass; }
 
     //Keybinds
     UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Input")
@@ -78,6 +79,8 @@ public:
     FString SavedHostAddress;
     UPROPERTY()
     FString PlayerName;
+    UPROPERTY()
+    FName SelectedClass;
     UPROPERTY()
     TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
     UPROPERTY()

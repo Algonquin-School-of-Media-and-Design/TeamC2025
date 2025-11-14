@@ -48,11 +48,6 @@
 #include "AbilitySystem/AbilityPointCounter.h"
 #include "AbilitySystem/AbilitySelection.h"
 #include "AbilitySystem/HealthPotion.h"
-#include "AbilitySystem/Moonbeam.h"       
-#include "AbilitySystem/AbilityBase.h"    
-#include "Abilities/WarBannerAbility.h"
-#include "AbilitySystem/ImpunityAbility.h"
-#include "AbilitySystem/EarthquakeAbility.h"
 #include "Item/ItemData.h"
 #include "Engine/ActorChannel.h"
 #include "Engine/LocalPlayer.h"
@@ -426,21 +421,12 @@ float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const&
 {
 	float actualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	if (DefenceAbilityInstance)
-	{
-		if (AImpunityAbility* Impunity = Cast<AImpunityAbility>(DefenceAbilityInstance))
-		{
-			actualDamage *= Impunity->GetDamageReductionMultiplier();
-		}
-	}
-
 	PlayerHealth -= actualDamage;
 
 	if (PlayerHealth <= 0)
 	{
 		PlayerHealth = 0;
 	}
-	//UE_LOG(LogTemp, Log, TEXT("Player took %f damage, current health: %f"), actualDamage, PlayerHealth);
 
 	UpdateHUD();
 
@@ -550,85 +536,6 @@ void ARelicRunnersCharacter::BeginPlay()
 		});
 	}
 
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	if (WarBannerAbilityTemplate != nullptr)
-	{
-		WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
-		WarBannerAbility->Server_Initialize(this);
-	}
-
-	//VengefulDance format
-    UtilityAbilityClass = AVengefulDance::StaticClass();
-
-    if (UtilityAbilityClass)
-    {
-		UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityAbilityClass);
-        if (UtilityAbilityInstance)
-        {
-			UtilityAbilityInstance->OwnerActor = this;
-        }
-    }
-
-	////BundleOfJoy format
-	if (!DamageAbilityClass)
-	{
-		DamageAbilityClass = ABundleOfJoy::StaticClass();
-	}
-
-	// Impunity (Defensive) Ability
-	if (!DefenceAbilityClass)
-	{
-		DefenceAbilityClass = AImpunityAbility::StaticClass();
-	}
-
-	if (DefenceAbilityClass)
-	{
-		DefenceAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DefenceAbilityClass);
-		if (DefenceAbilityInstance)
-		{
-			DefenceAbilityInstance->OwnerActor = this;
-		}
-	}
-
-	if (!UltimateAbilityClass)
-	{
-		UltimateAbilityClass = AEarthquakeAbility::StaticClass();
-	}
-
-	if (UltimateAbilityClass)
-	{
-		UltimateAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UltimateAbilityClass);
-		if (UltimateAbilityInstance)
-		{
-			UltimateAbilityInstance->OwnerActor = this;
-		}
-	}
-	
-	// Spawn Damage Ability (Moonbeam) 
-	if (DamageAbilityClass)
-	{
-		FActorSpawnParameters Params;
-		Params.Owner = this;
-		Params.Instigator = this;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(
-			DamageAbilityClass,
-			GetActorLocation(),
-			GetActorRotation(),
-			Params
-		);
-
-		if (DamageAbilityInstance)
-		{
-			// Let the ability know who owns it (used by Moonbeam)
-			DamageAbilityInstance->SetAbilityOwner(this);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn DamageAbilityInstance (Moonbeam)."));
-		}
-	}
 }
 
 void ARelicRunnersCharacter::InitLocalUI()
@@ -756,32 +663,6 @@ void ARelicRunnersCharacter::TraceForInteractables()
 		IInteractInterface::Execute_ShowTooltip(Item, bShouldShow);
 	}
 
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
-	if (WarBannerAbility == nullptr)
-		return;
-
-	if (!WarBannerAbility->CanActivate())
-		return;
-
-	if (IsWarBannerActive)
-	{
-		FHitResult HitResult;
-		FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true, this);
-
-		bool bHit = GetWorld()->LineTraceSingleByChannel(
-			HitResult,
-			PlayerLocation,
-			PlayerLocation + (PlayerForward * MaxDistance),
-			ECC_Visibility,
-			TraceParams);
-
-		FVector targetPosition = bHit ? HitResult.Location : PlayerLocation + (PlayerForward * MaxDistance);
-
-		DrawDebugLine(GetWorld(), PlayerLocation, targetPosition, FColor::Blue);
-		WarBannerAbility->SetActorLocation(targetPosition);
-		WarBannerAbility->SetActorRotation(FRotator(0.0f, GetControlRotation().Yaw, 0.0f));
-	}
-	//War Banner Ability Section End
 }
 
 void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
@@ -1067,102 +948,42 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 
 void ARelicRunnersCharacter::DamageAbility()
 {
-	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
-
-	//For BundleOfJoy
-	if (DamageAbilityClass && GetWorld())
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = GetInstigator();
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 150.f + FVector(0, 0, 100.f);
-		FRotator SpawnRotation = GetActorRotation();
-
-		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageAbilityClass, SpawnLocation, SpawnRotation, SpawnParams);
-
-		if (DamageAbilityInstance)
-		{
-			DamageAbilityInstance->OwnerActor = this;
-			DamageAbilityInstance->SetActorLocation(SpawnLocation); 
-			DamageAbilityInstance->ActivateAbility();
-
-			UE_LOG(LogTemp, Warning, TEXT("Ability spawned at: %s"), *DamageAbilityInstance->GetActorLocation().ToString());
-		}
-
-		return;
-	}
-	
-	if (DamageAbilityInstance)
-	{
-		if (DamageAbilityInstance->CanActivate())
-		{
-			DamageAbilityInstance->ActivateAbility();
-
-			if (AbilityPointCounter)
-			{
-				AbilityPointCounter->StartDamageCooldown(DamageAbilityInstance->GetCooldown());
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Damage ability is on cooldown."));
-		}
-
-		return; 
-	}
-
-	if (AbilityPointCounter)
-	{
-		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
-	}
-
+	GiveDamageAbilities();
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
 {
-	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
-
-	if (DefenceAbilityInstance)
-	{
-		DefenceAbilityInstance->ActivateAbility();
-	}
+	GiveDefenceAbilities();
 }
 
 void ARelicRunnersCharacter::UtilityAbility()
 {
-	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
-
-	IsWarBannerActive = !IsWarBannerActive;
-
-	if (WarBannerAbility == nullptr)
-		return;
-
-	if (IsWarBannerActive)
-	{
-		WarBannerAbility->ActivateAbility();
-	}
-	else
-	{
-		WarBannerAbility->CancelAbility();
-	}
-
-	//For VengefulDance
-	if (UtilityAbilityInstance)
-	{
-		UtilityAbilityInstance->ActivateAbility();
-	}
+	GiveUtilityAbilities();
 }
 
 void ARelicRunnersCharacter::UltimateAbility()
 {
-	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+	GiveUltimateAbilities();
+}
 
-	if (UltimateAbilityInstance)
-	{
-		UltimateAbilityInstance->ActivateAbility();
-	}
+void ARelicRunnersCharacter::GiveDamageAbilities()
+{
+
+}
+
+void ARelicRunnersCharacter::GiveDefenceAbilities()
+{
+
+}
+
+void ARelicRunnersCharacter::GiveUtilityAbilities()
+{
+
+}
+
+void ARelicRunnersCharacter::GiveUltimateAbilities()
+{
+
 }
 
 void ARelicRunnersCharacter::HealthPotions()

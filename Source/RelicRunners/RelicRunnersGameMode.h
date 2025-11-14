@@ -33,10 +33,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Preview")
 	TSubclassOf<class APlayerPreview> PlayerPreviewClass;
 
-
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ANemesisCharacter> NemesisCharacterClass;
-
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AArtemisCharacter> ArtemisCharacterClass;

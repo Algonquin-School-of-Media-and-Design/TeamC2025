@@ -56,7 +56,7 @@ void ARelicRunnersGameMode::PostLogin(APlayerController* NewPlayer)
 
     }
 
-    // Skip the host player (listen server�s own controller)
+    // Skip the host player (listen servers own controller)
     if (NewPlayer->IsLocalController())
     {
         UE_LOG(LogTemp, Warning, TEXT("[GameMode] Skipping preview spawn for host: %s"), *NewPlayer->GetName());
