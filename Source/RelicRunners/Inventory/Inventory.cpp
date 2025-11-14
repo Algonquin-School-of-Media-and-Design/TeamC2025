@@ -59,6 +59,10 @@ void UInventory::NativeConstruct()
     if (B_Offhand) B_Offhand->OnClicked.AddDynamic(this, &UInventory::OffhandlotClicked);
     if (B_Necklace) B_Necklace->OnClicked.AddDynamic(this, &UInventory::NecklaceSlotClicked);
     if (B_SortingType) B_SortingType->OnClicked.AddDynamic(this, &UInventory::SortingTypeClicked);
+    
+    //Vendor
+    if (VendorCanvas) VendorCanvas->SetVisibility(ESlateVisibility::Collapsed);
+    if (VendorSlots) VendorSlots->ClearListItems();
 }
 
 void UInventory::HandleSortSelected(EInventorySorting Method)

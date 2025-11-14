@@ -89,9 +89,18 @@ public:
 	void OffhandlotClicked();
 	UFUNCTION()
 	void SortingTypeClicked();
+
+
 	//UI Elements
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTileView* InventorySlots;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTileView* VendorSlots;
+
+	UPROPERTY(meta = (BindWidget))
+	class UCanvasPanel* VendorCanvas;
+
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_InventorySlots;
 	UPROPERTY(meta = (BindWidget))

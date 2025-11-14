@@ -99,6 +99,7 @@ void AVendor::ShowTooltip_Implementation(bool bShow)
 	
 }
 
+// Replication
 void AVendor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
