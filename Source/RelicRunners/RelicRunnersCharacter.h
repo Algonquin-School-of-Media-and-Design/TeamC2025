@@ -267,6 +267,8 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
+	void Die();
+
 protected:
 
 	//Other Classes
@@ -382,6 +384,8 @@ protected:
 	float DefenceCooldown = 5.f;
 	float UtilityCooldown = 5.f;
 	float UltimateCooldown = 10.f;
+
+	FVector respawnPoint;
 
 	UPROPERTY()
 	UAttributeSet* Attributes;

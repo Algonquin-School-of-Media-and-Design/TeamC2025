@@ -57,6 +57,7 @@
 #include "Enemy/EnemyCharacter.h"
 #include "Enemy/EnemyCharacterAI.h"
 
+#include "LevelGeneration/CapturableFlag.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -426,11 +427,18 @@ float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const&
 	if (PlayerHealth <= 0)
 	{
 		PlayerHealth = 0;
+		Die();
 	}
 
 	UpdateHUD();
 
 	return actualDamage;
+}
+
+void ARelicRunnersCharacter::Die()
+{
+	SetActorLocation(respawnPoint);
+	PlayerHealth = PlayerMaxHealth;
 }
 
 bool ARelicRunnersCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -536,6 +544,8 @@ void ARelicRunnersCharacter::BeginPlay()
 		});
 	}
 
+	respawnPoint = GetActorLocation();
+
 }
 
 void ARelicRunnersCharacter::InitLocalUI()
@@ -629,6 +639,12 @@ void ARelicRunnersCharacter::Tick(float DeltaTime)
 
 	TraceForInteractables();
 	UpdatePlayerHUDWorldFacing();
+
+	if (GetActorLocation().Z <= -100.0f)
+	{
+		Die();
+		UpdateHUD();
+	}
 }
 
 void ARelicRunnersCharacter::TraceForInteractables()
@@ -860,6 +876,18 @@ void ARelicRunnersCharacter::Interact()
 						MyPC->Server_RequestPickup(Item);
 					}
 				}
+			}
+			else if (ACapturableFlag* Flag = Cast<ACapturableFlag>(HitActor))
+			{
+				if (APlayerController* PC = Cast<APlayerController>(GetController()))
+				{
+					ARelicRunnersPlayerController* MyPC = Cast<ARelicRunnersPlayerController>(PC);
+					if (MyPC)
+					{
+						MyPC->Server_RequestFlagActivation(Flag);
+					}
+				}
+
 			}
 			else
 			{
