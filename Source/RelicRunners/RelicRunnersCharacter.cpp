@@ -794,15 +794,14 @@ void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
 	FVector CameraLocation = LocalController->PlayerCameraManager->GetCameraLocation();
 	FVector WidgetLocation = PlayerHUDWorld->GetComponentLocation();
 
-	// This character is locally controlled � make it face *away* from camera
 	if (IsLocallyControlled())
 	{
 		PlayerHUDWorld->SetVisibility(false);
 	}
-	else // Remote player � make it face toward camera
+	else 
 	{
 		FVector ToCamera = CameraLocation - WidgetLocation;
-		ToCamera.Z = 0.f; // optional: lock pitch
+		ToCamera.Z = 0.f;
 
 		if (!ToCamera.IsNearlyZero())
 		{
@@ -849,7 +848,7 @@ void ARelicRunnersCharacter::PerformSwingTrace()
 		End,
 		FQuat::Identity,
 		ECC_Pawn,
-		FCollisionShape::MakeSphere(100.0f), // Adjust the thickness of your sword
+		FCollisionShape::MakeSphere(100.0f),
 		Params
 	);
 
@@ -885,7 +884,6 @@ void ARelicRunnersCharacter::Server_HitEnemy_Implementation(AActor* HitActor)
 {
 	if (HitActor)
 	{
-		// Optionally validate here (e.g. distance checks to prevent cheating)
 		UGameplayStatics::ApplyDamage(HitActor, 5.f, GetController(), this, nullptr);
 	}
 }
@@ -1064,7 +1062,7 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 {
 	if (UI != "Ability") HideUI(AbilitySelection, playerController);
 	if (UI != "Inventory") HideUI(Inventory, playerController, true);
-	//if (UI != "Pause") HideUI(PauseMenu, playerController);
+	if (UI != "Pause") HideUI(PauseMenu, playerController);
 }
 
 void ARelicRunnersCharacter::DamageAbility()
@@ -1102,7 +1100,6 @@ void ARelicRunnersCharacter::DamageAbility()
 		{
 			DamageAbilityInstance->ActivateAbility();
 
-			// Sync HUD cooldown with the ability's cooldown value
 			if (AbilityPointCounter)
 			{
 				AbilityPointCounter->StartDamageCooldown(DamageAbilityInstance->GetCooldown());
@@ -1116,7 +1113,6 @@ void ARelicRunnersCharacter::DamageAbility()
 		return; 
 	}
 
-	// Fallback: original behavior if no ability is assigned
 	if (AbilityPointCounter)
 	{
 		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
@@ -1138,7 +1134,6 @@ void ARelicRunnersCharacter::UtilityAbility()
 {
 	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 
-	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
 	IsWarBannerActive = !IsWarBannerActive;
 
 	if (WarBannerAbility == nullptr)

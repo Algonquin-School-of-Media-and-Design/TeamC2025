@@ -31,17 +31,14 @@ void UPlayerHUD::UpdateHUD(float CurrentHealth, float MaxHealth, float CurrentRe
 		return;
 	}
 
-	// Compute percents
 	float HealthPercent = MaxHealth > 0 ? CurrentHealth / MaxHealth : 0.f;
 	float ResourcePercent = MaxResource > 0 ? CurrentResource / MaxResource : 0.f;
 	float ExperiencePercent = XPToLevel > 0 ? CurrentXP / XPToLevel : 0.f;
 
-	// Update bars
 	HealthBar->SetPercent(HealthPercent);
 	ResourceBar->SetPercent(ResourcePercent);
 	ExperienceBar->SetPercent(ExperiencePercent);
 
-	// Update text
 	TB_Health->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), FMath::RoundToInt(CurrentHealth), FMath::RoundToInt(MaxHealth))));
 	TB_Resource->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), FMath::RoundToInt(CurrentResource), FMath::RoundToInt(MaxResource))));
 	TB_Level->SetText(FText::FromString(FString::Printf(TEXT("Level %d"), CurrentLevel)));
@@ -57,13 +54,9 @@ void UPlayerHUD::UpdateHUDHealth(float CurrentHealth, float MaxHealth)
 		return;
 	}
 
-	// Compute percents
 	float HealthPercent = MaxHealth > 0 ? CurrentHealth / MaxHealth : 0.f;
 
-	// Update bar
 	HealthBar->SetPercent(HealthPercent);
-
-	// Update text
 	TB_Health->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), FMath::RoundToInt(CurrentHealth), FMath::RoundToInt(MaxHealth))));
 }
 
@@ -75,13 +68,9 @@ void UPlayerHUD::UpdateHUDResource(float CurrentResource, float MaxResource)
 		return;
 	}
 
-	// Compute percents
 	float ResourcePercent = MaxResource > 0 ? CurrentResource / MaxResource : 0.f;
 
-	// Update bars
 	ResourceBar->SetPercent(ResourcePercent);
-
-	// Update text
 	TB_Resource->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), FMath::RoundToInt(CurrentResource), FMath::RoundToInt(MaxResource))));
 }
 
@@ -93,13 +82,8 @@ void UPlayerHUD::UpdateHUDXP(int CurrentLevel, float CurrentXP, float XPToLevel)
 		return;
 	}
 
-	// Compute percents
 	float ExperiencePercent = XPToLevel > 0 ? CurrentXP / XPToLevel : 0.f;
-
-	// Update bars
 	ExperienceBar->SetPercent(ExperiencePercent);
-
-	// Update text
 	TB_Level->SetText(FText::FromString(FString::Printf(TEXT("Level %d"), CurrentLevel)));
 	TB_Experience->SetText(FText::FromString(FString::Printf(TEXT("%d / %d XP"), FMath::RoundToInt(CurrentXP), FMath::RoundToInt(XPToLevel))));
 

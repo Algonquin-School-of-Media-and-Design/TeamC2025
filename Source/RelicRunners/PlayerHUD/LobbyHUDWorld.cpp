@@ -23,11 +23,9 @@ void ULobbyHUDWorld::UpdatePlayerClassDisplay(FName NewClass)
     if (!OwningPreview || !OwningPreview->LinkedPlayerState) return;
     ARelicRunnersPlayerState* PS = OwningPreview->LinkedPlayerState;
 
-    if (TB_Name)
-        TB_Name->SetText(FText::FromString(PS->GetPlayerName()));
+    if (TB_Name) TB_Name->SetText(FText::FromString(PS->GetPlayerName()));
 
-    if (TB_Class)
-        TB_Class->SetText(FText::FromName(NewClass));
+    if (TB_Class) TB_Class->SetText(FText::FromName(NewClass));
 
     if (I_Class)
     {

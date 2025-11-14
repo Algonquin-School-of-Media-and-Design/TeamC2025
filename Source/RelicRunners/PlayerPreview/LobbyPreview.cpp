@@ -35,7 +35,7 @@ ALobbyPreview::ALobbyPreview()
     MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
     MeshComp->bOnlyAllowAutonomousTickPose = false;
 
-    MeshComp->SetIsReplicated(false); // Let animation run locally
+    MeshComp->SetIsReplicated(false);
 
     LobbyHUDWorld = CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComponent"));
     LobbyHUDWorld->SetupAttachment(MeshComp);
@@ -48,7 +48,6 @@ ALobbyPreview::ALobbyPreview()
 
 }
 
-// Called when the game starts or when spawned
 void ALobbyPreview::BeginPlay()
 {
 	Super::BeginPlay();
@@ -66,7 +65,6 @@ void ALobbyPreview::BeginPlay()
 	
 }
 
-// Called every frame
 void ALobbyPreview::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -78,7 +76,7 @@ void ALobbyPreview::SetupFromPlayerState(ARelicRunnersPlayerState* PS)
     if (!HasAuthority() || !PS) return;
 
     LinkedPlayerState = PS;
-    OnRep_LinkedPlayerState(); // run on server immediately
+    OnRep_LinkedPlayerState();
 }
 
 void ALobbyPreview::OnPlayerClassChanged(FName NewClass)
