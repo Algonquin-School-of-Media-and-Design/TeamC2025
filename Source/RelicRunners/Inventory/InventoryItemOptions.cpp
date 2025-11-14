@@ -19,9 +19,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Inventory.h"
 #include <Blueprint/WidgetLayoutLibrary.h>
-
-#include "Blueprint/WidgetBlueprintLibrary.h"      
-#include "RelicRunners/Vendor/UIVendor.h"          
+#include "Blueprint/WidgetBlueprintLibrary.h"             
 
 UInventoryItemOptions* UInventoryItemOptions::CurrentPopup = nullptr;
 
@@ -41,14 +39,13 @@ void UInventoryItemOptions::NativeConstruct()
     {
         DropButton->OnClicked.AddDynamic(this, &UInventoryItemOptions::OnDropClicked);
     }
-
     if (BuyButton)
     {
-        BuyButton->OnClicked.AddDynamic(this, &UInventoryItemOptions::OnBuyClicked_Buy);
+        BuyButton->OnClicked.AddDynamic(this, &UInventoryItemOptions::OnBuyClicked);
     }
     if (SellButton)
     {
-        SellButton->OnClicked.AddDynamic(this, &UInventoryItemOptions::OnSellClicked_Sell);
+        SellButton->OnClicked.AddDynamic(this, &UInventoryItemOptions::OnSellClicked);
     }
 }
 
@@ -76,7 +73,8 @@ void UInventoryItemOptions::NativeTick(const FGeometry& MyGeometry, float InDelt
     FVector2D CurrentMousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
     float Distance = FVector2D::Distance(CurrentMousePos, InitialScreenPosition);
 
-    if (Distance > 100.f) // Adjust as needed
+    float PixelDistance = 100.0f;
+    if (Distance > PixelDistance)
     {
         ClosePopup();
         return;
@@ -92,16 +90,26 @@ void UInventoryItemOptions::NativeTick(const FGeometry& MyGeometry, float InDelt
     }
 }
 
-void UInventoryItemOptions::ConfigureButtons(bool bShowEquip, bool bShowUnequip)
+void UInventoryItemOptions::ConfigureButtons(bool ShowEquip, bool ShowUnequip, bool ShowSell, bool ShowBuy)
 {
     if (EquipButton)
     {
-        EquipButton->SetVisibility(bShowEquip ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+        EquipButton->SetVisibility(ShowEquip ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
 
     if (UnequipButton)
     {
-        UnequipButton->SetVisibility(bShowUnequip ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+        UnequipButton->SetVisibility(ShowUnequip ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    }
+
+    if (SellButton)
+    {
+        SellButton->SetVisibility(ShowSell ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    }
+
+    if (BuyButton)
+    {
+        BuyButton->SetVisibility(ShowBuy ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
 }
 
@@ -157,46 +165,12 @@ void UInventoryItemOptions::OnDropClicked()
     }
 }
 
-static UIVendor* FindVisibleVendorWidget(UUserWidget* Context)
+void UInventoryItemOptions::OnBuyClicked()
 {
-    if (!Context) return nullptr;
 
-    TArray<UUserWidget*> Widgets;
-    UWidgetBlueprintLibrary::GetAllWidgetsOfClass(Context, Widgets, UIVendor::StaticClass(), /*TopLevelOnly*/ false);
-    for (UUserWidget* W : Widgets)
-    {
-        if (W && W->IsInViewport())
-        {
-            const ESlateVisibility Vis = W->GetVisibility();
-            if (Vis != ESlateVisibility::Hidden && Vis != ESlateVisibility::Collapsed)
-            {
-                return Cast<UIVendor>(W);
-            }
-        }
-    }
-    return nullptr;
 }
 
-void UInventoryItemOptions::OnBuyClicked_Buy()
+void UInventoryItemOptions::OnSellClicked()
 {
-    UIVendor* Vendor = VendorWidgetRef ? VendorWidgetRef : FindVisibleVendorWidget(this);
-    if (Vendor && Item)
-    {
-        UE_LOG(LogTemp, Verbose, TEXT("[InventoryItemOptions] BUY %s"), *Item->GetUniqueID().ToString());
-        Vendor->BuyByGuid(Item->GetUniqueID());   
-    }
-    
-    RemoveFromParent();
-}
 
-void UInventoryItemOptions::OnSellClicked_Sell()
-{
-    UIVendor* Vendor = VendorWidgetRef ? VendorWidgetRef : FindVisibleVendorWidget(this);
-    if (Vendor && Item)
-    {
-        UE_LOG(LogTemp, Verbose, TEXT("[InventoryItemOptions] SELL %s"), *Item->GetUniqueID().ToString());
-        Vendor->SellByGuid(Item->GetUniqueID());  
-    }
-    
-    RemoveFromParent();
 }

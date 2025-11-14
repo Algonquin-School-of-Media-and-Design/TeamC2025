@@ -15,7 +15,13 @@
  ************************************************************************************/
 
 #include "RelicRunnersCharacter.h"
-#include "Engine/LocalPlayer.h"
+
+#include "PlayerHUD/PlayerHUD.h"
+#include "PlayerHUD/PlayerHUDWorld.h"
+#include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
+#include "PlayerPreview/PlayerPreview.h"
+#include "PlayerState/RelicRunnersPlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -31,32 +37,30 @@
 #include "InputActionValue.h"
 #include "EngineUtils.h"
 #include "Inventory/Inventory.h"
+#include "Inventory/InventoryComponent.h"
 #include "Inventory/InventoryToolTip.h"
 #include "Inventory/InventoryItemOptions.h"
 #include "Inventory/InventorySortingOptions.h"
 #include "Item/ItemStats.h"
 #include "Item/ItemActor.h"
-#include "LevelGeneration/CapturableFlag.h"
 #include "Interact/InteractInterface.h"
-#include "PlayerHUD/PlayerHUD.h"
 #include "Menu/PauseMenu.h"
 #include "AbilitySystem/AbilityPointCounter.h"
 #include "AbilitySystem/AbilitySelection.h"
 #include "AbilitySystem/HealthPotion.h"
-#include "PlayerHUD/PlayerHUDWorld.h"
-#include "PlayerPreview/PlayerPreview.h"
-#include "PlayerState/RelicRunnersPlayerState.h"
-#include "Kismet/GameplayStatics.h"
+#include "AbilitySystem/Moonbeam.h"       
+#include "AbilitySystem/AbilityBase.h"    
+#include "Abilities/WarBannerAbility.h"
+#include "AbilitySystem/ImpunityAbility.h"
+#include "AbilitySystem/EarthquakeAbility.h"
 #include "Item/ItemData.h"
-#include "Inventory/InventoryComponent.h"
 #include "Engine/ActorChannel.h"
-#include "Enemy/EnemyCharacterAI.h"
-#include "RelicRunners/LevelUpHUD/LevelUpHUD.h"
+#include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
 #include "Game/RelicRunnersGameInstance.h"
 #include "Director System/Director.h"
-#include "Engine/Engine.h"
-#include "AbilitySystem/AbilityBase.h"    
 #include "Enemy/EnemyCharacter.h"
+#include "Enemy/EnemyCharacterAI.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -102,41 +106,41 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	UpperMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	UpperMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	UpperMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	LowerMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LowerMesh"));
 	LowerMesh->SetupAttachment(GetMesh());
 	LowerMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	LowerMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	LowerMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	LowerMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
 	ArmsMesh->SetupAttachment(GetMesh());
 	ArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ArmsMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	ArmsMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	ArmsMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	HelmetMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetMesh"));
 	HelmetMesh->SetupAttachment(GetMesh());
 	HelmetMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HelmetMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	HelmetMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	HelmetMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	NecklaceMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NecklaceMesh"));
 	NecklaceMesh->SetupAttachment(GetMesh());
 	NecklaceMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	NecklaceMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	NecklaceMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 	NecklaceMesh->SetLeaderPoseComponent(GetMesh());
-
+	// Mesh attachments
 	MainhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainhandMesh"));
 	MainhandItemMesh->SetupAttachment(GetMesh(), TEXT("MainhandSocket"));
 	MainhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MainhandItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	MainhandItemMesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-
+	// Mesh attachments
 	OffhandItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OffhandMesh"));
 	OffhandItemMesh->SetupAttachment(GetMesh(), TEXT("OffhandSocket"));
 	OffhandItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -156,7 +160,8 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	//Inventory
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetIsReplicated(true);
-
+	
+	//Starting Stats
 	PlayerStartingMaxHealth = 100;
 	PlayerMaxHealth = PlayerStartingMaxHealth;
 	PlayerHealth = 20;
@@ -358,6 +363,7 @@ void ARelicRunnersCharacter::OnRep_HUD()
 	UpdateHUD();
 }
 
+
 void ARelicRunnersCharacter::AddExperience(int Amount)
 {
 	PlayerXP += Amount;
@@ -418,41 +424,27 @@ void ARelicRunnersCharacter::OnLevelUp()
 
 float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	float actualDamage = 0;
+	float actualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	//if (DefenceAbilityInstance)
-	//{
-	//	if (AImpunityAbility* Impunity = Cast<AImpunityAbility>(DefenceAbilityInstance))
-	//	{
-	//		actualDamage *= Impunity->GetDamageReductionMultiplier();
-	//	}
-	//}
-
-	if (HasAuthority())
+	if (DefenceAbilityInstance)
 	{
-		actualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-		PlayerHealth -= actualDamage;
-
-		if (PlayerHealth <= 0)
+		if (AImpunityAbility* Impunity = Cast<AImpunityAbility>(DefenceAbilityInstance))
 		{
-			PlayerHealth = 0;
-			Die();
+			actualDamage *= Impunity->GetDamageReductionMultiplier();
 		}
-		//UE_LOG(LogTemp, Log, TEXT("Player took %f damage, current health: %f"), actualDamage, PlayerHealth);
 	}
-	
+
+	PlayerHealth -= actualDamage;
+
+	if (PlayerHealth <= 0)
+	{
+		PlayerHealth = 0;
+	}
+	//UE_LOG(LogTemp, Log, TEXT("Player took %f damage, current health: %f"), actualDamage, PlayerHealth);
 
 	UpdateHUD();
 
 	return actualDamage;
-}
-
-void ARelicRunnersCharacter::Die()
-{
-	SetActorLocation(RespawnLocation);
-	PlayerHealth = PlayerMaxHealth;
-
 }
 
 bool ARelicRunnersCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -506,8 +498,6 @@ void ARelicRunnersCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	RespawnLocation = GetActorLocation();
-
 	// Always load ItemMeshData locally
 	if (ItemMeshDataClass)
 	{
@@ -560,9 +550,86 @@ void ARelicRunnersCharacter::BeginPlay()
 		});
 	}
 
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	if (WarBannerAbilityTemplate != nullptr)
+	{
+		WarBannerAbility = GetWorld()->SpawnActor<AWarBannerAbility>(WarBannerAbilityTemplate, FVector::ZeroVector, FRotator::ZeroRotator);
+		WarBannerAbility->Server_Initialize(this);
+	}
+
+	//VengefulDance format
+    UtilityAbilityClass = AVengefulDance::StaticClass();
+
+    if (UtilityAbilityClass)
+    {
+		UtilityAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UtilityAbilityClass);
+        if (UtilityAbilityInstance)
+        {
+			UtilityAbilityInstance->OwnerActor = this;
+        }
+    }
+
+	////BundleOfJoy format
+	if (!DamageAbilityClass)
+	{
+		DamageAbilityClass = ABundleOfJoy::StaticClass();
+	}
+
+	// Impunity (Defensive) Ability
+	if (!DefenceAbilityClass)
+	{
+		DefenceAbilityClass = AImpunityAbility::StaticClass();
+	}
+
+	if (DefenceAbilityClass)
+	{
+		DefenceAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DefenceAbilityClass);
+		if (DefenceAbilityInstance)
+		{
+			DefenceAbilityInstance->OwnerActor = this;
+		}
+	}
+
+	if (!UltimateAbilityClass)
+	{
+		UltimateAbilityClass = AEarthquakeAbility::StaticClass();
+	}
+
+	if (UltimateAbilityClass)
+	{
+		UltimateAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(UltimateAbilityClass);
+		if (UltimateAbilityInstance)
+		{
+			UltimateAbilityInstance->OwnerActor = this;
+		}
+	}
+	
+	// Spawn Damage Ability (Moonbeam) 
+	if (DamageAbilityClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(
+			DamageAbilityClass,
+			GetActorLocation(),
+			GetActorRotation(),
+			Params
+		);
+
+		if (DamageAbilityInstance)
+		{
+			// Let the ability know who owns it (used by Moonbeam)
+			DamageAbilityInstance->SetAbilityOwner(this);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to spawn DamageAbilityInstance (Moonbeam)."));
+		}
+	}
 }
-
-
 
 void ARelicRunnersCharacter::InitLocalUI()
 {
@@ -669,6 +736,8 @@ void ARelicRunnersCharacter::TraceForInteractables()
 	const float MaxDistance = 800.f;
 	const float MinFacingDot = 0.f; // 1 = perfectly facing, 0 = 90 degrees off
 
+	DrawDebugLine(GetWorld(),PlayerLocation, PlayerLocation + (PlayerForward * MaxDistance), FColor::Blue);
+
 	for (TActorIterator<AItemActor> It(GetWorld()); It; ++It)
 	{
 		AItemActor* Item = *It;
@@ -687,6 +756,32 @@ void ARelicRunnersCharacter::TraceForInteractables()
 		IInteractInterface::Execute_ShowTooltip(Item, bShouldShow);
 	}
 
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	if (WarBannerAbility == nullptr)
+		return;
+
+	if (!WarBannerAbility->CanActivate())
+		return;
+
+	if (IsWarBannerActive)
+	{
+		FHitResult HitResult;
+		FCollisionQueryParams TraceParams(FName(TEXT("LineTrace")), true, this);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			PlayerLocation,
+			PlayerLocation + (PlayerForward * MaxDistance),
+			ECC_Visibility,
+			TraceParams);
+
+		FVector targetPosition = bHit ? HitResult.Location : PlayerLocation + (PlayerForward * MaxDistance);
+
+		DrawDebugLine(GetWorld(), PlayerLocation, targetPosition, FColor::Blue);
+		WarBannerAbility->SetActorLocation(targetPosition);
+		WarBannerAbility->SetActorRotation(FRotator(0.0f, GetControlRotation().Yaw, 0.0f));
+	}
+	//War Banner Ability Section End
 }
 
 void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
@@ -699,15 +794,14 @@ void ARelicRunnersCharacter::UpdatePlayerHUDWorldFacing()
 	FVector CameraLocation = LocalController->PlayerCameraManager->GetCameraLocation();
 	FVector WidgetLocation = PlayerHUDWorld->GetComponentLocation();
 
-	// This character is locally controlled � make it face *away* from camera
 	if (IsLocallyControlled())
 	{
 		PlayerHUDWorld->SetVisibility(false);
 	}
-	else // Remote player � make it face toward camera
+	else 
 	{
 		FVector ToCamera = CameraLocation - WidgetLocation;
-		ToCamera.Z = 0.f; // optional: lock pitch
+		ToCamera.Z = 0.f;
 
 		if (!ToCamera.IsNearlyZero())
 		{
@@ -729,9 +823,6 @@ void ARelicRunnersCharacter::PassiveHealthRegen()
 	}
 	UpdateHUD();
 }
-
-
-
 
 void ARelicRunnersCharacter::Client_UpdateEquippedStats_Implementation(const FEquippedStatsSummary& NewStats)
 {
@@ -757,7 +848,7 @@ void ARelicRunnersCharacter::PerformSwingTrace()
 		End,
 		FQuat::Identity,
 		ECC_Pawn,
-		FCollisionShape::MakeSphere(100.0f), // Adjust the thickness of your sword
+		FCollisionShape::MakeSphere(100.0f),
 		Params
 	);
 
@@ -793,7 +884,6 @@ void ARelicRunnersCharacter::Server_HitEnemy_Implementation(AActor* HitActor)
 {
 	if (HitActor)
 	{
-		// Optionally validate here (e.g. distance checks to prevent cheating)
 		UGameplayStatics::ApplyDamage(HitActor, 5.f, GetController(), this, nullptr);
 	}
 }
@@ -890,18 +980,6 @@ void ARelicRunnersCharacter::Interact()
 					}
 				}
 			}
-			else if (ACapturableFlag* Flag = Cast<ACapturableFlag>(HitActor))
-			{
-				if (APlayerController* PC = Cast<APlayerController>(GetController()))
-				{
-					ARelicRunnersPlayerController* MyPC = Cast<ARelicRunnersPlayerController>(PC);
-					if (MyPC)
-					{
-						MyPC->Server_RequestFlagActivation(Flag);
-					}
-				}
-
-			}
 			else
 			{
 				IInteractInterface::Execute_Interact(HitActor, this);
@@ -945,36 +1023,23 @@ void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget, bool bClosePopups =
 void ARelicRunnersCharacter::InventoryUI()
 {
 	if (!Inventory) return;
-
-	// Close other open UIs before opening inventory
 	RemoveOtherUI("Inventory", Cast<APlayerController>(Controller));
-
-	// Toggle inventory visibility
 	ToggleUI(Inventory, true);
 }
 
 void ARelicRunnersCharacter::PauseUI()
 {
 	if (!PauseMenu) return;
-
-	// Close other open UIs before opening pause menu
 	RemoveOtherUI("Pause", Cast<APlayerController>(Controller));
-
-	// Toggle pause menu visibility
 	ToggleUI(PauseMenu);
 }
 
 void ARelicRunnersCharacter::AbilitySystemUI()
 {
 	if (!AbilitySelection || PlayerAbilityPoints < 1) return;
-
-	// Close other open UIs before opening ability selection
 	RemoveOtherUI("Ability", Cast<APlayerController>(Controller));
-
-	// Toggle ability selection visibility
 	ToggleUI(AbilitySelection);
 }
-
 
 void ARelicRunnersCharacter::HideUI(UUserWidget* UIWidget, APlayerController* PlayerController, bool bClosePopups = false)
 {
@@ -1002,46 +1067,102 @@ void ARelicRunnersCharacter::RemoveOtherUI(FString UI, APlayerController* player
 
 void ARelicRunnersCharacter::DamageAbility()
 {
-	// When key is pressed, call proper ability based on class chosen 
-	GiveDamageAbilities();
+	AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+
+	//For BundleOfJoy
+	if (DamageAbilityClass && GetWorld())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 150.f + FVector(0, 0, 100.f);
+		FRotator SpawnRotation = GetActorRotation();
+
+		DamageAbilityInstance = GetWorld()->SpawnActor<AAbilityBase>(DamageAbilityClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+		if (DamageAbilityInstance)
+		{
+			DamageAbilityInstance->OwnerActor = this;
+			DamageAbilityInstance->SetActorLocation(SpawnLocation); 
+			DamageAbilityInstance->ActivateAbility();
+
+			UE_LOG(LogTemp, Warning, TEXT("Ability spawned at: %s"), *DamageAbilityInstance->GetActorLocation().ToString());
+		}
+
+		return;
+	}
+	
+	if (DamageAbilityInstance)
+	{
+		if (DamageAbilityInstance->CanActivate())
+		{
+			DamageAbilityInstance->ActivateAbility();
+
+			if (AbilityPointCounter)
+			{
+				AbilityPointCounter->StartDamageCooldown(DamageAbilityInstance->GetCooldown());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Verbose, TEXT("Damage ability is on cooldown."));
+		}
+
+		return; 
+	}
+
+	if (AbilityPointCounter)
+	{
+		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+	}
+
 }
 
 void ARelicRunnersCharacter::DefenceAbility()
 {
-	// When key is pressed, call proper ability based on class chosen 
-	GiveDefenceAbilities();
+	AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+
+	if (DefenceAbilityInstance)
+	{
+		DefenceAbilityInstance->ActivateAbility();
+	}
 }
 
 void ARelicRunnersCharacter::UtilityAbility()
 {
-	// When key is pressed, call proper ability based on class chosen 
-	GiveUtilityAbilities();
+	AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+
+	IsWarBannerActive = !IsWarBannerActive;
+
+	if (WarBannerAbility == nullptr)
+		return;
+
+	if (IsWarBannerActive)
+	{
+		WarBannerAbility->ActivateAbility();
+	}
+	else
+	{
+		WarBannerAbility->CancelAbility();
+	}
+
+	//For VengefulDance
+	if (UtilityAbilityInstance)
+	{
+		UtilityAbilityInstance->ActivateAbility();
+	}
 }
 
 void ARelicRunnersCharacter::UltimateAbility()
 {
-	// When key is pressed, call proper ability based on class chosen 
-	GiveUltimateAbilities();
-}
+	AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 
-void ARelicRunnersCharacter::GiveDamageAbilities()
-{
-	// do not put anything here 
-}
-
-void ARelicRunnersCharacter::GiveDefenceAbilities()
-{
-	// do not put anything here
-}
-
-void ARelicRunnersCharacter::GiveUtilityAbilities()
-{
-	// do not put anything here
-}
-
-void ARelicRunnersCharacter::GiveUltimateAbilities()
-{
-	// do not put anything here
+	if (UltimateAbilityInstance)
+	{
+		UltimateAbilityInstance->ActivateAbility();
+	}
 }
 
 void ARelicRunnersCharacter::HealthPotions()
@@ -1051,44 +1172,39 @@ void ARelicRunnersCharacter::HealthPotions()
 		int OldHealth = PlayerHealth;
 		int OldPotionCount = HealthPotionCount;
 
-		// Apply potion effects
 		HealthPotion->OnHealthPotionClicked(PlayerHealth, PlayerMaxHealth, HealthPotionCount, HealthGranted);
 
-		// Notify server if health or potion count changed
 		if (PlayerHealth != OldHealth || HealthPotionCount != OldPotionCount)
 		{
 			Server_UseHealthPotion(PlayerHealth, HealthPotionCount);
 		}
 
-		// Refresh HUD display
 		UpdateHUD();
 	}
 }
 
 void ARelicRunnersCharacter::Server_UseHealthPotion_Implementation(int NewHealth, int NewPotionCount)
 {
+
 	if (!HasAuthority())
 		return;
 
-	// Clamp health and potion count
 	PlayerHealth = FMath::Clamp(NewHealth, 0, PlayerMaxHealth);
 	HealthPotionCount = FMath::Max(NewPotionCount, 0);
 
-	// Update HUD for all clients
 	UpdateHUD();
 }
+
 
 void ARelicRunnersCharacter::Server_SpendAbilityPoints_Implementation()
 {
 	if (!HasAuthority())
 		return;
 
-	// Spend one ability point if available
 	if (PlayerAbilityPoints > 0)
 	{
 		PlayerAbilityPoints--;
 
-		// Notify client about the change
 		Client_OnAbilityPointsUpdated(PlayerAbilityPoints);
 
 		UpdateHUD();
@@ -1101,7 +1217,7 @@ void ARelicRunnersCharacter::Client_OnAbilityPointsUpdated_Implementation(int32 
 	if (!PlayerController)
 		return;
 
-	// Hide ability selection UI when no points left
+	// Update UI locally on the client
 	if (NewAbilityPoints == 0 && AbilitySelection)
 	{
 		AbilitySelection->SetVisibility(ESlateVisibility::Hidden);
@@ -1110,7 +1226,6 @@ void ARelicRunnersCharacter::Client_OnAbilityPointsUpdated_Implementation(int32 
 		PlayerController->SetShowMouseCursor(false);
 	}
 }
-
 
 void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
 {
@@ -1341,46 +1456,4 @@ UStaticMeshComponent* ARelicRunnersCharacter::GetStaticMeshComponentByItemType(c
 	if (ItemType == "Sword") return MainhandItemMesh;
 	if (ItemType == "Shield") return OffhandItemMesh;
 	return nullptr;
-}
-
-void ARelicRunnersCharacter::AddGold(int32 Amount)
-{
-    if (UInventoryComponent* Inv = GetInventoryComponent())
-    {
-        Inv->TryChangeGold(Amount);
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(
-                -1, 2.f, FColor::Yellow,
-                FString::Printf(TEXT("Gold +%d  ->  %d"), Amount, Inv->GetGold())
-            );
-        }
-    }
-}
-
-void ARelicRunnersCharacter::SpendGold(int32 Amount)
-{
-    if (UInventoryComponent* Inv = GetInventoryComponent())
-    {
-        if (!Inv->TryChangeGold(-Amount))
-        {
-            if (GEngine)
-            {
-                GEngine->AddOnScreenDebugMessage(
-                    -1, 2.f, FColor::Red,
-                    FString::Printf(TEXT("Not enough gold to spend %d"), Amount)
-                );
-            }
-        }
-        else
-        {
-            if (GEngine)
-            {
-                GEngine->AddOnScreenDebugMessage(
-                    -1, 2.f, FColor::Yellow,
-                    FString::Printf(TEXT("Gold -%d  ->  %d"), Amount, Inv->GetGold())
-                );
-            }
-        }
-    }
 }

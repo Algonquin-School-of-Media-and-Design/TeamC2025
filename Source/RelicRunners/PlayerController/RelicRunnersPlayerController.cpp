@@ -394,6 +394,8 @@ void ARelicRunnersPlayerController::BeginPlay()
 
 	if (URelicRunnersGameInstance* GI = GetGameInstance<URelicRunnersGameInstance>())
 	{
+		FTimerHandle DelayHandle;
+		GetWorldTimerManager().SetTimer(DelayHandle, [this, GI]() { GI->ApplyKeybindings(); }, 0.2f, false);
 		Server_SetPlayerName(GI->GetCharacterName());
 		UE_LOG(LogTemp, Log, TEXT("BeginPlay: Sent server player name: %s"), *GI->GetCharacterName());
 	}
@@ -599,37 +601,6 @@ void ARelicRunnersPlayerController::StopJumping(const FInputActionValue& Value)
 	if (PossessedPawn)
 	{
 		PossessedPawn->StopJumping();
-	}
-}
-
-
-void ARelicRunnersPlayerController::AddGold(int32 Amount)
-{
-	if (APawn* MyPawn = GetPawn())
-	{
-		if (UInventoryComponent* Inv = MyPawn->FindComponentByClass<UInventoryComponent>())
-		{
-			Inv->TryChangeGold(Amount);
-			UE_LOG(LogTemp, Log, TEXT("Added %d gold. New total: %d"), Amount, Inv->GetGold());
-		}
-	}
-}
-
-void ARelicRunnersPlayerController::SpendGold(int32 Amount)
-{
-	if (APawn* MyPawn = GetPawn())
-	{
-		if (UInventoryComponent* Inv = MyPawn->FindComponentByClass<UInventoryComponent>())
-		{
-			if (!Inv->TryChangeGold(-Amount))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Not enough gold to spend %d"), Amount);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Log, TEXT("Spent %d gold. New total: %d"), Amount, Inv->GetGold());
-			}
-		}
 	}
 }
 

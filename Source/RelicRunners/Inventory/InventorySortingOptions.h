@@ -37,35 +37,33 @@ class RELICRUNNERS_API UInventorySortingOptions : public UUserWidget
 
 public:
 
+	//Properties
 	UPROPERTY(BlueprintAssignable, Category = "Sorting")
 	FOnSortingSelected OnSortingSelected;
+	static class UInventorySortingOptions* CurrentPopup;
+	FVector2D InitialScreenPosition;
 
+	//Functions
+	UFUNCTION()
+	void SortByItemTypeClicked();
+	UFUNCTION()
+	void SortByRarityClicked();
+	UFUNCTION()
+	void SortByLevelClicked();
+	static void CloseAnyOpenPopup();
+	void ClosePopup();
+	void Setup();
 	static FString GetSortingMethodDisplayName(EInventorySorting Method);
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	//UI Elements
 	UPROPERTY(meta = (BindWidget))
 	class UButton* B_SortByType;
-
 	UPROPERTY(meta = (BindWidget))
 	class UButton* B_SortByRarity;
-
 	UPROPERTY(meta = (BindWidget))
 	class UButton* B_SortByLevel;
 
+protected:
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual void NativeConstruct() override;
-
-	static class UInventorySortingOptions* CurrentPopup;
-	FVector2D InitialScreenPosition;
-	void ClosePopup();
-	void Setup();
-
-	static void CloseAnyOpenPopup();
-
-	UFUNCTION()
-	void SortByItemTypeClicked();
-
-	UFUNCTION()
-	void SortByRarityClicked();
-
-	UFUNCTION()
-	void SortByLevelClicked();
 };

@@ -51,16 +51,10 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         Params.Owner = NewPlayer;
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        ALobbyPreview* SpawnedPreview = GetWorld()->SpawnActor<ALobbyPreview>(
-            LobbyPreviewClass,
-            LobbySpawnPositions[Index],
-            FRotator::ZeroRotator,
-            Params
-        );
+        ALobbyPreview* SpawnedPreview = GetWorld()->SpawnActor<ALobbyPreview>(LobbyPreviewClass, LobbySpawnPositions[Index], FRotator::ZeroRotator, Params);
 
         if (SpawnedPreview)
         {
-            // Link preview to this player's PlayerState on the server
             if (ARelicRunnersPlayerState* RPS = NewPlayer->GetPlayerState<ARelicRunnersPlayerState>())
             {
                 SpawnedPreview->SetupFromPlayerState(RPS);
@@ -77,27 +71,21 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
     TSharedRef<int32> RepeatCount = MakeShared<int32>(0);
     TSharedRef<FTimerHandle> TimerHandle_Update = MakeShared<FTimerHandle>();
 
-    GetWorld()->GetTimerManager().SetTimer(
-        *TimerHandle_Update,
-        [WeakThis, TimerHandle_Update, RepeatCount]()
-        {
+    GetWorld()->GetTimerManager().SetTimer(*TimerHandle_Update, [WeakThis, TimerHandle_Update, RepeatCount]()
+    {
             if (!WeakThis.IsValid()) return;
 
             WeakThis->UpdateSetup();
 
             (*RepeatCount)++;
-            if (*RepeatCount >= 5)
+            if (*RepeatCount >= 4)
             {
                 if (UWorld* World = WeakThis->GetWorld())
                 {
                     World->GetTimerManager().ClearTimer(*TimerHandle_Update);
                 }
             }
-        },
-        0.5f,
-        true
-    );
-
+    }, 0.5f, true);
 }
 
 void ALobbyGameMode::Logout(AController* Exiting)

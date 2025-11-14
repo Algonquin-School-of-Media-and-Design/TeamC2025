@@ -55,8 +55,7 @@ void UInventorySlotsEntry::NativeOnListItemObjectSet(UObject* ListItemObject)
     B_Color->SetBrushColor(ItemFrameColor);
 
     // Load and assign icon texture
-    FString ImagePath = FString::Printf(TEXT("Texture2D'/Game/ThirdPerson/Icons/%s.%s'"),
-        *Item->GetItemType(), *Item->GetItemType());
+    FString ImagePath = FString::Printf(TEXT("Texture2D'/Game/ThirdPerson/Icons/%s.%s'"), *Item->GetItemType(), *Item->GetItemType());
     if (UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *ImagePath)))
     {
         I_Item->SetBrushFromTexture(Texture);
@@ -67,8 +66,8 @@ FReply UInventorySlotsEntry::NativeOnMouseButtonDown(const FGeometry& InGeometry
 {
     if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
     {
-        bIsPressed = true;
-        bIsDragging = false;
+        IsPressed = true;
+        IsDragging = false;
         PressedTime = GetWorld()->GetRealTimeSeconds();
 
         FEventReply EventReply = UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton);
@@ -80,18 +79,18 @@ FReply UInventorySlotsEntry::NativeOnMouseButtonDown(const FGeometry& InGeometry
 
 FReply UInventorySlotsEntry::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-    if (!bIsPressed) return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
+    if (!IsPressed) return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
 
-    bIsPressed = false;
+    IsPressed = false;
 
     float HeldDuration = GetWorld()->GetRealTimeSeconds() - PressedTime;
 
-    if (!bIsDragging && HeldDuration < 0.25f)
+    if (!IsDragging && HeldDuration < 0.25f)
     {
         OnEntryClicked();
     }
 
-    bIsDragging = false;
+    IsDragging = false;
     return FReply::Handled();
 }
 
@@ -99,7 +98,7 @@ void UInventorySlotsEntry::NativeOnDragDetected(const FGeometry& InGeometry, con
 {
     if (!Item) return;
 
-    bIsDragging = true;
+    IsDragging = true;
 
     UDragDropOperation* DragOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
     DragOp->Payload = Item;
@@ -154,7 +153,7 @@ void UInventorySlotsEntry::OnEntryClicked()
     {
         Popup->AddToViewport();
         Popup->Setup(Item);
-        Popup->ConfigureButtons(true, false);
+        Popup->ConfigureButtons(true, false, false, false);
 
         FVector2D ScreenPosition;
         UWidgetLayoutLibrary::GetMousePositionScaledByDPI(GetWorld()->GetFirstPlayerController(), ScreenPosition.X, ScreenPosition.Y);

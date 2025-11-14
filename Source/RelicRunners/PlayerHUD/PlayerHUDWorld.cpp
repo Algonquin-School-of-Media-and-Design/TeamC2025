@@ -35,13 +35,12 @@ void UPlayerHUDWorld::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 	if (!OwningCharacter) return;
 
-	// Ensure replicated data is current
-	const int32 CurrentHealth = OwningCharacter->GetPlayerHealth();
-	const int32 MaxHealth = OwningCharacter->GetPlayerMaxHealth();
+	int CurrentHealth = OwningCharacter->GetPlayerHealth();
+	int MaxHealth = OwningCharacter->GetPlayerMaxHealth();
 
 	if (HealthBar)
 	{
-		const float Percent = (MaxHealth > 0) ? (float)CurrentHealth / (float)MaxHealth : 0.f;
+		float Percent = (MaxHealth > 0) ? (float)CurrentHealth / (float)MaxHealth : 0.f;
 		HealthBar->SetPercent(Percent);
 	}
 	if (TB_Health)
@@ -49,19 +48,19 @@ void UPlayerHUDWorld::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		TB_Health->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentHealth, MaxHealth)));
 	}
 
-	const int32 CurrentResource = OwningCharacter->GetPlayerResource();
-	const int32 MaxResource = OwningCharacter->GetPlayerMaxResource();
+	int CurrentResource = OwningCharacter->GetPlayerResource();
+	int MaxResource = OwningCharacter->GetPlayerMaxResource();
 	if (ResourceBar)
 	{
-		const float ResourcePercent = (MaxResource > 0) ? (float)CurrentResource / (float)MaxResource : 0.f;
+		float ResourcePercent = (MaxResource > 0) ? (float)CurrentResource / (float)MaxResource : 0.f;
 		ResourceBar->SetPercent(ResourcePercent);
 	}
 
-	const int32 CurrentXP = OwningCharacter->GetPlayerXP();
-	const int32 RequiredXP = OwningCharacter->GetPlayerXPToLevel();
+	int CurrentXP = OwningCharacter->GetPlayerXP();
+	int RequiredXP = OwningCharacter->GetPlayerXPToLevel();
 	if (ExperienceBar)
 	{
-		const float XPPercent = (RequiredXP > 0) ? (float)CurrentXP / (float)RequiredXP : 0.f;
+		float XPPercent = (RequiredXP > 0) ? (float)CurrentXP / (float)RequiredXP : 0.f;
 		ExperienceBar->SetPercent(XPPercent);
 	}
 
@@ -75,8 +74,7 @@ void UPlayerHUDWorld::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 	if (TB_Level)
 	{
-		int32 Level = OwningCharacter->GetPlayerLevel();
+		int Level = OwningCharacter->GetPlayerLevel();
 		TB_Level->SetText(FText::FromString(FString::Printf(TEXT("%d"), Level)));
 	}
-	
 }

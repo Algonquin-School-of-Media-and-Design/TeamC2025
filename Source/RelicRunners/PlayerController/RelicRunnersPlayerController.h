@@ -182,13 +182,6 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientTravelToGame();
 
-	//  Currency Cheats
-	UFUNCTION(Exec)
-	void AddGold(int32 Amount = 10);
-
-	UFUNCTION(Exec)
-	void SpendGold(int32 Amount = 10);
-
 	// Begin Actor interface
 protected:
 	ARelicRunnersPlayerController();

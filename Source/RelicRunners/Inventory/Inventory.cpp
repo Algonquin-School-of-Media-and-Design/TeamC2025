@@ -51,14 +51,18 @@ void UInventory::NativeConstruct()
     InventoryItemOptionsClass = LoadClass<UInventoryItemOptions>(nullptr, TEXT("/Game/Inventory/BP_InventoryItemOptions.BP_InventoryItemOptions_C"));
     InventorySortingOptionsClass = LoadClass<UInventorySortingOptions>(nullptr, TEXT("/Game/Inventory/BP_InventorySortingOptions.BP_InventorySortingOptions_C"));
 
-    B_Helmet->OnClicked.AddDynamic(this, &UInventory::HelmetSlotClicked);
-    B_Arms->OnClicked.AddDynamic(this, &UInventory::ArmsSlotClicked);
-    B_Upper->OnClicked.AddDynamic(this, &UInventory::UpperSlotClicked);
-    B_Lower->OnClicked.AddDynamic(this, &UInventory::LowerSlotClicked);
-    B_Mainhand->OnClicked.AddDynamic(this, &UInventory::MainhandSlotClicked);
-    B_Offhand->OnClicked.AddDynamic(this, &UInventory::OffhandlotClicked);
-    B_Necklace->OnClicked.AddDynamic(this, &UInventory::NecklaceSlotClicked);
-    B_SortingType->OnClicked.AddDynamic(this, &UInventory::SortingTypeClicked);
+    if (B_Helmet) B_Helmet->OnClicked.AddDynamic(this, &UInventory::HelmetSlotClicked);
+    if (B_Arms) B_Arms->OnClicked.AddDynamic(this, &UInventory::ArmsSlotClicked);
+    if (B_Upper) B_Upper->OnClicked.AddDynamic(this, &UInventory::UpperSlotClicked);
+    if (B_Lower) B_Lower->OnClicked.AddDynamic(this, &UInventory::LowerSlotClicked);
+    if (B_Mainhand) B_Mainhand->OnClicked.AddDynamic(this, &UInventory::MainhandSlotClicked);
+    if (B_Offhand) B_Offhand->OnClicked.AddDynamic(this, &UInventory::OffhandlotClicked);
+    if (B_Necklace) B_Necklace->OnClicked.AddDynamic(this, &UInventory::NecklaceSlotClicked);
+    if (B_SortingType) B_SortingType->OnClicked.AddDynamic(this, &UInventory::SortingTypeClicked);
+    
+    //Vendor
+    if (VendorCanvas) VendorCanvas->SetVisibility(ESlateVisibility::Collapsed);
+    if (VendorSlots) VendorSlots->ClearListItems();
 }
 
 void UInventory::HandleSortSelected(EInventorySorting Method)
@@ -95,16 +99,6 @@ void UInventory::RefreshInventoryUI()
 
     OnEquippedStatsUpdated(InventoryComponent->CachedEquippedStats);
 }
-
-// Currency 
-void UInventory::RefreshGoldUI(int32 NewGold)
-{
-    if (TB_Gold)
-    {
-        TB_Gold->SetText(FText::AsNumber(NewGold));
-    }
-}
-
 
 void UInventory::RefreshEquippedUI()
 {
@@ -200,12 +194,8 @@ void UInventory::SetInventoryComponent(UInventoryComponent* NewComponent)
         // Try again next frame if it's not ready
         UE_LOG(LogTemp, Warning, TEXT("[UI] InventoryComponent not ready, retrying..."));
 
-        // Schedule retry
         FTimerHandle RetryHandle;
-        GetWorld()->GetTimerManager().SetTimer(RetryHandle, [this, NewComponent]()
-            {
-                SetInventoryComponent(NewComponent); // retry
-            }, 0.1f, false);
+        GetWorld()->GetTimerManager().SetTimer(RetryHandle, [this, NewComponent]() { SetInventoryComponent(NewComponent); }, 0.1f, false);
 
         return;
     }
@@ -216,18 +206,10 @@ void UInventory::SetInventoryComponent(UInventoryComponent* NewComponent)
     InventoryComponent->OnInventoryChanged.RemoveDynamic(this, &UInventory::RefreshInventoryUI);
     InventoryComponent->OnEquipmentChanged.RemoveDynamic(this, &UInventory::RefreshEquippedUI);
     InventoryComponent->OnStatsChanged.RemoveDynamic(this, &UInventory::OnEquippedStatsUpdated);
-
+    // Add the new binds
     InventoryComponent->OnInventoryChanged.AddDynamic(this, &UInventory::RefreshInventoryUI);
     InventoryComponent->OnEquipmentChanged.AddDynamic(this, &UInventory::RefreshEquippedUI);
     InventoryComponent->OnStatsChanged.AddDynamic(this, &UInventory::OnEquippedStatsUpdated);
-
-    // NEW: bind gold updates
-    InventoryComponent->OnGoldChanged.RemoveAll(this);
-    InventoryComponent->OnGoldChanged.AddDynamic(this, &UInventory::RefreshGoldUI);
-
-    // Initialize once immediately
-    RefreshGoldUI(InventoryComponent->GetGold());
-
 
     UE_LOG(LogTemp, Log, TEXT("[UI] InventoryComponent successfully bound to delegates."));
 
@@ -253,10 +235,7 @@ void UInventory::SetPreviewActorImage(UTextureRenderTarget2D* RenderTarget)
 
     if (!RenderTarget || !I_PlayerPreview) return;
 
-    UMaterialInterface* BaseMaterial = LoadObject<UMaterialInterface>(
-        nullptr,
-        TEXT("/Game/ThirdPerson/Blueprints/PlayerPreview/M_PlayerPreview.M_PlayerPreview")
-    );
+    UMaterialInterface* BaseMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/PlayerPreview/M_PlayerPreview.M_PlayerPreview"));
 
     if (!BaseMaterial)
     {
@@ -273,8 +252,6 @@ void UInventory::SetPreviewActorImage(UTextureRenderTarget2D* RenderTarget)
     }
 
     DynMaterial->SetTextureParameterValue(FName("PreviewTexture"), RenderTarget);
-
-    //  Use this to apply the material directly to the UImage widget
     I_PlayerPreview->SetBrushFromMaterial(DynMaterial);
 
     UE_LOG(LogTemp, Warning, TEXT("[UI] Set preview image with RenderTarget: %s"), *GetNameSafe(RenderTarget));
@@ -313,22 +290,13 @@ void UInventory::DropItem(UItemObject* Item)
 {
     if (!Item) return;
 
-    // Check if item is equipped
     if (InventoryComponent->GetEquippedItemReference(Item->ItemData.ItemType) == Item)
     {
         UnequipItem(Item);
     }
-
     InventorySlots->RemoveItem(Item);
 
-    if (OwningCharacter->HasAuthority())
-    {
-        OwningCharacter->Server_DropItem(Item->ItemData);
-    }
-    else
-    {
-        OwningCharacter->Server_DropItem(Item->ItemData);
-    }
+    OwningCharacter->Server_DropItem(Item->ItemData);
 }
 
 FReply UInventory::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -410,8 +378,8 @@ void UInventory::OnEquippedSlotClick(UItemObject* EquippedItem)
             Popup->AddToViewport();
             Popup->Setup(EquippedItem);
 
-            // Hide Equip, Show Unequip for equipped items
-            Popup->ConfigureButtons(false, true);
+            // (Hide Equip, Show Unequip, Show Sell, Show Buy) for equipped items
+            Popup->ConfigureButtons(false, true, false, false);
 
             FVector2D ScreenPosition;
             UWidgetLayoutLibrary::GetMousePositionScaledByDPI(GetWorld()->GetFirstPlayerController(), ScreenPosition.X, ScreenPosition.Y);
@@ -428,8 +396,7 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
         return false;
 
     UItemObject* DraggedItem = Cast<UItemObject>(InOperation->Payload);
-    if (!DraggedItem)
-        return false;
+    if (!DraggedItem) return false;
 
     FVector2D DropPosition = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
     FGeometry EquippedGeometry = EquippedCanvas->GetCachedGeometry();
@@ -437,9 +404,7 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
     const FVector2D EquippedLocal = EquippedGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
     const FVector2D EquippedSize = EquippedGeometry.GetLocalSize();
 
-    const bool bInsideEquipped =
-        EquippedLocal.X >= 0.f && EquippedLocal.Y >= 0.f &&
-        EquippedLocal.X <= EquippedSize.X && EquippedLocal.Y <= EquippedSize.Y;
+    const bool bInsideEquipped = EquippedLocal.X >= 0.f && EquippedLocal.Y >= 0.f && EquippedLocal.X <= EquippedSize.X && EquippedLocal.Y <= EquippedSize.Y;
 
     if (bInsideEquipped)
     {

@@ -16,6 +16,7 @@
 #include <InputMappingContext.h>
 #include <EnhancedInputSubsystems.h>
 #include <RelicRunners/Menu/KeybindingsListData.h>
+#include <RelicRunners/AbilitySystem/AbilityPointCounter.h>
 
 void URelicRunnersGameInstance::Init()
 {
@@ -39,57 +40,41 @@ void URelicRunnersGameInstance::ResetToDefaults()
 
 void URelicRunnersGameInstance::ApplyKeybindings()
 {
-
-    // Get the player input subsystem
     APlayerController* PC = GetFirstLocalPlayerController();
     if (!PC) return;
 
     ARelicRunnersPlayerController* RPC = Cast<ARelicRunnersPlayerController>(PC);
     if (!RPC) return;
 
-    UInputMappingContext* MappingContext = RPC->GetInputMappingContext();
-    if (!MappingContext)
+    UInputMappingContext* OldMappingContext = RPC->GetInputMappingContext();
+    if (!OldMappingContext)
     {
         UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: No InputMappingContext set!"));
         return;
     }
 
+    UInputMappingContext* MappingContext = DuplicateObject<UInputMappingContext>(OldMappingContext, this);
+
     UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
     if (!Subsystem) return;
 
+    Subsystem->RemoveMappingContext(OldMappingContext);
     MappingContext->UnmapAll();
 
-    // Restore Look
-    UInputAction* LookAction = LoadObject<UInputAction>(
-        nullptr,
-        TEXT("/Game/ThirdPerson/Input/Actions/IA_Look.IA_Look")
-    );
-
+    UInputAction* LookAction = LoadObject<UInputAction>(nullptr, TEXT("/Game/ThirdPerson/Input/Actions/IA_Look.IA_Look"));
     if (LookAction)
     {
         FEnhancedActionKeyMapping& Mapping = MappingContext->MapKey(LookAction, EKeys::Mouse2D);
 
-        UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: Look (Mouse2D)"));
-
-        UInputModifierNegate* NegateModifier = NewObject<UInputModifierNegate>();
-        NegateModifier->bX = Keys->InvertedXMouse; // Invert X
-        NegateModifier->bY = Keys->InvertedYMouse; // Invert Y
-        NegateModifier->bZ = false;
+        UInputModifierNegate* NegateModifier = NewObject<UInputModifierNegate>(MappingContext);
+        NegateModifier->bX = Keys->InvertedXMouse;
+        NegateModifier->bY = Keys->InvertedYMouse;
 
         Mapping.Modifiers.Add(NegateModifier);
-        UE_LOG(LogTemp, Log, TEXT("Look Modifiers: X | %s Y | %s"),
-            Keys->InvertedXMouse ? TEXT("true") : TEXT("false"),
-            Keys->InvertedYMouse ? TEXT("true") : TEXT("false")
-        );
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("ApplyKeybindings: couldn't find IA_Look asset!"));
     }
 
     for (auto& Binding : Keys->KeyBinds)
     {
-        // Build action asset name (your naming convention)
         FString ActionAssetName = FString::Printf(TEXT("IA_%s"), *Binding.Name.Replace(TEXT(" "), TEXT("")));
         FString AssetPath = FString::Printf(TEXT("/Game/ThirdPerson/Input/Actions/%s.%s"), *ActionAssetName, *ActionAssetName);
 
@@ -100,16 +85,11 @@ void URelicRunnersGameInstance::ApplyKeybindings()
             continue;
         }
 
-        // Map key for the action on the mapping context
-        // MapKey usually exists as a convenience wrapper exposed in the API you used earlier
         MappingContext->MapKey(FoundAction, Binding.Bind);
 
-        UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: mapped action %s -> key %s"), *Binding.Name, *Binding.Bind.GetFName().ToString());
+        UE_LOG(LogTemp, Log, TEXT("ApplyKeybindings: %s -> key %s"), *Binding.Name, *Binding.ReadableBind);
     }
 
-    // Re-apply mapping context to the subsystem (remove old first if necessary)
-    // You may want to remove then add to ensure updated mappings are used:
-    Subsystem->RemoveMappingContext(MappingContext);
     Subsystem->AddMappingContext(MappingContext, 0);
 }
 
@@ -117,7 +97,6 @@ void URelicRunnersGameInstance::Shutdown()
 {
     Super::Shutdown();
 
-    //Leave any remaining sessions
     LeaveSession();
 }
 
@@ -295,7 +274,6 @@ void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool
     {
         PendingHostAfterLeave = 0;
 
-        //Attempt host now that session was destroyed
         HostGame();
         return;
     }
@@ -307,7 +285,7 @@ void URelicRunnersGameInstance::OnDestroySessionComplete(FName SessionName, bool
     }
 }
 
-void URelicRunnersGameInstance::JoinGame(int32 SessionIndex)
+void URelicRunnersGameInstance::JoinGame(int SessionIndex)
 {
     if (!SessionInterface.IsValid() || !SessionSearch.IsValid() || SessionIndex < 0 || SessionIndex >= SessionSearch->SearchResults.Num()) return;
 
@@ -335,7 +313,6 @@ void URelicRunnersGameInstance::OnSessionDestroyedThenJoin(FName SessionName, bo
 {
     UE_LOG(LogTemp, Log, TEXT("OnSessionDestroyedThenJoin: %s success=%d"), *SessionName.ToString(), bWasSuccessful);
 
-    //Unbind to be tidy
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnDestroySessionCompleteDelegates.RemoveAll(this);
@@ -369,7 +346,6 @@ void URelicRunnersGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoin
 {
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
-        //Try game port first
         FString ConnectInfo;
         if (!Sess->GetResolvedConnectString(SessionName, ConnectInfo, NAME_GamePort) || ConnectInfo.IsEmpty())
         {
@@ -387,7 +363,6 @@ void URelicRunnersGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoin
         }
     }
 
-    //Unbind join delegate
     if (TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin())
     {
         Sess->OnJoinSessionCompleteDelegates.RemoveAll(this);
@@ -427,5 +402,6 @@ void URelicRunnersGameInstance::StartSessionGame()
         }
     }
 
+    // For host
     World->SeamlessTravel(TravelURL);
 }

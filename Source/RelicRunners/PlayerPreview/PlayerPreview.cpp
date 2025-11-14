@@ -38,8 +38,6 @@ APlayerPreview::APlayerPreview()
 	SceneCaptureComponent2D->bCaptureEveryFrame = true;
 	SceneCaptureComponent2D->bCaptureOnMovement = false;
 
-	// Mesh attachments
-
 	UpperMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("UpperMesh"));
 	UpperMesh->SetupAttachment(BodyMesh);
 	UpperMesh->SetLeaderPoseComponent(BodyMesh);

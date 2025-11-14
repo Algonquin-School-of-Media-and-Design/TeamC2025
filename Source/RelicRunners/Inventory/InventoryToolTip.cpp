@@ -27,7 +27,6 @@
 void UInventoryToolTip::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
-    // We can include our changes to the widget text here
 }
 
 void UInventoryToolTip::Setup(FItemData& ItemData, const FLinearColor& RarityColor)
@@ -40,7 +39,6 @@ void UInventoryToolTip::Setup(FItemData& ItemData, const FLinearColor& RarityCol
 
 void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& HoveredColor, UItemObject* EquippedItem)
 {
-    // --- Hovered item UI ---
     B_Rarity->SetBrushColor(HoveredColor);
     TB_RarityTooltip->SetText(FText::FromString(HoveredItem->GetRarity()));
     TB_RarityTooltip->SetColorAndOpacity(FLinearColor::White);
@@ -52,10 +50,9 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
     TB_LevelTooltip->SetColorAndOpacity(FLinearColor::White);
     B_Level->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1.0f));
 
-    const bool bHasEquipped = EquippedItem != nullptr;
+    const bool HasEquipped = EquippedItem != nullptr;
 
-    // --- Equipped item UI (note the _1 suffixes) ---
-    if (bHasEquipped)
+    if (HasEquipped)
     {
         FLinearColor EquippedColor = ItemStats::GetRarityDataMap()[EquippedItem->GetRarity()].Color;
 
@@ -84,7 +81,7 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
 
     struct FStatInfo
     {
-        int32 Value;
+        int Value;
         FString Label;
         UTextBlock* HoveredText;
         UHorizontalBox* HoveredBox;
@@ -108,13 +105,11 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
         { HoveredItem->ItemData.Gold,         "Gold",         TB_GoldTooltip,         HB_Gold,         B_Gold,         TB_GoldTooltip_1,         HB_Gold_1,         B_Gold_1,         TB_GoldTooltip_2,         HB_Gold_2,          B_Gold_2 }
     };
 
-    // Set visibility of Equipped and Comparison sections
-    B_Equipped->SetVisibility(bHasEquipped ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-    B_Comparison->SetVisibility(bHasEquipped ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    B_Equipped->SetVisibility(HasEquipped ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    B_Comparison->SetVisibility(HasEquipped ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 
     for (const FStatInfo& Stat : Stats)
     {
-        // Hovered (base column)
         if (Stat.Value == 0)
         {
             Stat.HoveredBox->SetVisibility(ESlateVisibility::Collapsed);
@@ -136,9 +131,9 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
             }
         }
 
-        if (bHasEquipped)
+        if (HasEquipped)
         {
-            int32 EquippedValue = 0;
+            int EquippedValue = 0;
             if (Stat.Label == "Health") EquippedValue = EquippedItem->ItemData.Health;
             else if (Stat.Label == "Armor") EquippedValue = EquippedItem->ItemData.Armor;
             else if (Stat.Label == "Dexterity") EquippedValue = EquippedItem->ItemData.Dexterity;
@@ -148,7 +143,7 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
             else if (Stat.Label == "Slots") EquippedValue = EquippedItem->ItemData.Slots;
             else if (Stat.Label == "Gold") EquippedValue = EquippedItem->ItemData.Gold;
 
-            const int32 Diff = Stat.Value - EquippedValue;
+            const int Diff = Stat.Value - EquippedValue;
 
             // Equipped display
             if (EquippedValue == 0)
@@ -161,7 +156,7 @@ void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& Hove
                 Stat.EquippedBox->SetVisibility(ESlateVisibility::Visible);
                 Stat.EquippedBorder->SetVisibility(ESlateVisibility::Visible);
 
-                // Display equipped stat with label, e.g. "+5 Slots"
+                // Display equipped stat with label, "+5 Health"
                 Stat.EquippedText->SetText(FText::FromString("+" + FString::FromInt(EquippedValue) + " " + Stat.Label));
                 Stat.EquippedText->SetColorAndOpacity(FLinearColor::White);
                 Stat.EquippedBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));

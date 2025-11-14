@@ -23,3 +23,15 @@ UKeybinds::UKeybinds()
     KeyBinds.Add({ TEXT("Ultimate Ability"),   EKeys::F });
     KeyBinds.Add({ TEXT("Health Potion"),      EKeys::H });
 }
+
+FKey UKeybinds::GetKeyForAction(const FString& ActionName) const
+{
+    for (const FKeybinding& Bind : KeyBinds)
+    {
+        if (Bind.Name.Equals(ActionName, ESearchCase::IgnoreCase))
+        {
+            return Bind.Bind;
+        }
+    }
+    return EKeys::Invalid;
+}

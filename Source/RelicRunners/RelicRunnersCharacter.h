@@ -11,25 +11,19 @@
  *   Any use, distribution, or modification outside of these projects
  *   is strictly prohibited without explicit written permission.
  *
- *   ï¿½ 2025 Tristan Anglin. All rights reserved.
+ *   © 2025 Tristan Anglin. All rights reserved.
  ************************************************************************************/
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Logging/LogMacros.h"
 #include "AbilitySystem/AbilityBase.h"
-#include "Abilities/ImpunityAbility.h"
-#include "Abilities/EarthquakeAbility.h"
+#include "AbilitySystem/ImpunityAbility.h"
+#include "AbilitySystem/EarthquakeAbility.h"
 #include "Abilities/VengefulDance.h"
-#include "Abilities/WarBannerAbility.h"
 #include "Abilities/BundleOfJoy.h"
-#include "Abilities/Moonbeam.h"
-#include "AbilitySystemInterface.h"
-#include "AbilitySystemComponent.h"
-#include "AttributeSet.h"
-
+#include "Logging/LogMacros.h"
 #include "RelicRunnersCharacter.generated.h"
 
 enum class EInventorySorting : uint8;
@@ -44,7 +38,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class ARelicRunnersCharacter : public ACharacter, public IAbilitySystemInterface
+class ARelicRunnersCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -147,6 +141,13 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_UseHealthPotion(int NewHealth, int NewPotionCount);
 
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DamageAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DamageAbilityInstance;
+
 	//Ticking
 	void UpdatePlayerHUDWorldFacing();
 	void TraceForInteractables();
@@ -206,10 +207,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void SetInventoryComponent(UInventoryComponent* InvComp);
 
-	// Currency cheats
-	UFUNCTION(Exec) void AddGold(int32 Amount = 10);
-	UFUNCTION(Exec) void SpendGold(int32 Amount = 10);
-
 	//Update functions
 	void UpdateItemVisuals(UObject* MeshAsset, const FString& ItemType);
 	UFUNCTION(BlueprintCallable)
@@ -256,8 +253,6 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* OffhandItemMesh;
 
-	FVector RespawnLocation;
-
 	//Other Classes
 	UPROPERTY()
 	class UItemMeshData* ItemMeshData;
@@ -272,10 +267,6 @@ public:
 	void OnLevelUp();
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-
-	UFUNCTION()
-	//method that is call on player death
-	void Die();
 
 protected:
 
@@ -301,6 +292,26 @@ protected:
 
 	UPROPERTY()
 	class UAbilityPointCounter* AbilityPointCounter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> UtilityAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* UtilityAbilityInstance;
+
+	//Defence Ability (Impunity Ability)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> DefenceAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* DefenceAbilityInstance;
+
+	// Ultimate Ability (Earthquake Ability)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
+	TSubclassOf<AAbilityBase> UltimateAbilityClass;
+
+	UPROPERTY()
+	AAbilityBase* UltimateAbilityInstance;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UHealthPotion> HealthPotionClass;
@@ -387,12 +398,15 @@ protected:
 	UPROPERTY()
 	float HealthGranted;         
 
+	float DamageCooldown = 5.f;
+	float DefenceCooldown = 5.f;
+	float UtilityCooldown = 5.f;
+	float UltimateCooldown = 10.f;
 
-
-	float DamageCooldown;
-	float DefenceCooldown;
-	float UtilityCooldown;
-	float UltimateCooldown;
+	//War Banner Ability | **Move this to the dedicated Tank class when it is ready**
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AWarBannerAbility> WarBannerAbilityTemplate;
+	class AWarBannerAbility* WarBannerAbility;
 
 	bool IsWarBannerActive = false;
 
@@ -400,31 +414,15 @@ protected:
 	virtual void BeginPlay();
 	void InitLocalUI();
 
-
 	void SpawnStarterItems();
 
 	//Ticking
 	void Tick(float DeltaTime);
-
 	UFUNCTION()
 	void PassiveHealthRegen();
-
 	FTimerHandle HealthRegenTimerHandle;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-	UAbilitySystemComponent* AbilitySystem;
-
-	UPROPERTY()
-	UAttributeSet* Attributes;
-
-	virtual void GiveDamageAbilities();
-	virtual void GiveDefenceAbilities();
-	virtual void GiveUtilityAbilities();
-	virtual void GiveUltimateAbilities();
 
 public:
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
-
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/

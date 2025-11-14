@@ -18,7 +18,6 @@ void UMainMenuWidget::NativeConstruct()
         CreditsWidget = CreateWidget<UCreditsWidget>(GetWorld(), CreditsWidgetClass);
         UpgradesWidget = CreateWidget<UUpgradesWidget>(GetWorld(), UpgradesWidgetClass);
         SettingsWidget = CreateWidget<USettingsWidget>(GetWorld(), SettingsWidgetClass);
-        SettingsWidget->InitializeDefaultKeybindings();
 
         if (ModeSelectionWidget && JoinGameWidget)
         {

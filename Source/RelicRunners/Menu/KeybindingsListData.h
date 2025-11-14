@@ -16,6 +16,7 @@ class RELICRUNNERS_API UKeybindingsListData : public UObject
 public:
 	FString Name;
 	FKey Keybind;
+	FString ReadableBind;
 
 	UPROPERTY(Transient)
 	class UKeybindingsListWidget* BoundWidget = nullptr;

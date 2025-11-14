@@ -15,15 +15,20 @@ class RELICRUNNERS_API ULobbyHUDWorld : public UUserWidget
 	GENERATED_BODY()
 
 public:
-
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	void NativeConstruct();
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Class;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* I_Class;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Name;
 
 	UPROPERTY()
 	class ALobbyPreview* OwningPreview;
+
+	UFUNCTION()
+	void UpdatePlayerClassDisplay(FName NewClass);
 };

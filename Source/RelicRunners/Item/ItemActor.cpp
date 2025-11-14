@@ -58,7 +58,7 @@ void AItemActor::InitializeTooltipWidget()
     if (!TooltipWidgetComponent->GetUserWidgetObject())
     {
         TooltipWidgetComponent->SetWidgetClass(TooltipWidgetClass);
-        TooltipWidgetComponent->InitWidget(); // ensures widget is created
+        TooltipWidgetComponent->InitWidget();
     }
 
     TooltipWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
@@ -167,13 +167,12 @@ void AItemActor::SetupVisuals()
     // Setup fog
     const auto& RarityData = ItemStats::GetRarityDataMap()[ItemData.Rarity];
 
-    // small tight volume
     Fog->SetRelativeLocation(FVector(0.f, 0.f, -45.f));
     Fog->SetRelativeScale3D(FVector(0.095f, 0.095f, 0.095f));
     Fog->FogPhaseG = 0.0f;
     Fog->HeightFogExtinction = 0.3f;
-    Fog->HeightFogFalloff = 1;       // keep >= 1.0 (engine recommendation)
-    Fog->FogAlbedo = RarityData.Color;             // tints the scattered light
+    Fog->HeightFogFalloff = 1;      
+    Fog->FogAlbedo = RarityData.Color;             // tints the fog
     Fog->FogEmissive = RarityData.Color * 7.0f;    // strong inner glow
     Fog->MarkRenderStateDirty();
 

@@ -16,7 +16,7 @@ void ARelicRunnersLobbyGameState::RemovePlayerState(APlayerState* PlayerState)
 {
     Super::RemovePlayerState(PlayerState);
 
-    for (int32 i = PreviewActors.Num() - 1; i >= 0; --i)
+    for (int i = PreviewActors.Num() - 1; i >= 0; --i)
     {
         if (PreviewActors[i] && PreviewActors[i]->LinkedPlayerState == PlayerState)
         {
@@ -24,11 +24,6 @@ void ARelicRunnersLobbyGameState::RemovePlayerState(APlayerState* PlayerState)
             PreviewActors.RemoveAt(i);
         }
     }
-}
-
-void ARelicRunnersLobbyGameState::OnRep_PlayerArray()
-{
-
 }
 
 void ARelicRunnersLobbyGameState::RefreshLobbyPreviews()
@@ -39,25 +34,24 @@ void ARelicRunnersLobbyGameState::RefreshLobbyPreviews()
     {
         if (!PS) continue;
 
-        // Skip if already has a preview
-        bool bAlreadyExists = false;
+        // Skip if already has a lobby preview
+        bool AlreadyExists = false;
         for (auto* ExistingPreview : PreviewActors)
         {
             if (ExistingPreview && ExistingPreview->LinkedPlayerState == PS)
             {
-                bAlreadyExists = true;
+                AlreadyExists = true;
                 break;
             }
         }
-        if (bAlreadyExists) continue;
+        if (AlreadyExists) continue;
 
-        // Spawn new one for this player
-        int32 Index = PreviewActors.Num();
+        // Spawn new lobby preview actor
+        int Index = PreviewActors.Num();
         FVector SpawnLoc = FVector(300 * Index, 0, 100);
         FRotator SpawnRot = FRotator::ZeroRotator;
 
-        ALobbyPreview* Preview = GetWorld()->SpawnActor<ALobbyPreview>(
-            ALobbyPreview::StaticClass(), SpawnLoc, SpawnRot);
+        ALobbyPreview* Preview = GetWorld()->SpawnActor<ALobbyPreview>(ALobbyPreview::StaticClass(), SpawnLoc, SpawnRot);
 
         if (Preview)
         {
