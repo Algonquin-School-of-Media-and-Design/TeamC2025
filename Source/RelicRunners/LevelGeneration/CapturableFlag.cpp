@@ -4,7 +4,7 @@
 #include "CapturableFlag.h"
 #include "Components/SceneComponent.h"
 #include "Components/BoxComponent.h"
-#include "RelicRunners/RelicRunnersGameMode.h"
+#include "RelicRunners/RelicRunnersGameState.h"
 #include "RelicRunners/Game/RelicRunnersGameInstance.h"
 #include <Net/UnrealNetwork.h>
 
@@ -25,7 +25,8 @@ ACapturableFlag::ACapturableFlag():
 	TriggerBox->SetGenerateOverlapEvents(true);
 	TriggerBox->SetupAttachment(Origin);
 
-	SetReplicates(true);
+	bReplicates = true;
+	bAlwaysRelevant = true;
 }
 
 // Called when the game starts or when spawned
@@ -33,42 +34,51 @@ void ACapturableFlag::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
+	ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
 
-	if (gamemode)
+	if (gameState)
 	{
-		gamemode->Multicast_IncrementObjective();
-	}
-	
+		//Increment the Replicated Objective variable in the Gamestate for every flag that is spawned
+		gameState->Multicast_IncrementObjective();
+	}	
 }
 
 // Called every frame
 void ACapturableFlag::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACapturableFlag::Interact_Implementation(ARelicRunnersCharacter* Char)
 {
-	if (!isActive)
+}
+
+void ACapturableFlag::Server_HandleInteracted_Implementation(ARelicRunnersCharacter* Char)
+{
+	if (HasAuthority() && Char)
 	{
-		Multicast_Interacted();
+		HandleInteracted(Char);
 	}
 }
 
-void ACapturableFlag::Multicast_Interacted_Implementation()
+void ACapturableFlag::HandleInteracted(ARelicRunnersCharacter* Char)
 {
-	ARelicRunnersGameMode* gamemode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode());
+	if (!Char || isActive)
+		return;
 
-	URelicRunnersGameInstance* gameInstance = Cast<URelicRunnersGameInstance>(GetGameInstance());
+	ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
 
-	if (gamemode)
+	if (gameState)
 	{
-		gamemode->Multicast_DecrementObjective();
+		//Decrement the Replicated Objective variable in the Gamestate
+		gameState->Multicast_DecrementObjective();
 	}
+
+	//Disable further interactions
 	isActive = true;
-	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Interacted with Flag")));
+
+	FString text = HasAuthority() ? "Server: " : "Client: ";
+	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, text + FString::Printf(TEXT("Interacted with Flag")));
 }
 
 void ACapturableFlag::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

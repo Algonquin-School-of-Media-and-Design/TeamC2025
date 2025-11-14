@@ -7,12 +7,14 @@
 #include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "../PlayerController/RelicRunnersPlayerController.h"
-#include "RelicRunners/RelicRunnersGameMode.h"
+#include "RelicRunners/RelicRunnersGameState.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ALevelChangeTrigger::ALevelChangeTrigger():
 	Origin(nullptr),
-	TriggerBox(nullptr)
+	TriggerBox(nullptr),
+	TargetLevel(NAME_None)
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -31,25 +33,15 @@ ALevelChangeTrigger::ALevelChangeTrigger():
 	LevelTargetTextRender = CreateDefaultSubobject<UTextRenderComponent>("LevelTextRender");
 	LevelTargetTextRender->SetupAttachment(Origin);
 
-	SetReplicates(true);
-	bAlwaysRelevant = true;
 	bReplicates = true;
+	bAlwaysRelevant = true;
 }
 
 void ALevelChangeTrigger::OnConstruction(const FTransform& transform)
 {
 	TriggerBox->SetRelativeLocation(FVector(0.0f, 0.0f, TriggerBox->GetUnscaledBoxExtent().Z));
 
-	if (TargetLevel.IsNull())
-	{
-		FString LevelString = FString("No Level");
-		LevelTargetTextRender->SetText(FText::FromString(LevelString));
-	}
-	else
-	{
-		const FString LevelString = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString()));
-		LevelTargetTextRender->SetText(FText::FromString(LevelString));
-	}
+	LevelTargetTextRender->SetText(FText::FromString(TargetLevel.ToString()));
 }
 
 // Called when the game starts or when spawned
@@ -57,22 +49,12 @@ void ALevelChangeTrigger::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (TargetLevel.IsNull())
-	{
-		FString LevelString = FString("No Level");
-		LevelTargetTextRender->SetText(FText::FromString(LevelString));
-	}
-	else
-	{
-		const FString LevelString = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString()));
-		LevelTargetTextRender->SetText(FText::FromString(LevelString));
+	LevelTargetTextRender->SetText(FText::FromString(TargetLevel.ToString()));
 
-	}
-
-	if (ARelicRunnersGameMode* gameMode = Cast<ARelicRunnersGameMode>(GetWorld()->GetAuthGameMode()))
+	if (ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState()))
 	{
-		gameMode->OnObjectiveActionCompleted.AddDynamic(this, &ALevelChangeTrigger::Server_Activate);
-		IsActive = gameMode->InitializeTriggerState();
+		gameState->OnObjectiveActionCompleted.AddDynamic(this, &ALevelChangeTrigger::Server_Activate);
+		IsActive = gameState->InitializeTriggerState();
 	}
 }
 
@@ -84,7 +66,24 @@ void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent
 		{
 			Server_ChangeLevel();
 		}
+
+		if (!IsActive)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 30.0f, FColor::Yellow, FString::Printf(TEXT("Objective has not been met.")));
+		}
 	}
+}
+
+void ALevelChangeTrigger::Server_ChangeLevel_Implementation()
+{
+	ChangeLevel();
+}
+
+void ALevelChangeTrigger::Server_SetTargetLevel_Implementation(FName newTargetLevel)
+{
+	TargetLevel = newTargetLevel;
+
+	LevelTargetTextRender->SetText(FText::FromString(TargetLevel.ToString()));
 }
 
 void ALevelChangeTrigger::ChangeLevel()
@@ -93,15 +92,27 @@ void ALevelChangeTrigger::ChangeLevel()
 
 	if (world == nullptr)
 		return;
-
-	if (TargetLevel.IsNull())
-		return;
-
-	const FString LevelURL = FString(*FPackageName::ObjectPathToPackageName(TargetLevel.ToString() + "?listen"));
+	
+	for (FConstPlayerControllerIterator Iterator = world->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		ARelicRunnersPlayerController* PC = Cast<ARelicRunnersPlayerController>(*Iterator);
+		if (PC && !PC->IsLocalController()) // skip host
+		{
+			PC->ClientTravelToGame();
+		}
+	}
 
 	if (HasAuthority())
 	{
-		world->ServerTravel(LevelURL);
+		if (!TargetLevel.IsNone())
+		{
+			UGameplayStatics::OpenLevel(this, TargetLevel, true, FString("listen"));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 30.0f, FColor::Red, FString::Printf(TEXT("Warning!! Level Trigger has been triggered normally but *Target Level* is not valid.")));
+
+		}
 	}
 }
 
@@ -109,11 +120,6 @@ void ALevelChangeTrigger::Server_Activate_Implementation()
 {
 	IsActive = true;
 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Level Trigger has been activated")));
-}
-
-void ALevelChangeTrigger::Server_ChangeLevel_Implementation()
-{
-	ChangeLevel();
 }
 
 void ALevelChangeTrigger::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

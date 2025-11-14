@@ -36,6 +36,7 @@
 #include "Inventory/InventorySortingOptions.h"
 #include "Item/ItemStats.h"
 #include "Item/ItemActor.h"
+#include "LevelGeneration/CapturableFlag.h"
 #include "Interact/InteractInterface.h"
 #include "PlayerHUD/PlayerHUD.h"
 #include "Menu/PauseMenu.h"
@@ -668,8 +669,6 @@ void ARelicRunnersCharacter::TraceForInteractables()
 	const float MaxDistance = 800.f;
 	const float MinFacingDot = 0.f; // 1 = perfectly facing, 0 = 90 degrees off
 
-	DrawDebugLine(GetWorld(),PlayerLocation, PlayerLocation + (PlayerForward * MaxDistance), FColor::Blue);
-
 	for (TActorIterator<AItemActor> It(GetWorld()); It; ++It)
 	{
 		AItemActor* Item = *It;
@@ -890,6 +889,18 @@ void ARelicRunnersCharacter::Interact()
 						MyPC->Server_RequestPickup(Item);
 					}
 				}
+			}
+			else if (ACapturableFlag* Flag = Cast<ACapturableFlag>(HitActor))
+			{
+				if (APlayerController* PC = Cast<APlayerController>(GetController()))
+				{
+					ARelicRunnersPlayerController* MyPC = Cast<ARelicRunnersPlayerController>(PC);
+					if (MyPC)
+					{
+						MyPC->Server_RequestFlagActivation(Flag);
+					}
+				}
+
 			}
 			else
 			{
