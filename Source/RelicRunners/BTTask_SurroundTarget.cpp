@@ -77,30 +77,32 @@ void UBTTask_SurroundTarget::OnSeparationLocationReached(FAIRequestID RequestID,
 
 	bool sphereResult = UKismetSystemLibrary::SphereOverlapActors(GetWorld(), ControlledPawn->GetActorLocation(), SeparationDistanceBetweenFriendly, FriendlyObjectTypes, nullptr, ignoredActors, overlappingActors);
 
-	if (!sphereResult || overlappingActors.Num() == 0)
+	if (!sphereResult)
 	{
 		FinishLatentTask(*OwnerComponent, EBTNodeResult::Failed);
 		return;
 	}
+	
 	
 	//using a weighted average to find the direction to move away from other enemies with the weight being the inverse of the distance to the other enemy so that closer enemies have more influence
 	float totalWeights = 0.f;
 	FVector moveDirection = FVector::ZeroVector;
 	float closestDistance = TNumericLimits<float>::Max();
 
-	for (AActor* actor : overlappingActors)
+	for (int i = 0; i < overlappingActors.Num(); i++)
 	{
-		if (!actor->Tags.Contains("Enemy"))
+		if (!overlappingActors[i]->Tags.Contains("Enemy"))
 		{
+			overlappingActors.RemoveAt(i);
 			continue;
 		}
 
-		float distance = FVector::Dist(actor->GetActorLocation(), ControlledPawn->GetActorLocation());
+		float distance = FVector::Dist(overlappingActors[i]->GetActorLocation(), ControlledPawn->GetActorLocation());
 
 		if (distance > 0.f)
 		{
 			float weight = 1.f / distance;
-			FVector direction = (ControlledPawn->GetActorLocation() - actor->GetActorLocation()).GetSafeNormal();
+			FVector direction = (ControlledPawn->GetActorLocation() - overlappingActors[i]->GetActorLocation()).GetSafeNormal();
 
 			moveDirection += direction * weight;
 			totalWeights += weight;
@@ -110,6 +112,12 @@ void UBTTask_SurroundTarget::OnSeparationLocationReached(FAIRequestID RequestID,
 				closestDistance = distance;
 			}
 		}
+	}
+
+	if (overlappingActors.Num() == 0)
+	{
+		FinishLatentTask(*OwnerComponent, EBTNodeResult::Succeeded);
+		return;
 	}
 
 	if (moveDirection == FVector::ZeroVector)
