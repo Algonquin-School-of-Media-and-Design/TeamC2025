@@ -37,7 +37,6 @@ void UBundleOfJoy::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 
     // Set a timer to trigger the explosion after the ability duration
     AvatarActor->GetWorldTimerManager().SetTimer(ExplosionTimer, FTimerDelegate::CreateUObject(this, &UBundleOfJoy::Explode), Duration, false);
-
 }
 
 
@@ -74,10 +73,8 @@ void UBundleOfJoy::Attract()
             TargetRot.Pitch = 0.f; 
             TargetRot.Roll = 0.f;
             Char->SetActorRotation(TargetRot); // Rotate character toward center
-
         }
     }
-
 }
 
 
