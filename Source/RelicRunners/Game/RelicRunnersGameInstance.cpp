@@ -374,8 +374,8 @@ void URelicRunnersGameInstance::StartSessionGame()
     UWorld* World = GetWorld();
     if (!World) return;
 
-    //FString TravelURL = TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap?listen");
-    FString TravelURL = TEXT("/Game/ThirdPerson/Maps/GenerateLevelTest?listen");
+    FString TravelURL = TEXT("/Game/ThirdPerson/Maps/ThirdPersonMap?listen");
+    //FString TravelURL = TEXT("/Game/ThirdPerson/Maps/GenerateLevelTest?listen");
     UE_LOG(LogTemp, Warning, TEXT("[LobbyGameMode] Host starting travel to %s"), *TravelURL);
 
     TSharedPtr<IOnlineSession> Sess = SessionInterface.Pin();
