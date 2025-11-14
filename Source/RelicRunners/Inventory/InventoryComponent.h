@@ -64,10 +64,10 @@ public:
     UInventoryComponent();
 
     // Inventory
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Inventory, Category="Inventory", meta=(AllowPrivateAccess = "true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_Inventory, Category="Inventory", meta=(AllowPrivateAccess = "true"))
     TArray<UItemObject*> InventoryItems;
 
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_EquippedItems, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_EquippedItems, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
     TArray<FEquippedItemEntry> EquippedItems;
 
     TArray<FEquippedItemEntry> GetEquippedItems() { return EquippedItems; };

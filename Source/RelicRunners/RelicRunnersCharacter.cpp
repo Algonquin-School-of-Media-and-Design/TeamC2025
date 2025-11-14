@@ -357,7 +357,6 @@ void ARelicRunnersCharacter::OnRep_HUD()
 	UpdateHUD();
 }
 
-
 void ARelicRunnersCharacter::AddExperience(int Amount)
 {
 	PlayerXP += Amount;
@@ -418,7 +417,7 @@ void ARelicRunnersCharacter::OnLevelUp()
 
 float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	float actualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	float actualDamage = 0;
 
 	//if (DefenceAbilityInstance)
 	//{
@@ -428,17 +427,31 @@ float ARelicRunnersCharacter::TakeDamage(float DamageAmount, FDamageEvent const&
 	//	}
 	//}
 
-	PlayerHealth -= actualDamage;
-
-	if (PlayerHealth <= 0)
+	if (HasAuthority())
 	{
-		PlayerHealth = 0;
+		actualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+		PlayerHealth -= actualDamage;
+
+		if (PlayerHealth <= 0)
+		{
+			PlayerHealth = 0;
+			Die();
+		}
+		//UE_LOG(LogTemp, Log, TEXT("Player took %f damage, current health: %f"), actualDamage, PlayerHealth);
 	}
-	//UE_LOG(LogTemp, Log, TEXT("Player took %f damage, current health: %f"), actualDamage, PlayerHealth);
+	
 
 	UpdateHUD();
 
 	return actualDamage;
+}
+
+void ARelicRunnersCharacter::Die()
+{
+	SetActorLocation(RespawnLocation);
+	PlayerHealth = PlayerMaxHealth;
+
 }
 
 bool ARelicRunnersCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -491,6 +504,8 @@ void ARelicRunnersCharacter::TryBindInventoryDelegates()
 void ARelicRunnersCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	RespawnLocation = GetActorLocation();
 
 	// Always load ItemMeshData locally
 	if (ItemMeshDataClass)

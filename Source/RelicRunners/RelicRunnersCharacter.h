@@ -256,6 +256,8 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* OffhandItemMesh;
 
+	FVector RespawnLocation;
+
 	//Other Classes
 	UPROPERTY()
 	class UItemMeshData* ItemMeshData;
@@ -270,6 +272,10 @@ public:
 	void OnLevelUp();
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	UFUNCTION()
+	//method that is call on player death
+	void Die();
 
 protected:
 

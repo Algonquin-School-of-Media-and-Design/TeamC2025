@@ -10,10 +10,12 @@
 #include "Components/WidgetComponent.h"
 #include <Net/UnrealNetwork.h>
 #include "EnemyHUDWorld.h"
-
+#include "RelicRunners/Item/ItemCard.h"
+#include "RelicRunners/Item/ItemStats.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
-AEnemyCharacter::AEnemyCharacter()
+AEnemyCharacter::AEnemyCharacter() : ACharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -22,6 +24,8 @@ AEnemyCharacter::AEnemyCharacter()
 	RemainingStunTime = 0;
 	Level = 1;
 	TypeOfEnemy = EEnemyType::UNKNOWN;
+
+	GetCapsuleComponent()->SetCollisionProfileName("Enemy");
 
 	//tristan UI stuff
 	EnemyHUDWorld = CreateDefaultSubobject<UWidgetComponent>(TEXT("TooltipWidgetComponent"));
@@ -35,6 +39,7 @@ AEnemyCharacter::AEnemyCharacter()
 
 	bReplicates = true;
 	SetReplicateMovement(true);
+	Tags.Add("Enemy");
 }
 
 void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -165,20 +170,25 @@ void AEnemyCharacter::SpawnItem()
 {
 	if (ItemLootPool.Num() > 0)
 	{
-		int randomIndex = FMath::RandRange(0, ItemLootPool.Num() - 1);
-		UItemObject* itemToSpawn = ItemLootPool[randomIndex];
+		float chance = FMath::FRandRange(0.f, 1.f);
 
-		if (itemToSpawn != nullptr)
+		if (chance <= ChanceToDrpopItem)
 		{
-			FVector spawnLocation = GetActorLocation();
-			FRotator spawnRotation = FRotator::ZeroRotator;
-			FActorSpawnParameters spawnParams;
-			spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+			int randomIndex = FMath::RandRange(0, ItemLootPool.Num() - 1);
+			UItemCard* itemToSpawn = ItemLootPool[randomIndex];
 
-			AItemActor* spawnedItem = GetWorld()->SpawnActor<AItemActor>(AItemActor::StaticClass(), spawnLocation, spawnRotation, spawnParams);
-			if (spawnedItem != nullptr)
+			if (itemToSpawn != nullptr)
 			{
-				spawnedItem->Initialize(itemToSpawn->ItemData);
+				FVector spawnLocation = GetActorLocation();
+				FRotator spawnRotation = FRotator::ZeroRotator;
+				FActorSpawnParameters spawnParams;
+				spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+				AItemActor* spawnedItem = GetWorld()->SpawnActor<AItemActor>(AItemActor::StaticClass(), spawnLocation, spawnRotation, spawnParams);
+				if (spawnedItem != nullptr)
+				{
+					spawnedItem->Initialize(ItemStats::CreateSpecificItemData(Level, itemToSpawn->ItemType, itemToSpawn->MeshData));
+				}
 			}
 		}
 	}
@@ -187,6 +197,19 @@ void AEnemyCharacter::SpawnItem()
 float AEnemyCharacter::CalculateXP() const
 {
 	return Level * FMath::RandRange(100, 150);
+}
+
+void AEnemyCharacter::PlayMontageOnClient_Implementation(UAnimMontage* Montage, float PlayRate)
+{
+	if (!HasAuthority())
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Play(Montage, PlayRate);
+		}
+	}
 }
 
 void AEnemyCharacter::UpdateEnemyHUDWorldFacing()
