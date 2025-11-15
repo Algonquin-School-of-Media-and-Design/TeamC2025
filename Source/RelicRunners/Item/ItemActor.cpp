@@ -153,10 +153,10 @@ void AItemActor::SetupVisuals()
     }
 
     static const TMap<FString, FVector> ItemScaleMap = {
-        { "Lower", FVector(1.50f) }, { "Upper", FVector(1.75f) },
+        { "Lower", FVector(1.0f) }, { "Upper", FVector(1.0f) },
         { "Shield", FVector(0.4f) }, { "Sword", FVector(2.0f) }, 
-        { "Helmet", FVector(3.0f) }, { "Arms", FVector(2.5f) }, 
-        { "Necklace", FVector(3.25f) },
+        { "Helmet", FVector(1.0f) }, { "Arms", FVector(1.0f) }, 
+        { "Necklace", FVector(1.0f) },
     };
 
     if (const FVector* Scale = ItemScaleMap.Find(ItemData.ItemType))
