@@ -625,7 +625,7 @@ void ARelicRunnersCharacter::SpawnStarterItems()
 {
 	if (ItemMeshData && InventoryComponent)
 	{
-		for (int i = 0; i < 50; ++i)
+		for (int i = 0; i < 25; ++i)
 		{
 			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateRandomItemData(ItemMeshData), InventoryComponent);
 			InventoryComponent->AddItem(Item);
@@ -897,7 +897,7 @@ void ARelicRunnersCharacter::Interact()
 	}
 }
 
-void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget, bool bClosePopups = false)
+void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget)
 {
 	if (!IsLocallyControlled() || !UIWidget) return;
 
@@ -922,7 +922,7 @@ void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget, bool bClosePopups =
 	}
 	PlayerController->SetShowMouseCursor(bEnable);
 
-	if (bClosePopups && UIWidget == Inventory)
+	if (UIWidget == Inventory)
 	{
 		UInventoryItemOptions::CloseAnyOpenPopup();
 		UInventorySortingOptions::CloseAnyOpenPopup();
@@ -933,7 +933,8 @@ void ARelicRunnersCharacter::InventoryUI()
 {
 	if (!Inventory) return;
 	RemoveOtherUI("Inventory", Cast<APlayerController>(Controller));
-	ToggleUI(Inventory, true);
+	ToggleUI(Inventory);
+	Inventory->ToggleVendorUI(false);
 }
 
 void ARelicRunnersCharacter::PauseUI()

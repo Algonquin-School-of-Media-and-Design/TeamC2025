@@ -83,10 +83,8 @@ void AVendor::Interact_Implementation(ARelicRunnersCharacter* Char)
 {
 	if (!Char) return;
 
-	if (APlayerController* PC = Cast<APlayerController>(Char->GetController()))
-	{
-		
-	}
+	Char->InventoryUI();
+	Char->GetInventory()->ToggleVendorUI(true);
 }
 
 FItemData AVendor::GetItemData_Implementation()

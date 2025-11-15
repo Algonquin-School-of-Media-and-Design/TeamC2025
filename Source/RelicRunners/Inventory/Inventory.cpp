@@ -65,6 +65,20 @@ void UInventory::NativeConstruct()
     if (VendorSlots) VendorSlots->ClearListItems();
 }
 
+void UInventory::ToggleVendorUI(bool value)
+{
+    if (!VendorCanvas) return;
+
+    if (!value)
+    {
+        VendorCanvas->SetVisibility(ESlateVisibility::Collapsed);
+    }
+    else
+    {
+        VendorCanvas->SetVisibility(ESlateVisibility::Visible);
+    }
+}
+
 void UInventory::HandleSortSelected(EInventorySorting Method)
 {
     if (TB_SortingType)
@@ -399,16 +413,39 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
     if (!DraggedItem) return false;
 
     FVector2D DropPosition = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
-    FGeometry EquippedGeometry = EquippedCanvas->GetCachedGeometry();
 
+    //Equipped Items Location
+    FGeometry EquippedGeometry = EquippedCanvas->GetCachedGeometry();
     const FVector2D EquippedLocal = EquippedGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
     const FVector2D EquippedSize = EquippedGeometry.GetLocalSize();
-
     const bool bInsideEquipped = EquippedLocal.X >= 0.f && EquippedLocal.Y >= 0.f && EquippedLocal.X <= EquippedSize.X && EquippedLocal.Y <= EquippedSize.Y;
+
+    //Inventory Items Location
+    FGeometry InventoryGeometry = InventorySlots->GetCachedGeometry();
+    const FVector2D InventoryLocal = InventoryGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D InventorySize = InventoryGeometry.GetLocalSize();
+    const bool bInsideInventory = InventoryLocal.X >= 0.f && InventoryLocal.Y >= 0.f && InventoryLocal.X <= InventoryLocal.X && InventoryLocal.Y <= InventoryLocal.Y;
+
+    //Vendor Forge Location
+    FGeometry ForgeGeometry = ForgeCanvas->GetCachedGeometry();
+    const FVector2D ForgeLocal = ForgeGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D ForgeSize = ForgeGeometry.GetLocalSize();
+    const bool bInsideForge = ForgeLocal.X >= 0.f && ForgeLocal.Y >= 0.f && ForgeLocal.X <= ForgeLocal.X && ForgeLocal.Y <= ForgeLocal.Y;
 
     if (bInsideEquipped)
     {
         EquipItem(DraggedItem);
+    }
+    else if (bInsideForge && VendorCanvas->IsVisible())
+    {
+        FuseBorder->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds1->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds2->SetVisibility(ESlateVisibility::Visible);
+    }
+    else if (bInsideInventory)
+    {
+        return true;
     }
     else
     {

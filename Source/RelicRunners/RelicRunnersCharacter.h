@@ -126,7 +126,7 @@ public:
 	void MoveInDirection(EAxis::Type Axis, float Value);
 	void Look(const FInputActionValue& Value);
 	void Interact();
-	void ToggleUI(UUserWidget* UIWidget, bool bClosePopups);
+	void ToggleUI(UUserWidget* UIWidget);
 	void InventoryUI();
 	void PauseUI();
 	void AbilitySystemUI();

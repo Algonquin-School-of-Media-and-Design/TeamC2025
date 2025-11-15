@@ -54,6 +54,7 @@ public:
 
 	//Functions
 	virtual void NativeConstruct() override;
+	void ToggleVendorUI(bool value);
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual FReply NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	FSlotUIComponents GetUIComponentsForItemType(const FString& ItemType);
@@ -100,6 +101,21 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UCanvasPanel* VendorCanvas;
+
+	UPROPERTY(meta = (BindWidget))
+	class UCanvasPanel* ForgeCanvas;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* FuseBorder;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_Odds;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_Odds1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_Odds2;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_InventorySlots;
