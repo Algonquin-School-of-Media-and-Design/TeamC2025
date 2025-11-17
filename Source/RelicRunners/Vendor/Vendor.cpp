@@ -83,6 +83,7 @@ void AVendor::RemoveStock(const FItemData& ItemData)
 		if (Stock[i].UniqueID == ItemData.UniqueID)
 		{
 			Stock.RemoveAt(i);
+			OnRep_Stock();
 			return;
 		}
 	}

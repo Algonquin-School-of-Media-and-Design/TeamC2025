@@ -663,8 +663,6 @@ void ARelicRunnersCharacter::TraceForInteractables()
 {
 	if (!IsLocallyControlled()) return;
 
-	//const FVector PlayerLocation = FollowCamera->GetComponentLocation();
-	//const FVector PlayerForward = FollowCamera->GetForwardVector();
 	const FVector PlayerLocation = GetActorLocation();
 	const FVector PlayerForward = FollowCamera->GetForwardVector();
 

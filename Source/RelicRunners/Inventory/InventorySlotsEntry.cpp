@@ -28,13 +28,14 @@
 #include "InventoryItemOptions.h"
 #include "InventorySortingOptions.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include <Blueprint/WidgetBlueprintLibrary.h>
+#include "InventoryDragOperation.h"
 #include "RelicRunners/Item/ItemStats.h"
 #include "RelicRunners/Item/ItemData.h"
 #include "Inventory.h"
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
 #include "InventoryComponent.h"
 #include <RelicRunners/RelicRunnersCharacter.h>
-#include <Blueprint/WidgetBlueprintLibrary.h>
 
 void UInventorySlotsEntry::NativeConstruct()
 {
@@ -103,11 +104,23 @@ void UInventorySlotsEntry::NativeOnDragDetected(const FGeometry& InGeometry, con
     if (!Item) return;
 
     IsDragging = true;
-
-    UDragDropOperation* DragOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
+    
+    //Start drag operation
+    UInventoryDragOperation* DragOp = NewObject<UInventoryDragOperation>();
     DragOp->Payload = Item;
     DragOp->DefaultDragVisual = this;
     DragOp->Pivot = EDragPivot::MouseDown;
+
+    //Get starting location 
+    UTileView* TileView = Cast<UTileView>(GetOwningListView());
+    if (TileView->GetName() == "InventorySlots")
+    {
+        DragOp->FromWhere = UInventoryDragOperation::Locations::Inventory;
+    }
+    else if (TileView->GetName() == "VendorSlots")
+    {
+        DragOp->FromWhere = UInventoryDragOperation::Locations::Shop;
+    }
     OutOperation = DragOp;
 }
 

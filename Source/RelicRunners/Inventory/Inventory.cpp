@@ -22,6 +22,7 @@
 #include "Components/HorizontalBox.h"
 #include "Components/Button.h"
 #include "Components/Border.h"
+#include "Components/VerticalBox.h"
 #include "Components/Image.h"
 #include "Components/CanvasPanel.h"
 #include "InventoryToolTip.h"
@@ -42,6 +43,7 @@
 #include "RelicRunners/PlayerPreview/PlayerPreview.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
+#include "InventoryDragOperation.h"
 
 void UInventory::NativeConstruct()
 {
@@ -444,10 +446,12 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
 {
     Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 
-    if (!InOperation)
-        return false;
+    if (!InOperation) return false;
 
-    UItemObject* DraggedItem = Cast<UItemObject>(InOperation->Payload);
+    UInventoryDragOperation* DragOp = Cast<UInventoryDragOperation>(InOperation);
+    if (!DragOp) return false;
+
+    UItemObject* DraggedItem = Cast<UItemObject>(DragOp->Payload);
     if (!DraggedItem) return false;
 
     FVector2D DropPosition = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
@@ -463,6 +467,12 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
     const FVector2D InventoryLocal = InventoryGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
     const FVector2D InventorySize = InventoryGeometry.GetLocalSize();
     const bool bInsideInventory = InventoryLocal.X >= 0.f && InventoryLocal.Y >= 0.f && InventoryLocal.X <= InventoryLocal.X && InventoryLocal.Y <= InventoryLocal.Y;
+
+    //Inventory Whole Side Location
+    FGeometry InventorySideGeometry = InventorySide->GetCachedGeometry();
+    const FVector2D InventorySideLocal = InventorySideGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D InventorySideSize = InventorySideGeometry.GetLocalSize();
+    const bool bInsideInventorySide = InventorySideLocal.X >= 0.f && InventorySideLocal.Y >= 0.f && InventorySideLocal.X <= InventorySideLocal.X && InventorySideLocal.Y <= InventorySideLocal.Y;
 
     //Vendor Forge Location
     FGeometry ForgeGeometry = ForgeCanvas->GetCachedGeometry();
@@ -480,20 +490,20 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
     {
         EquipItem(DraggedItem);
     }
-    else if (bInsideForge && VendorCanvas->IsVisible())
+    else if (bInsideForge && VendorCanvas->IsVisible() && DragOp->FromWhere == UInventoryDragOperation::Locations::Inventory)
     {
         FuseBorder->SetVisibility(ESlateVisibility::Visible);
         TB_Odds->SetVisibility(ESlateVisibility::Visible);
         TB_Odds1->SetVisibility(ESlateVisibility::Visible);
         TB_Odds2->SetVisibility(ESlateVisibility::Visible);
     }
-    else if (bInsideShop && VendorCanvas->IsVisible())
+    else if (bInsideShop && VendorCanvas->IsVisible() && DragOp->FromWhere == UInventoryDragOperation::Locations::Inventory)
     {
         SellItem(DraggedItem);
     }
-    else if (bInsideInventory)
+    else if (bInsideInventorySide && DragOp->FromWhere == UInventoryDragOperation::Locations::Shop)
     {
-        //do nothing rn
+        BuyItem(DraggedItem);
     }
     else
     {

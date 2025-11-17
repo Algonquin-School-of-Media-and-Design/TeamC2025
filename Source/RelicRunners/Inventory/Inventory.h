@@ -100,7 +100,8 @@ public:
 	//UI Elements
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTileView* InventorySlots;
-
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UVerticalBox* InventorySide;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTileView* VendorSlots;
 
