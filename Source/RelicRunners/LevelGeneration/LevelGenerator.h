@@ -29,7 +29,8 @@ enum class EFloorObstacle : uint8
 {
 	None,
 	Basic,
-	KeyTile,
+	CapturableFlag,
+	EnemyZone,
 	Start,
 	End,
 };
@@ -93,6 +94,9 @@ public:
 	float TileScale;
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values")
+	class AActor* CameraActor;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values")
 	TSubclassOf<class ALevelChangeTrigger> LevelChangeTrigger;
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (ToolTip = "Level the players will travel to when in contact with the Level Change Trigger."))
@@ -125,8 +129,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100", ToolTip = "Size in which the border of the level is forced to spawn a walkable tile."))
 	int BorderForceFull;
 
-	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000", ToolTip = "Maximum amount of tiles in which an objective is spawned on top of. Tile that are set as unwalkable are overriden to be walkable."))
-	int MaxKeyTileAmount;
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000", ToolTip = "Maximum amount of tiles in which a flag objective is spawned on top of. Tile that are set as unwalkable are overriden to be walkable."))
+	int MaxCapturableFlagAmount;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000", ToolTip = "Maximum amount of tiles in which an enemy zone objective is spawned on top of. Tile that are set as unwalkable are overriden to be walkable."))
+	int MaxEnemyZoneAmount;
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle", meta = (ToolTip = "Array of regular packed level actors that the level generator will pick out of randomly to spawn."));
 	TArray <TSubclassOf<class APackedLevelActor>> PackedActorArray;
@@ -139,6 +146,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle| Key Tiles", meta = (ToolTip = "Array of Packed level actor used as the *Capture the flag* objective points."));
 	TArray<TSubclassOf<class APackedLevelActor>> CapturableFlagPackedActorArray;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle| Key Tiles", meta = (ToolTip = "Array of Packed level actor used as the *Enemy Zone* objective points."));
+	TArray<TSubclassOf<class APackedLevelActor>> EnemyZonePackedActorArray;
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Floor", meta = (ToolTip = "Mesh used for the quarter of a walkable tile with neighbours."))
 	class UStaticMeshComponent* FullPiece;
@@ -175,8 +185,11 @@ public:
 	//Finds the starting and ending indexes and sets them accordingly.
 	void SetStartingAndEndingPoints(int startingIndex, int endingIndex);
 
-	//Overrides tiles set by *InitializeFloor()* and sets them as Key Tiles.
-	void SetKeyTile(int index);
+	//Overrides tiles set by *InitializeFloor()* and sets them as Capturable Flag Tiles.
+	void SetFlagTile(int index);
+
+	//Overrides tiles set by *InitializeFloor()* and sets them as Enemy Zone Tiles.
+	void SetEnemyZoneTile(int index);
 
 	//Creates a path from *startingIndex* to *targetIndex* by setting those tile to walkable.
 	void FindStartToEndPath(int startingIndex, int targetIndex, int width);

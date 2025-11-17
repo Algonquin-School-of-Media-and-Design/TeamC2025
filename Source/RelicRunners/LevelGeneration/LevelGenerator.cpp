@@ -18,6 +18,7 @@ Setup Lava spawning
 ALevelGenerator::ALevelGenerator() :
 	ObjectiveType(0),
 	TileScale(1.0f),
+	CameraActor(nullptr),
 	LevelChangeTrigger(nullptr),
 	TargetLevel(nullptr),
 	GenerationIsRandom(true),
@@ -28,7 +29,8 @@ ALevelGenerator::ALevelGenerator() :
 	BasicObstaclePercentage(50.0f),
 	CenterForceFull(0),
 	BorderForceFull(0),
-	MaxKeyTileAmount(1),
+	MaxCapturableFlagAmount(0),
+	MaxEnemyZoneAmount(0),
 	LevelStartPackedActor(nullptr),
 	LevelEndPackedActor(nullptr),
 	FullPiece(nullptr),
@@ -81,6 +83,15 @@ void ALevelGenerator::PostInitializeComponents()
 			int32 textureWidth = MipMap.SizeX;
 			int32 textureDepth = MipMap.SizeY;
 
+			//Set Camera Position relative to size of map
+			if (CameraActor)
+			{
+				float cameraX = textureWidth * TileScale * 2 - TileScale;
+				float cameraY = textureDepth * TileScale * 2 - TileScale;
+
+				CameraActor->SetActorLocation(FVector(cameraX, cameraY, 1000.0f));
+			}
+
 			//Initialize the floor based on each pixel in the texture.
 			for (int y = 0; y < textureDepth; y++)
 			{
@@ -121,6 +132,14 @@ void ALevelGenerator::PostInitializeComponents()
 		}
 		else
 		{
+			//Set Camera Position relative to size of map
+			if (CameraActor)
+			{
+				float cameraX = SpawnWidth * TileScale * 2 - TileScale;
+				float cameraY = SpawnDepth * TileScale * 2 - TileScale;
+				CameraActor->SetActorLocation(FVector(cameraX, cameraY, 0.0f));
+			}
+
 			//Initialize the starting and ending tiles.
 			int startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 			int endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
@@ -149,8 +168,8 @@ void ALevelGenerator::PostInitializeComponents()
 				FindStartToEndPath(startingIndex, endingIndex, SpawnWidth);
 			}
 
-			//Override previously initialized tiles with key tiles
-			for (int i = 0; i < MaxKeyTileAmount; i++)
+			//Override previously initialized tiles with capturable flag tiles
+			for (int i = 0; i < MaxCapturableFlagAmount; i++)
 			{
 				int keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 
@@ -172,7 +191,36 @@ void ALevelGenerator::PostInitializeComponents()
 				//If it can, override the currently selected tile with the key tile and create a path from the starting tile to it.
 				if (whileLoopLimit < 10)
 				{
-					SetKeyTile(keyTileIndex);
+					SetFlagTile(keyTileIndex);
+
+					FindStartToEndPath(startingIndex, keyTileIndex, SpawnWidth);
+				}
+			}
+
+			//Override previously initialized tiles with capturable flag tiles
+			for (int i = 0; i < MaxEnemyZoneAmount; i++)
+			{
+				int keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
+				int whileLoopLimit = 0;
+
+				//If the currently selected tile can be overriden, do that, if not, find another tile. Repeat 10 time. if failed every time, give up.
+				while (FloorValuesArray[keyTileIndex].FloorObstacle > EFloorObstacle::Basic)
+				{
+					keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
+					whileLoopLimit++;
+
+					if (whileLoopLimit >= 10)
+					{
+						break;
+					}
+				}
+
+				//If it can, override the currently selected tile with the key tile and create a path from the starting tile to it.
+				if (whileLoopLimit < 10)
+				{
+					SetEnemyZoneTile(keyTileIndex);
 
 					FindStartToEndPath(startingIndex, keyTileIndex, SpawnWidth);
 				}
@@ -200,7 +248,7 @@ void ALevelGenerator::PostInitializeComponents()
 		ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
 		if (gameState)
 		{
-			gameState->Multicast_SetObjectiveType(ObjectiveType);
+			gameState->Server_SetObjectiveType(ObjectiveType);
 		}
 	}
 
@@ -314,10 +362,19 @@ void ALevelGenerator::SetStartingAndEndingPoints(int startingIndex, int endingIn
 	FloorValuesArray[endingIndex].obstacleYaw = FMath::RandRange(0, 3) * 90;
 }
 
-void ALevelGenerator::SetKeyTile(int index)
+void ALevelGenerator::SetFlagTile(int index)
 {
 	FloorValuesArray[index].IsFullTile = true;
-	FloorValuesArray[index].FloorObstacle = EFloorObstacle::KeyTile;
+	FloorValuesArray[index].FloorObstacle = EFloorObstacle::CapturableFlag;
+	FloorValuesArray[index].randomFloorToSpawn = 0;
+	FloorValuesArray[index].obstacleYaw = FMath::RandRange(0, 3) * 90;
+
+}
+
+void ALevelGenerator::SetEnemyZoneTile(int index)
+{
+	FloorValuesArray[index].IsFullTile = true;
+	FloorValuesArray[index].FloorObstacle = EFloorObstacle::EnemyZone;
 	FloorValuesArray[index].randomFloorToSpawn = 0;
 	FloorValuesArray[index].obstacleYaw = FMath::RandRange(0, 3) * 90;
 }
@@ -753,7 +810,7 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedActorArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
 		break;
-	case EFloorObstacle::KeyTile:
+	case EFloorObstacle::CapturableFlag:
 		if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::CaptureTheFlag))
 		{
 			if (!CapturableFlagPackedActorArray.IsEmpty())
@@ -763,6 +820,20 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 				if (CapturableFlagPackedActorArray[randIndex] != nullptr)
 				{
 					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(CapturableFlagPackedActorArray[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
+				}
+			}
+		}
+		break;
+	case EFloorObstacle::EnemyZone:
+		if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DefeatAllEnemies))
+		{
+			if (!EnemyZonePackedActorArray.IsEmpty())
+			{
+				int randIndex = FMath::RandRange(0, EnemyZonePackedActorArray.Num() - 1);
+
+				if (EnemyZonePackedActorArray[randIndex] != nullptr)
+				{
+					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(EnemyZonePackedActorArray[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
 				}
 			}
 		}

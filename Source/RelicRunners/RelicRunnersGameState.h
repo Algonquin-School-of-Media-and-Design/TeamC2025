@@ -44,26 +44,36 @@ public:
 	ARelicRunnersGameState();
 
 	UFUNCTION(Server, Reliable)
-	void Multicast_IncrementObjective();
+	void Server_IncrementObjective(EObjectiveType objectiveType);
 
 	UFUNCTION(Server, Reliable)
-	void Multicast_DecrementObjective();
+	void Server_DecrementObjective(EObjectiveType objectiveType);
 
 	UFUNCTION(Server, Reliable)
-	void Multicast_SetObjectiveType(EObjectiveType newType);
-	void Multicast_SetObjectiveType(int newType);
+	void Server_SetObjectiveType(int newType);
 
 	bool InitializeTriggerState();
 
-	UPROPERTY(ReplicatedUsing = OnRep_ObjectivesChange)
-	int RemainingObjectives = 0;
+	void InformCurrentObjectives();
+
+	UPROPERTY(ReplicatedUsing = OnRep_FlagObjectivesChange)
+	int RemainingCapturableFlags = 0;
 
 	UFUNCTION()
-	void OnRep_ObjectivesChange();
+	void OnRep_FlagObjectivesChange();
+
+	UPROPERTY(ReplicatedUsing = OnRep_EnemyObjectivesChange)
+	int RemainingEnemyZones= 0;
+
+	UFUNCTION()
+	void OnRep_EnemyObjectivesChange();
 
 	UPROPERTY(BlueprintAssignable)
 	FOnObjectiveActionCompleted OnObjectiveActionCompleted;
 
 	UPROPERTY(Replicated, meta = (Bitmask, BitmaskEnum = EObjectiveType))
 	int ObjectiveType = 0;
+
+	UPROPERTY(Replicated, meta = (Bitmask, BitmaskEnum = EObjectiveType))
+	int CompletedObjectives = 0;
 };

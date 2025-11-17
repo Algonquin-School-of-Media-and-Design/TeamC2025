@@ -69,6 +69,10 @@ void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent
 
 		if (!IsActive)
 		{
+			if (ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState()))
+			{
+				gameState->InformCurrentObjectives();
+			}
 			GEngine->AddOnScreenDebugMessage(-1, 30.0f, FColor::Yellow, FString::Printf(TEXT("Objective has not been met.")));
 		}
 	}

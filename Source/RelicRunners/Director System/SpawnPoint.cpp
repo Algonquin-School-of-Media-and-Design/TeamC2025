@@ -189,6 +189,13 @@ void ASpawnPoint::SpawnEnemies()
 				}
 			}
 		}
+		
+		if(FinishedAllWaves())
+		{
+			//Justin added this
+			OnEnemyWavesComplete.Broadcast();
+			//End Justin section
+		}
 	}
 }
 
