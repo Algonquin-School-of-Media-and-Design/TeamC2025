@@ -5,8 +5,10 @@
 
 UImpunityAbility::UImpunityAbility()
 {
+    InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+
     Duration = 5.0f;
-    Cooldown = 8.0f;
+    CooldownDuration = 8.0f;
 }
 
 void UImpunityAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -47,7 +49,7 @@ void UImpunityAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const
     ACharacter* AvatarChar = Cast<ACharacter>(GetAvatarActorFromActorInfo());
     if (AvatarChar)
     {
-        AvatarChar->GetWorldTimerManager().SetTimer(CooldownTimer, [this]() { bIsOnCooldown = false; }, Cooldown, false);
+        AvatarChar->GetWorldTimerManager().SetTimer(CooldownTimer, [this]() { bIsOnCooldown = false; }, CooldownDuration, false);
     }
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

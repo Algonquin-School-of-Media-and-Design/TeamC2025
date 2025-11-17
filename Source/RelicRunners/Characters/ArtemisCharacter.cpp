@@ -30,7 +30,10 @@ void AArtemisCharacter::PossessedBy(AController* NewController)
 	if (PS)
 	{
 		AbilitySystem = PS->GetAbilitySystemComponent();
-		AbilitySystem->InitAbilityActorInfo(PS, this);
+		if (AbilitySystem)
+		{
+			AbilitySystem->InitAbilityActorInfo(PS, this);
+		}
 	}
 }
 
@@ -54,7 +57,7 @@ void AArtemisCharacter::GiveDamageAbilities()
 	if (AbilitySystem)
 	{
 		// Start ability cooldown
-		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+		//AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 	}
 }
 
@@ -65,7 +68,7 @@ void AArtemisCharacter::GiveDefenceAbilities()
 	if (AbilitySystem)
 	{
 		// Start ability cooldown
-		AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+		//AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 	}
 }
 
@@ -76,7 +79,7 @@ void AArtemisCharacter::GiveUtilityAbilities()
 	if (AbilitySystem)
 	{
 		// Start ability cooldown
-		AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+		//AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 	}
 }
 
@@ -90,7 +93,7 @@ void AArtemisCharacter::GiveUltimateAbilities()
 		AbilitySystem->GiveAbility(FGameplayAbilitySpec(UMoonbeam::StaticClass(), 1, 0));
 
 		// Start ability cooldown
-		AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+		//AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 	}
 	
 }

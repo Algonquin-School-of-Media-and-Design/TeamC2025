@@ -9,16 +9,20 @@ UVengefulDance::UVengefulDance()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
+    AbilityName = FName("VengefulDance");
+
     DamageInterval = 0.5f;
     KnockbackStrength = 1800.f;
     Duration = 1.f;
-    Cooldown = 5.f;
+    CooldownDuration = 5.f;
     DamageAmount = 25.f;
     AreaRadius = 300.f;
+
 }
 
 void UVengefulDance::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+
     if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) // Attempt to commit the ability
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, true); // If commit fails, end the ability

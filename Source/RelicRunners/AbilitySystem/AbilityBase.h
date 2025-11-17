@@ -44,9 +44,6 @@ public:
 public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Config")
-    float Cooldown = 0.f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Config")
     float Duration = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Combat")
@@ -58,6 +55,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Combat")
     float ConeAngle = 0.f;
 
+    //Ability Info
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Info")
     FName AbilityName;
 
@@ -66,5 +64,28 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Info")
     EAbilityTargetType TargetType;
+
+
+    // GAS Cooldown
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability|Cooldown")
+    float CooldownDuration;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Cooldown")
+    FGameplayTag CooldownTag;
+
+    // Ability Tags
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Tags")
+    FGameplayTagContainer BlockAbilitiesWithTags;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Tags")
+    FGameplayTagContainer CancelAbilitiesWithTags;
+
+protected:
+
+    virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
+
+    //virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
+
 };
 

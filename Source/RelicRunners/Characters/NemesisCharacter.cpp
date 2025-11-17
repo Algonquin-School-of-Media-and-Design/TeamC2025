@@ -28,7 +28,10 @@ void ANemesisCharacter::PossessedBy(AController* NewController)
     if (PS)
     {
         AbilitySystem = PS->GetAbilitySystemComponent();
-        AbilitySystem->InitAbilityActorInfo(PS, this);
+        if (AbilitySystem)
+        {
+            AbilitySystem->InitAbilityActorInfo(PS, this);
+        }
     }
 }
 
@@ -46,6 +49,17 @@ void ANemesisCharacter::OnRep_PlayerState()
     }
 }
 
+void ANemesisCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+
+    if (AbilitySystem)
+    {
+        AbilitySystem->CancelAllAbilities();
+        AbilitySystem->RemoveAllGameplayCues();
+    }
+}
+
 
 void ANemesisCharacter::GiveDamageAbilities()
 {
@@ -54,7 +68,7 @@ void ANemesisCharacter::GiveDamageAbilities()
     if (AbilitySystem)
     {
 		// start ability cooldown
-        AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+        //AbilityPointCounter->StartDamageCooldown(DamageCooldown);
     }
 }
 
@@ -71,7 +85,7 @@ void ANemesisCharacter::GiveDefenceAbilities()
         AbilitySystem->TryActivateAbilityByClass(UImpunityAbility::StaticClass());
 
 		// Start ability cooldown
-        AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+        //AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
     }
 }
 
@@ -88,7 +102,7 @@ void ANemesisCharacter::GiveUtilityAbilities()
         AbilitySystem->TryActivateAbilityByClass(UVengefulDance::StaticClass());
 
         // Start ability cooldown
-        AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+        //AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
     }
 }
 
@@ -99,7 +113,7 @@ void ANemesisCharacter::GiveUltimateAbilities()
     if (AbilitySystem)
     {
 		// Start ability cooldown
-        AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+        //AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
     }
 }
 

@@ -19,6 +19,8 @@ public:
     virtual void PossessedBy(AController* NewController) override;
     virtual void OnRep_PlayerState() override;
 
+    void EndPlay(const EEndPlayReason::Type EndPlayReason);
+
 protected:
     virtual void BeginPlay() override;
 

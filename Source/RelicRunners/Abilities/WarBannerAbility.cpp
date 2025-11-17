@@ -5,6 +5,7 @@
 
 UWarBannerAbility::UWarBannerAbility()
 {
+    InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
    /* bIsOnCooldown = false;
     Cooldown = 0.f;
     Duration = 10.f;

@@ -6,6 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemComponent.h"
 #include "../PlayerController/RelicRunnersPlayerController.h"
 #include "RelicRunners/RelicRunnersGameState.h"
 #include "Kismet/GameplayStatics.h"
@@ -64,6 +65,7 @@ void ALevelChangeTrigger::OnTriggerOverlap(UPrimitiveComponent* OverlapComponent
 	{
 		if (HasAuthority() && IsActive)
 		{
+
 			Server_ChangeLevel();
 		}
 

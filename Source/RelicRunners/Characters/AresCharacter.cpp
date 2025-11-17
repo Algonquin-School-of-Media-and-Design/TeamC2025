@@ -31,7 +31,10 @@ void AAresCharacter::PossessedBy(AController* NewController)
 	if (PS)
 	{
 		AbilitySystem = PS->GetAbilitySystemComponent();
-		AbilitySystem->InitAbilityActorInfo(PS, this);
+		if (AbilitySystem)
+		{
+			AbilitySystem->InitAbilityActorInfo(PS, this);
+		}
 	}
 }
 
@@ -60,7 +63,7 @@ void AAresCharacter::GiveDamageAbilities()
 		// Activate Earthquake ability 
 		AbilitySystem->TryActivateAbilityByClass(UEarthquakeAbility::StaticClass());
 		// start ability cooldown
-		AbilityPointCounter->StartDamageCooldown(DamageCooldown);
+		//AbilityPointCounter->StartDamageCooldown(DamageCooldown);
 	}
 }
 
@@ -71,7 +74,7 @@ void AAresCharacter::GiveDefenceAbilities()
 	if (AbilitySystem)
 	{
 		// start ability cooldown
-		AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
+		//AbilityPointCounter->StartDefenceCooldown(DefenceCooldown);
 	}
 }
 
@@ -130,7 +133,7 @@ void AAresCharacter::GiveUtilityAbilities()
 	if (AbilitySystem)
 	{
 		//start ability cooldown
-		AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
+		//AbilityPointCounter->StartUtilityCooldown(UtilityCooldown);
 	}
 }
 
@@ -141,7 +144,7 @@ void AAresCharacter::GiveUltimateAbilities()
 	if (AbilitySystem)
 	{
 		// start ability cooldown
-		AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
+		//AbilityPointCounter->StartUltimateCooldown(UltimateCooldown);
 	}
 }
 
