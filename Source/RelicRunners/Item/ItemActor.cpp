@@ -45,6 +45,9 @@ AItemActor::AItemActor()
     TooltipWidgetComponent->SetRelativeScale3D(FVector(0.1f));
     TooltipWidgetComponent->CastShadow = false;
 
+    ItemCoverMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemCoverMesh"));
+    ItemCoverMesh->SetupAttachment(RootComponent);
+
     static ConstructorHelpers::FClassFinder<UUserWidget> TooltipWidgetBPClass(TEXT("/Game/Inventory/BP_InventoryToolTipWorld"));
     if (TooltipWidgetBPClass.Succeeded())
     {

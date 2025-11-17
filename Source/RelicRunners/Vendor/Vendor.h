@@ -11,16 +11,6 @@ struct FItemData;
 class UInventoryComponent;
 class ARelicRunnersCharacter;
 
-
-USTRUCT(BlueprintType)
-struct FVendorEntry
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FItemData Item;
-};
-
 UCLASS()
 class RELICRUNNERS_API AVendor : public ACharacter, public IInteractInterface
 {
@@ -35,14 +25,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Vendor")
 	void RerollStock();
 
-	bool BuyItemByIndex(int32 Index, ARelicRunnersCharacter* Buyer);
+	void AddStock(const struct FItemData& ItemData);
 
-	bool SellItemByGuid(FGuid ItemGuid, ARelicRunnersCharacter* Seller);
+	void RemoveStock(const struct FItemData& ItemData);
 
 	// IInteractInterface
 	virtual void Interact_Implementation(ARelicRunnersCharacter* Char) override;
 	virtual FItemData GetItemData_Implementation() override;
 	virtual void ShowTooltip_Implementation(bool bShow) override; // Empty
+
+	TArray<struct FItemData> GetStock() { return Stock; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -51,15 +43,16 @@ protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-protected:
 	// Generated stock
 	UPROPERTY(ReplicatedUsing = OnRep_Stock, VisibleAnywhere, BlueprintReadOnly, Category = "Vendor|Stock")
-	TArray<FVendorEntry> Stock;
+	TArray<struct FItemData> Stock;
 
 	UFUNCTION()
-	void OnRep_Stock() { }
+	void OnRep_Stock();
 
-	// Cached (non-replicated)
+	UPROPERTY()
+	class UInventory* LinkedInventoryWidget;
+
 	UPROPERTY(Transient)
 	UItemMeshData* ItemMeshData = nullptr;
 };

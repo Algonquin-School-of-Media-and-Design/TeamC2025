@@ -41,7 +41,12 @@ class RELICRUNNERS_API AEnemyCharacter : public ACharacter
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<class UItemCard*> ItemLootPool;
+	TArray<struct FItemData> ItemLootPool;
+
+	UPROPERTY()
+	class UItemMeshData* ItemMeshData;
+	UPROPERTY(EditDefaultsOnly, Category = "Item Generation")
+	TSubclassOf<class UItemMeshData> ItemMeshDataClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	FName EnemyName = "Enemy";

@@ -52,9 +52,12 @@ public:
 	UPROPERTY()
 	class UInventoryComponent* LocalInventory;
 
+	class AVendor* CurrentVendor;
+
 	//Functions
 	virtual void NativeConstruct() override;
 	void ToggleVendorUI(bool value);
+	void DisplaySelectedVendorItems(const TArray<struct FItemData>& Items, AVendor* Vendor);
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual FReply NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	FSlotUIComponents GetUIComponentsForItemType(const FString& ItemType);
@@ -62,9 +65,11 @@ public:
 	void SetInventoryComponent(UInventoryComponent* NewComponent);
 	void SetPreviewActorImage(class UTextureRenderTarget2D* RenderTarget);
 	static UInventory* Get(UObject* Context);
-	void UnequipItem(UItemObject* Item);
+	void UnequipItem(class UItemObject* Item);
 	void EquipItem(class UItemObject* Item);
 	void DropItem(class UItemObject* Item);
+	void BuyItem(class UItemObject* Item);
+	void SellItem(class UItemObject* Item);
 	void OnEquippedSlotClick(class UItemObject* EquippedItem);
 	UFUNCTION()
 	void RefreshInventoryUI();
@@ -104,6 +109,9 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UCanvasPanel* ForgeCanvas;
+
+	UPROPERTY(meta = (BindWidget))
+	class UCanvasPanel* ShopCanvas;
 
 	UPROPERTY(meta = (BindWidget))
 	class UBorder* FuseBorder;

@@ -55,7 +55,7 @@ void AVendor::GenerateStock()
 
 	for (int i = 0; i < 20; ++i)
 	{
-		Stock.Add(ItemStats::CreateSpecificItemData(1, ItemStats::GetRandomItemType(), ItemMeshData));
+		Stock.Add(ItemStats::CreateRandomItemData(ItemMeshData));
 	}
 }
 

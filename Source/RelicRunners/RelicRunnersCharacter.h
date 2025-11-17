@@ -200,6 +200,27 @@ public:
 	UFUNCTION()
 	int GetPlayerStartingLuck() const { return PlayerStartingLuck; }
 
+	UFUNCTION()
+	int GetPlayerGold() const { return PlayerGold; }
+
+	UFUNCTION()
+	void AddGold(int Value);
+
+	UFUNCTION(Server, Reliable)
+	void Server_AddGold(int Value);
+
+	UFUNCTION()
+	bool CheckEnoughGold(int Value);
+
+	UFUNCTION(Server, Reliable)
+	void Server_BuyItem(const FItemData& ItemData, class AVendor* Vendor);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SellItem(const FItemData& ItemData, class AVendor* Vendor);
+
+	UFUNCTION(Client, Reliable)
+	void Client_UpdateVendorUI(class AVendor* Vendor);
+
 	class UInventory* GetInventory() { return Inventory; };
 
 	class UInventoryComponent* GetInventoryComponent() { return InventoryComponent; };
@@ -330,6 +351,8 @@ protected:
 	//Replication
 	UFUNCTION()
 	void OnRep_HUD();
+	UFUNCTION()
+	void OnRep_PlayerGold();
 
 	//Stats
 	UPROPERTY()
@@ -350,6 +373,8 @@ protected:
 	int PlayerLevel;
 	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerAbilityPoints;
+	UPROPERTY(ReplicatedUsing = OnRep_PlayerGold, BlueprintReadOnly, Category = "Player")
+	int PlayerGold;
 	UPROPERTY()
 	int PlayerArmor;
 	UPROPERTY()
@@ -374,6 +399,8 @@ protected:
 	int PlayerStartingIntelligence;
 	UPROPERTY()
 	int PlayerStartingLuck;
+	UPROPERTY()
+	int PlayerStartingGold;
 
 	UPROPERTY()
 	int HealthPotionCount;   

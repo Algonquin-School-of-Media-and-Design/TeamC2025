@@ -108,10 +108,22 @@ public:
         return Item;
     }
 
+    static UItemObject* CreateItemFromData(const FItemData& ItemData)
+    {
+        UItemObject* Item = NewObject<UItemObject>();
+        Item->SetItemData(ItemData);
+        return Item;
+    }
+
     static FItemData CreateSpecificItemData(int Level, FString ItemType, UItemMeshData* MeshData)
     {
+        return CreateSpecificItemData(Level, ItemType, GetRandomRarity(), MeshData);
+    }
+
+    static FItemData CreateSpecificItemData(int Level, FString ItemType, FString Rarity, UItemMeshData* MeshData)
+    {
         FItemData ItemData;
-        ItemData.Rarity = GetRandomRarity();
+        ItemData.Rarity = Rarity;
         ItemData.ItemType = ItemType;
         ItemData.Name = ItemData.ItemType;
         ItemData.Level = Level;

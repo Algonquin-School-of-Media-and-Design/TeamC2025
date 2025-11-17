@@ -15,6 +15,7 @@
  ************************************************************************************/
 
 #include "Inventory.h"
+#include "RelicRunners/Vendor/Vendor.h"
 #include "Components/TileView.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanelSlot.h"
@@ -72,10 +73,27 @@ void UInventory::ToggleVendorUI(bool value)
     if (!value)
     {
         VendorCanvas->SetVisibility(ESlateVisibility::Collapsed);
+        VendorSlots->ClearListItems();
+        CurrentVendor = nullptr;
     }
     else
     {
         VendorCanvas->SetVisibility(ESlateVisibility::Visible);
+    }
+}
+
+void UInventory::DisplaySelectedVendorItems(const TArray<FItemData>& Items, AVendor* Vendor)
+{
+    VendorSlots->ClearListItems();
+    CurrentVendor = Vendor;
+
+    for (const FItemData& Data : Items)
+    {
+        UItemObject* NewItem = NewObject<UItemObject>(this);
+
+        NewItem->ItemData = Data;
+
+        VendorSlots->AddItem(NewItem);
     }
 }
 
@@ -313,6 +331,26 @@ void UInventory::DropItem(UItemObject* Item)
     OwningCharacter->Server_DropItem(Item->ItemData);
 }
 
+void UInventory::BuyItem(UItemObject* Item)
+{
+    if (!Item) return;
+
+    if (OwningCharacter)
+    {
+        OwningCharacter->Server_BuyItem(Item->ItemData, CurrentVendor);
+    }
+}
+
+void UInventory::SellItem(UItemObject* Item)
+{
+    if (!Item) return;
+
+    if (OwningCharacter)
+    {
+        OwningCharacter->Server_SellItem(Item->ItemData, CurrentVendor);
+    }
+}
+
 FReply UInventory::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
     UInventoryItemOptions::CloseAnyOpenPopup();
@@ -432,6 +470,12 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
     const FVector2D ForgeSize = ForgeGeometry.GetLocalSize();
     const bool bInsideForge = ForgeLocal.X >= 0.f && ForgeLocal.Y >= 0.f && ForgeLocal.X <= ForgeLocal.X && ForgeLocal.Y <= ForgeLocal.Y;
 
+    //Vendor Shop Location
+    FGeometry ShopGeometry = ShopCanvas->GetCachedGeometry();
+    const FVector2D ShopLocal = ShopGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D ShopSize = ShopGeometry.GetLocalSize();
+    const bool bInsideShop = ShopLocal.X >= 0.f && ShopLocal.Y >= 0.f && ShopLocal.X <= ShopLocal.X && ShopLocal.Y <= ShopLocal.Y;
+
     if (bInsideEquipped)
     {
         EquipItem(DraggedItem);
@@ -443,9 +487,13 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
         TB_Odds1->SetVisibility(ESlateVisibility::Visible);
         TB_Odds2->SetVisibility(ESlateVisibility::Visible);
     }
+    else if (bInsideShop && VendorCanvas->IsVisible())
+    {
+        SellItem(DraggedItem);
+    }
     else if (bInsideInventory)
     {
-        return true;
+        //do nothing rn
     }
     else
     {
@@ -464,11 +512,12 @@ void UInventory::OnEquippedStatsUpdated(const FEquippedStatsSummary& Stats)
     if (TB_Intelligence) TB_Intelligence->SetText(FText::AsNumber(Stats.TotalIntelligence));
     if (TB_Luck)         TB_Luck->SetText(FText::AsNumber(Stats.TotalLuck));
 
-    if (TB_Username && OwningCharacter)
+    if (OwningCharacter)
     {
+        if (TB_Gold) TB_Gold->SetText(FText::AsNumber(OwningCharacter->GetPlayerGold()));
         if (ARelicRunnersPlayerState* PS = Cast<ARelicRunnersPlayerState>(OwningCharacter->GetPlayerState()))
         {
-            TB_Username->SetText(FText::FromString(PS->GetPlayerName()));
+            if(TB_Username) TB_Username->SetText(FText::FromString(PS->GetPlayerName()));
         }
     }
 

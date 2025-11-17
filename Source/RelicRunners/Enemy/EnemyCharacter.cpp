@@ -10,7 +10,6 @@
 #include "Components/WidgetComponent.h"
 #include <Net/UnrealNetwork.h>
 #include "EnemyHUDWorld.h"
-#include "RelicRunners/Item/ItemCard.h"
 #include "RelicRunners/Item/ItemStats.h"
 #include "Components/CapsuleComponent.h"
 
@@ -145,6 +144,12 @@ void AEnemyCharacter::BeginPlay()
 		}
 	}
 
+	//mesh data
+	if (ItemMeshDataClass)
+	{
+		ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
+	}
+
 	if (HasAuthority())
 	{
 		UWorld* World = GetWorld();
@@ -174,22 +179,16 @@ void AEnemyCharacter::SpawnItem()
 
 		if (chance <= ChanceToDrpopItem)
 		{
-			int randomIndex = FMath::RandRange(0, ItemLootPool.Num() - 1);
-			UItemCard* itemToSpawn = ItemLootPool[randomIndex];
+			//int randomIndex = FMath::RandRange(0, ItemLootPool.Num() - 1);
+			//FItemData itemToSpawn = ItemLootPool[randomIndex];
 
-			if (itemToSpawn != nullptr)
-			{
-				FVector spawnLocation = GetActorLocation();
-				FRotator spawnRotation = FRotator::ZeroRotator;
-				FActorSpawnParameters spawnParams;
-				spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+			FVector spawnLocation = GetActorLocation();
+			FRotator spawnRotation = FRotator::ZeroRotator;
+			FActorSpawnParameters spawnParams;
+			spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-				AItemActor* spawnedItem = GetWorld()->SpawnActor<AItemActor>(AItemActor::StaticClass(), spawnLocation, spawnRotation, spawnParams);
-				if (spawnedItem != nullptr)
-				{
-					spawnedItem->Initialize(ItemStats::CreateSpecificItemData(Level, itemToSpawn->ItemType, itemToSpawn->MeshData));
-				}
-			}
+			AItemActor* spawnedItem = GetWorld()->SpawnActor<AItemActor>(AItemActor::StaticClass(), spawnLocation, spawnRotation, spawnParams);
+			spawnedItem->Initialize(ItemStats::CreateSpecificItemData(Level, ItemStats::GetRandomItemType(), ItemMeshData));
 		}
 	}
 }

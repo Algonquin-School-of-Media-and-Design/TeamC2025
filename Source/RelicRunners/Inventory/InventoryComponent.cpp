@@ -70,6 +70,23 @@ void UInventoryComponent::AddItem(UItemObject* Item)
     OnInventoryChanged.Broadcast();
 }
 
+void UInventoryComponent::RemoveItem(UItemObject* Item)
+{
+    if (!Item) return;
+
+    for (int i = 0; i < InventoryItems.Num(); i++)
+    {
+        if (InventoryItems[i] && InventoryItems[i]->ItemData.UniqueID == Item->ItemData.UniqueID)
+        {
+            InventoryItems.RemoveAt(i);
+            SortInventoryByCurrentMethod();
+            OnInventoryChanged.Broadcast();
+            return;
+        }
+    }
+}
+
+
 void UInventoryComponent::OnRep_SortingMethod()
 {
     HandleSortingNow(); // Show sorted inventory on client UI
@@ -332,6 +349,44 @@ void UInventoryComponent::UpdateTotalEquippedStats(AEnemyCharacterAI* Char)
     CachedEquippedStats = Stats;
     OnStatsChanged.Broadcast(Stats);
 }
+
+UItemObject* UInventoryComponent::FindItemByID(FGuid ID) const
+{
+    //Check inventory items
+    for (UItemObject* Item : InventoryItems)
+    {
+        if (Item && Item->ItemData.UniqueID == ID)
+        {
+            return Item;
+        }
+    }
+
+    //Check equipped items
+    for (const FEquippedItemEntry& Entry : EquippedItems)
+    {
+        if (Entry.Item && Entry.Item->ItemData.UniqueID == ID)
+        {
+            return Entry.Item;
+        }
+    }
+
+    return nullptr;
+}
+
+void UInventoryComponent::RemoveItemByID(FGuid ItemID)
+{
+    for (int i = 0; i < InventoryItems.Num(); ++i)
+    {
+        UItemObject* Item = InventoryItems[i];
+        if (Item && Item->ItemData.UniqueID == ItemID)
+        {
+            InventoryItems.RemoveAt(i);
+            OnInventoryChanged.Broadcast();
+            return; 
+        }
+    }
+}
+
 
 FEquippedStatsSummary UInventoryComponent::CalculateEquippedStats() const
 {

@@ -20,7 +20,9 @@
 #include "Components/Border.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/TileView.h"
 #include "Components/TextBlock.h"
+#include "Components/CanvasPanel.h"
 #include "SlateBasics.h"
 #include "InventoryToolTip.h"
 #include "InventoryItemOptions.h"
@@ -45,6 +47,8 @@ void UInventorySlotsEntry::NativeOnListItemObjectSet(UObject* ListItemObject)
 {
     Item = Cast<UItemObject>(ListItemObject);
     if (!Item) return;
+
+    ParentInventory = GetTypedOuter<UInventory>();
 
     TB_Level->SetText(FText::FromString(FString::FromInt(Item->GetLevel())));
     TB_Level->SetColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1));
@@ -147,13 +151,40 @@ void UInventorySlotsEntry::OnEntryClicked()
     UInventorySortingOptions::CloseAnyOpenPopup();
 
     if (!InventoryItemOptionsClass || !Item) return;
+    
+    //Determining if vendor is active and which tileview its part of.
+    bool VendorActive = false;
+    if (ParentInventory)
+    {
+        if (ParentInventory->VendorCanvas->IsVisible())
+        {
+            VendorActive = true;
+        }
+    }
+
+    UTileView* TileView = Cast<UTileView>(GetOwningListView());
 
     UInventoryItemOptions* Popup = CreateWidget<UInventoryItemOptions>(GetWorld(), InventoryItemOptionsClass);
     if (Popup)
     {
         Popup->AddToViewport();
         Popup->Setup(Item);
-        Popup->ConfigureButtons(true, false, false, false);
+
+        if (VendorActive)
+        {
+            if (TileView->GetName() == "InventorySlots")
+            {
+                Popup->ConfigureButtons(true, false, true, false);
+            }
+            else if (TileView->GetName() == "VendorSlots")
+            {
+                Popup->ConfigureButtons(false, false, false, true);
+            }
+        }
+        else
+        {
+            Popup->ConfigureButtons(true, false, false, false);
+        }
 
         FVector2D ScreenPosition;
         UWidgetLayoutLibrary::GetMousePositionScaledByDPI(GetWorld()->GetFirstPlayerController(), ScreenPosition.X, ScreenPosition.Y);
