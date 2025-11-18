@@ -58,13 +58,7 @@ void UInventorySlotsEntry::NativeOnListItemObjectSet(UObject* ListItemObject)
     FLinearColor ItemFrameColor = ItemStats::GetRarityDataMap()[Item->GetRarity()].Color;
     B_Item->SetBrushColor(ItemFrameColor);
     B_Color->SetBrushColor(ItemFrameColor);
-
-    // Load and assign icon texture
-    FString ImagePath = FString::Printf(TEXT("Texture2D'/Game/ThirdPerson/Icons/%s.%s'"), *Item->GetItemType(), *Item->GetItemType());
-    if (UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *ImagePath)))
-    {
-        I_Item->SetBrushFromTexture(Texture);
-    }
+    I_Item->SetBrushFromTexture(Item->ItemData.Icon);
 }
 
 FReply UInventorySlotsEntry::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)

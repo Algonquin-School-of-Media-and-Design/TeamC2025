@@ -176,6 +176,13 @@ public:
             SetItemMeshes(ItemData, MeshData);
         }
 
+        // Load and assign icon texture
+        FString ImagePath = FString::Printf(TEXT("Texture2D'/Game/ThirdPerson/Icons/%s.%s'"), *ItemData.ItemType, *ItemData.ItemType);
+        if (UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *ImagePath)))
+        {
+            ItemData.Icon = Texture;
+        }
+
         return ItemData;
     }
 

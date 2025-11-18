@@ -120,6 +120,8 @@ UAbilitySelection::StatBuff UAbilitySelection::RandomStatBuff()
 void UAbilitySelection::RefreshUpgrades()
 {
 	// Refresh total stats after upgrade used
+    if (!OwningCharacter) return;
+
     OwningCharacter->GetInventoryComponent()->UpdateTotalEquippedStats(OwningCharacter);
 
     Buff1 = RandomStatBuff();
