@@ -645,12 +645,12 @@ void UInventory::UpdateForgeOdds(const FString& LeftRarity, const FString& Right
     };
 
     static const float UpgradeSameTier[7] = {
-        70.f, // Common
-        50.f, // Uncommon
-        40.f, // Rare
-        35.f, // Epic
-        20.f, // Legendary
-        15.f, // Mythic
+        90.f, // Common
+        80.f, // Uncommon
+        70.f, // Rare
+        60.f, // Epic
+        50.f, // Legendary
+        30.f, // Mythic
         0.f   // Relic
     };
 
@@ -679,8 +679,9 @@ void UInventory::UpdateForgeOdds(const FString& LeftRarity, const FString& Right
     if (IndexA == IndexB)
     {
         float Up = UpgradeSameTier[Highest];
-        float Down = FMath::Clamp(Up * 0.15f, 2.f, 15.f);
-        float Stay = 100.f - Up - Down;
+        float RemainingPercent = 100.0f - Up;
+        float Stay = RemainingPercent * 0.6f;
+        float Down = RemainingPercent * 0.4f;
 
         Chance1 = Down;
         Chance2 = Stay;
@@ -691,11 +692,10 @@ void UInventory::UpdateForgeOdds(const FString& LeftRarity, const FString& Right
     {
         float Proximity = 1.f / float(Distance);
 
-        float Up = UpgradeSameTier[Highest] * Proximity * 0.7f;
-
-        float Down = FMath::Clamp(Up * (2.f + Distance * 0.5f), 5.f, 50.f);
-        float Stay = 100.f - Up - Down;
-        if (Stay < 5.f) Stay = 5.f;
+        float Up = UpgradeSameTier[Highest] * Proximity * 0.8f;
+        float RemainingPercent = 100.0f - Up;
+        float Stay = RemainingPercent * 0.6f;
+        float Down = RemainingPercent * 0.4f;
 
         Chance1 = Down;
         Chance2 = Stay;
