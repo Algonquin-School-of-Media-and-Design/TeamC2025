@@ -11,7 +11,10 @@ UAbilityBase::UAbilityBase()
     // Set ability to be unique per actor
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
+    CooldownGameplayEffectClass = GenericCooldownEffect;
 }
+
+
 
 
 

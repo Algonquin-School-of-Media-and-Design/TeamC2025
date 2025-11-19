@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"  
+#include "CooldownGameplayEffect.h"
 #include "AbilityBase.generated.h"
 
 UENUM(BlueprintType)

@@ -17,7 +17,7 @@ UVengefulDance::UVengefulDance()
     Duration = 1.f;
     DamageAmount = 25.f;
     AreaRadius = 300.f;
-
+    
     CooldownDuration = 5.f;
     CooldownTag = FGameplayTag::RequestGameplayTag("Gameplay.Cooldown.VengefulDance");
 
@@ -55,19 +55,6 @@ void UVengefulDance::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
         return;
     }
 
-    // Apply the cooldown GE
-    if (GenericCooldownEffect)
-    {
-        FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(GenericCooldownEffect, GetAbilityLevel(), ASC->MakeEffectContext());
-        if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
-        {
-            SpecHandle.Data->DynamicGrantedTags.AddTag(CooldownTag);
-            SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.CooldownDuration"), CooldownDuration);
-            ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-            UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Cooldown applied: %f seconds"), CooldownDuration);
-        }
-    }
-
     // Damage logic
     AActor* AvatarActor = GetAvatarActorFromActorInfo();
     if (!AvatarActor) return;
@@ -81,6 +68,16 @@ void UVengefulDance::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
 
     DrawDebugCircle(AvatarActor->GetWorld(), AvatarActor->GetActorLocation(), AreaRadius, 64, FColor::Red, false, Duration, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 
+}
+
+void UVengefulDance::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+    Super::ApplyCooldown(Handle, ActorInfo, ActivationInfo);
+
+    FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(GenericCooldownEffect, GetAbilityLevel());
+    Spec.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.CooldownDuration"), CooldownDuration);
+
+    ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 }
 
 void UVengefulDance::ApplyRingDamage()
