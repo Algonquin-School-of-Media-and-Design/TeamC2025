@@ -1,6 +1,7 @@
 #include "VengefulDance.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
+#include "AbilitySystemComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
@@ -14,35 +15,70 @@ UVengefulDance::UVengefulDance()
     DamageInterval = 0.5f;
     KnockbackStrength = 1800.f;
     Duration = 1.f;
-    CooldownDuration = 5.f;
     DamageAmount = 25.f;
     AreaRadius = 300.f;
 
+    CooldownDuration = 5.f;
+    CooldownTag = FGameplayTag::RequestGameplayTag("Gameplay.Cooldown.VengefulDance");
+
+    CooldownTagContainer.AddTag(CooldownTag);
+
+    ActivationBlockedTags.AddTag(CooldownTag);
 }
 
 void UVengefulDance::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 
-    if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) // Attempt to commit the ability
+    UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] ActivateAbility called"));
+
+    if (!ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
     {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true); // If commit fails, end the ability
-        return; 
+        UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Invalid ActorInfo or ASC!"));
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+        return;
     }
 
-    AActor* AvatarActor = GetAvatarActorFromActorInfo(); // Get the actor this ability belongs to
-    if (!AvatarActor) // If the actor is invalid
+    UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+
+    // Check if ability is on cooldown
+    if (ASC->HasMatchingGameplayTag(CooldownTag))
     {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true); // End the ability
-        return; 
+        UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Ability is on cooldown!"));
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+        return;
     }
 
-    // Start applying damage in a ring 
-    AvatarActor->GetWorldTimerManager().SetTimer(DamageTickTimer, [this]() {ApplyRingDamage(); }, DamageInterval, true);
+    if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] CommitAbility failed"));
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+        return;
+    }
 
-    // Set a timer to automatically end the ability after its Duration
-    AvatarActor->GetWorldTimerManager().SetTimer(EndTimer, FTimerDelegate::CreateUObject(this, &UVengefulDance::EndAbility, Handle, ActorInfo, ActivationInfo, true, false), Duration, false);
+    // Apply the cooldown GE
+    if (GenericCooldownEffect)
+    {
+        FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(GenericCooldownEffect, GetAbilityLevel(), ASC->MakeEffectContext());
+        if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
+        {
+            SpecHandle.Data->DynamicGrantedTags.AddTag(CooldownTag);
+            SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.CooldownDuration"), CooldownDuration);
+            ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+            UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Cooldown applied: %f seconds"), CooldownDuration);
+        }
+    }
 
-    // Draw a debug circle for the damage area 
+    // Damage logic
+    AActor* AvatarActor = GetAvatarActorFromActorInfo();
+    if (!AvatarActor) return;
+
+    UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Starting damage timers"));
+
+    AvatarActor->GetWorldTimerManager().SetTimer(DamageTickTimer, [this]() { ApplyRingDamage(); }, DamageInterval, true);
+    AvatarActor->GetWorldTimerManager().SetTimer(EndTimer,
+        FTimerDelegate::CreateUObject(this, &UVengefulDance::EndAbility, Handle, ActorInfo, ActivationInfo, true, false),
+        Duration, false);
+
     DrawDebugCircle(AvatarActor->GetWorld(), AvatarActor->GetActorLocation(), AreaRadius, 64, FColor::Red, false, Duration, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 
 }

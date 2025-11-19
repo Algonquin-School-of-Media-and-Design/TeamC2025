@@ -32,14 +32,7 @@ class RELICRUNNERS_API UAbilityBase : public UGameplayAbility
 public:
     UAbilityBase();
 
-    // Activates the ability, committing it and starting its effects and timers
-    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,const FGameplayAbilityActorInfo* ActorInfo,const FGameplayAbilityActivationInfo ActivationInfo,const FGameplayEventData* TriggerEventData) override;
-
-    // Ends the ability, stops timers, cleans up, and replicates/cancels it
-    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,const FGameplayAbilityActorInfo* ActorInfo,const FGameplayAbilityActivationInfo ActivationInfo,bool bReplicateEndAbility,bool bWasCancelled) override;
-
     virtual FName GetAbilityName() const { return FName(TEXT("AbilityBase")); }
-
 
 public:
 
@@ -69,10 +62,16 @@ public:
     // GAS Cooldown
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability|Cooldown")
-    float CooldownDuration;
+    float CooldownDuration = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Cooldown")
     FGameplayTag CooldownTag;
+
+    UPROPERTY()
+    FGameplayTagContainer CooldownTagContainer;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Cooldown")
+    TSubclassOf<UGameplayEffect> GenericCooldownEffect;
 
     // Ability Tags
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Tags")
@@ -80,12 +79,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Tags")
     FGameplayTagContainer CancelAbilitiesWithTags;
-
-protected:
-
-    virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
-
-    //virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 };
 
