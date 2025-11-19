@@ -126,11 +126,7 @@ public:
 	class UCanvasPanel* VendorCanvas;
 
 	UPROPERTY(meta = (BindWidget))
-	class UCircularThrobber* CircularThrobber0;
-	UPROPERTY(meta = (BindWidget))
 	class UCircularThrobber* CircularThrobber1;
-	UPROPERTY(meta = (BindWidget))
-	class UCircularThrobber* CircularThrobber2;
 
 	UPROPERTY(meta = (BindWidget))
 	class UHorizontalBox* ForgeBox;

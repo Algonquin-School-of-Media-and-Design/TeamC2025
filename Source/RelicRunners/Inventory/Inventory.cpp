@@ -95,9 +95,7 @@ void UInventory::ToggleVendorUI(bool value)
         SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, nullptr);
         SetForgeTooltip(I_ForgeItem2, B_ForgeItem2, nullptr);
         SetForgeTooltip(I_ForgeItem1, B_ForgeItem1, nullptr);
-        CircularThrobber0->SetVisibility(ESlateVisibility::Hidden);
         CircularThrobber1->SetVisibility(ESlateVisibility::Hidden);
-        CircularThrobber2->SetVisibility(ESlateVisibility::Hidden);
         UpdateForgeUI();
     }
     else
@@ -529,7 +527,7 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
     {
         EquipItem(DraggedItem);
     }
-    else if (bInsideForge && VendorCanvas->IsVisible() && DragOp->FromWhere == UInventoryDragOperation::Locations::Inventory)
+    else if (bInsideForge && VendorCanvas->IsVisible() && DragOp->FromWhere == UInventoryDragOperation::Locations::Inventory && DraggedItem->GetRarity() != "Relic")
     {
         if (!ForgeItemLeft)
         {
@@ -545,9 +543,7 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
         }
         ForgeItemResult = nullptr;    
         SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, nullptr);
-        CircularThrobber0->SetVisibility(ESlateVisibility::Hidden);
         CircularThrobber1->SetVisibility(ESlateVisibility::Hidden);
-        CircularThrobber2->SetVisibility(ESlateVisibility::Hidden);
         UpdateForgeUI();
     }
     else if (bInsideShop && VendorCanvas->IsVisible() && DragOp->FromWhere == UInventoryDragOperation::Locations::Inventory)
@@ -612,13 +608,36 @@ void UInventory::OnFuseButtonPressed()
 
     InventoryComponent->AddItem(NewItem);
     ForgeItemResult = NewItem;
+
+    UpdateForgeUI();
+
+    if (NewRarity == Rarity1)
+    {
+        TB_Odds->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
+        TB_Odds->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds->SetText(FText::FromString(FString::Printf(TEXT("Diminished"))));
+    }
+    if (NewRarity == Rarity2)
+    {
+        TB_Odds->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
+        TB_Odds->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds->SetText(FText::FromString(FString::Printf(TEXT("Unaltered"))));
+    }
+    if (NewRarity == Rarity3)
+    {
+        TB_Odds->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
+        TB_Odds->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds->SetText(FText::FromString(FString::Printf(TEXT("Refined"))));
+        CircularThrobber1->SetVisibility(ESlateVisibility::HitTestInvisible);
+    }
+
+    TB_Odds1->SetVisibility(ESlateVisibility::Visible);
+    TB_Odds1->SetText(FText::FromString(FString::Printf(TEXT("%s item added to Inventory"), *NewRarity)));
+    TB_Odds1->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
+
     SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, ForgeItemResult);
     SetForgeTooltip(I_ForgeItem2, B_ForgeItem2, nullptr);
     SetForgeTooltip(I_ForgeItem1, B_ForgeItem1, nullptr);
-    CircularThrobber0->SetVisibility(ESlateVisibility::HitTestInvisible);
-    CircularThrobber1->SetVisibility(ESlateVisibility::HitTestInvisible);
-    CircularThrobber2->SetVisibility(ESlateVisibility::HitTestInvisible);
-    UpdateForgeUI();
 }
 
 
@@ -650,7 +669,7 @@ void UInventory::UpdateForgeOdds(const FString& LeftRarity, const FString& Right
         70.f, // Rare
         60.f, // Epic
         50.f, // Legendary
-        30.f, // Mythic
+        40.f, // Mythic
         0.f   // Relic
     };
 
