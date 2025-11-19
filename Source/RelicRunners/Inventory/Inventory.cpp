@@ -25,7 +25,6 @@
 #include "Components/VerticalBox.h"
 #include "Components/Image.h"
 #include "Components/Throbber.h"
-#include "Components/CircularThrobber.h"
 #include "Components/CanvasPanel.h"
 #include "InventoryToolTip.h"
 #include "InventorySortingOptions.h"
@@ -95,7 +94,7 @@ void UInventory::ToggleVendorUI(bool value)
         SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, nullptr);
         SetForgeTooltip(I_ForgeItem2, B_ForgeItem2, nullptr);
         SetForgeTooltip(I_ForgeItem1, B_ForgeItem1, nullptr);
-        CircularThrobber1->SetVisibility(ESlateVisibility::Hidden);
+        if (ForgeCompleted) StopAnimation(ForgeCompleted);
         UpdateForgeUI();
     }
     else
@@ -543,7 +542,6 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
         }
         ForgeItemResult = nullptr;    
         SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, nullptr);
-        CircularThrobber1->SetVisibility(ESlateVisibility::Hidden);
         UpdateForgeUI();
     }
     else if (bInsideShop && VendorCanvas->IsVisible() && DragOp->FromWhere == UInventoryDragOperation::Locations::Inventory)
@@ -628,7 +626,6 @@ void UInventory::OnFuseButtonPressed()
         TB_Odds->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
         TB_Odds->SetVisibility(ESlateVisibility::Visible);
         TB_Odds->SetText(FText::FromString(FString::Printf(TEXT("Refined"))));
-        CircularThrobber1->SetVisibility(ESlateVisibility::HitTestInvisible);
     }
 
     TB_Odds1->SetVisibility(ESlateVisibility::Visible);
@@ -638,6 +635,11 @@ void UInventory::OnFuseButtonPressed()
     SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, ForgeItemResult);
     SetForgeTooltip(I_ForgeItem2, B_ForgeItem2, nullptr);
     SetForgeTooltip(I_ForgeItem1, B_ForgeItem1, nullptr);
+
+    if (ForgeCompleted)
+    {
+        PlayAnimation(ForgeCompleted, 0.f, 1); 
+    }
 }
 
 
