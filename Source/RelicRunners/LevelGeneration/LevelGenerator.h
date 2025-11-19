@@ -29,6 +29,7 @@ enum class EFloorObstacle : uint8
 {
 	None,
 	Basic,
+	Hole,
 	CapturableFlag,
 	EnemyZone,
 	Start,
@@ -87,6 +88,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class USceneComponent* Origin;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class USplineComponent* DeliverySpline;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenerationValues | Values", meta = (Bitmask, BitmaskEnum = EObjectiveType))
 	int ObjectiveType;
 
@@ -117,8 +121,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "2", UIMin = "2", ClampMax = "100", UIMax = "100"))
 	int SpawnDepth;
 
-	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100", ToolTip = "Percentage in which the floor is spawned walkable. !00% = All floor, 0% = No floor."))
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100", ToolTip = "Percentage in which the tile is spawned walkable. 100% = All floor, 0% = No floor."))
 	float FullPercentage;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100", ToolTip = "Percentage in which the tile spawned is a hole. 100% = All holes, 0% = No holes. Note: All hole tiles will spawn a modular obstacle."))
+	float HolePercentage;
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100", ToolTip = "Percentage in which a normal modular obstacle will be spawned on a walkable tile."))
 	float BasicObstaclePercentage;
@@ -137,6 +144,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle", meta = (ToolTip = "Array of regular packed level actors that the level generator will pick out of randomly to spawn."));
 	TArray <TSubclassOf<class APackedLevelActor>> PackedActorArray;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle", meta = (ToolTip = "Array packed level actors specifically for hole tiles (full tiles without a floor)."));
+	TArray <TSubclassOf<class APackedLevelActor>> HoleTilePackedActorArray;
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle", meta = (ToolTip = "Packed level actor used as the starting point of the level."));
 	TSubclassOf<class APackedLevelActor> LevelStartPackedActor;
@@ -180,7 +190,7 @@ public:
 	void ForceFloorBool(bool forcedFloor, int x, int y, int width);
 
 	//Sets wether or not the current tile will have a modular obstacle spawned on top of itself.
-	void InitializeModularObstacle(FSFloorValues& floorValue);
+	void InitializeModularObstacle(FSFloorValues& floorValue, bool canGenerateHoles);
 
 	//Finds the starting and ending indexes and sets them accordingly.
 	void SetStartingAndEndingPoints(int startingIndex, int endingIndex);

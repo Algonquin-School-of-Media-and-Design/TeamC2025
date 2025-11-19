@@ -385,6 +385,7 @@ protected:
 	float UtilityCooldown = 5.f;
 	float UltimateCooldown = 10.f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	FVector respawnPoint;
 
 	UPROPERTY()
