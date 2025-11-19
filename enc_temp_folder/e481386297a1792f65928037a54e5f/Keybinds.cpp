@@ -17,10 +17,10 @@ UKeybinds::UKeybinds()
     KeyBinds.Add({ TEXT("Pause"),              EKeys::Escape });
     KeyBinds.Add({ TEXT("Ping"),               EKeys::MiddleMouseButton });
     KeyBinds.Add({ TEXT("Basic Attack"),       EKeys::LeftMouseButton });
-    KeyBinds.Add({ TEXT("Damage Ability"),     EKeys::One });
-    KeyBinds.Add({ TEXT("Defence Ability"),    EKeys::Two });
-    KeyBinds.Add({ TEXT("Utility Ability"),    EKeys::Three });
-    KeyBinds.Add({ TEXT("Ultimate Ability"),   EKeys::Four });
+    KeyBinds.Add({ TEXT("Damage Ability"),     EKeys::Q });
+    KeyBinds.Add({ TEXT("Utility Ability"),    EKeys::R });
+    KeyBinds.Add({ TEXT("Defence Ability"),    EKeys::T });
+    KeyBinds.Add({ TEXT("Ultimate Ability"),   EKeys::F });
     KeyBinds.Add({ TEXT("Health Potion"),      EKeys::H });
 }
 
