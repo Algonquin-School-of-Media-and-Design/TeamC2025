@@ -29,5 +29,6 @@ protected:
     virtual void GiveUtilityAbilities() override;
     virtual void GiveUltimateAbilities() override;
 
-
+    UPROPERTY(EditAnywhere, Category = "Abilities")
+    TSubclassOf<UGameplayAbility> VengefulDanceAbilityBP;
 };

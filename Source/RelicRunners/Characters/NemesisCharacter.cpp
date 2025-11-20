@@ -95,10 +95,11 @@ void ANemesisCharacter::GiveUtilityAbilities()
 
     if (AbilitySystem)
     {
+
 		// Give Vengeful Dance ability
         AbilitySystem->GiveAbility(FGameplayAbilitySpec(UVengefulDance::StaticClass(), 1, 0));
-
-		// Activate Vengeful Dance ability
+       
+        // Activate Vengeful Dance ability
         AbilitySystem->TryActivateAbilityByClass(UVengefulDance::StaticClass());
 
         // Start ability cooldown

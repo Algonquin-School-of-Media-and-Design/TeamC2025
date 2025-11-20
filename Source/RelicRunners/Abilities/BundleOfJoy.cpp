@@ -61,6 +61,9 @@ void UBundleOfJoy::Attract()
     for (AActor* Actor : OverlappingActors) // Loop through overlapping actors
     {
         if (!Actor) continue; // Skip null actors
+
+        if (!Actor->Tags.Contains("Enemy")) continue;
+
         if (ACharacter* Char = Cast<ACharacter>(Actor)) // Only process characters
         {
             FVector Dir = (Center - Char->GetActorLocation()); // Direction towards the attraction center
@@ -97,6 +100,7 @@ void UBundleOfJoy::Explode()
     for (AActor* Actor : OverlappingActors) // Loop through overlapping actors
     {
         if (!Actor) continue; // Skip null actors
+        if (!Actor->Tags.Contains("Enemy")) continue;
         UGameplayStatics::ApplyDamage(Actor, DamageAmount, nullptr, AvatarActor, nullptr); // Apply damage to each actor
     }
 

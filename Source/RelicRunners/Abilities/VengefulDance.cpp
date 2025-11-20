@@ -21,32 +21,16 @@ UVengefulDance::UVengefulDance()
     CooldownDuration = 5.f;
     CooldownTag = FGameplayTag::RequestGameplayTag("Gameplay.Cooldown.VengefulDance");
 
+    ActivationBlockedTags.AddTag(CooldownTag);
     CooldownTagContainer.AddTag(CooldownTag);
 
-    ActivationBlockedTags.AddTag(CooldownTag);
 }
 
 void UVengefulDance::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
     UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] ActivateAbility called"));
-
-    if (!ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Invalid ActorInfo or ASC!"));
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
-    }
-
-    UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
-
-    // Check if ability is on cooldown
-    if (ASC->HasMatchingGameplayTag(CooldownTag))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Ability is on cooldown!"));
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
-    }
 
     if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
     {
@@ -55,29 +39,34 @@ void UVengefulDance::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
         return;
     }
 
-    // Damage logic
     AActor* AvatarActor = GetAvatarActorFromActorInfo();
     if (!AvatarActor) return;
 
-    UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Starting damage timers"));
+    //if (GenericCooldownEffect && CooldownDuration > 0.f)
+    //{
+    //    UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+    //    if (ASC)
+    //    {
+    //        FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(GenericCooldownEffect, GetAbilityLevel(), ASC->MakeEffectContext());
+    //        if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
+    //        {
+    //            // Set the duration of the cooldown using SetByCaller if your GE is configured for it
+    //            SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.CooldownDuration"), CooldownDuration);
+
+    //            // Apply the GE to the owner
+    //            ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+    //            UE_LOG(LogTemp, Warning, TEXT("[VengefulDance] Cooldown applied for %f seconds"), CooldownDuration);
+    //        }
+    //    }
+    //}
 
     AvatarActor->GetWorldTimerManager().SetTimer(DamageTickTimer, [this]() { ApplyRingDamage(); }, DamageInterval, true);
-    AvatarActor->GetWorldTimerManager().SetTimer(EndTimer,
-        FTimerDelegate::CreateUObject(this, &UVengefulDance::EndAbility, Handle, ActorInfo, ActivationInfo, true, false),
-        Duration, false);
+    AvatarActor->GetWorldTimerManager().SetTimer(EndTimer,FTimerDelegate::CreateUObject(this, &UVengefulDance::EndAbility, Handle, ActorInfo, ActivationInfo, true, false),Duration, false);
 
     DrawDebugCircle(AvatarActor->GetWorld(), AvatarActor->GetActorLocation(), AreaRadius, 64, FColor::Red, false, Duration, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 
-}
 
-void UVengefulDance::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
-{
-    Super::ApplyCooldown(Handle, ActorInfo, ActivationInfo);
-
-    FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(GenericCooldownEffect, GetAbilityLevel());
-    Spec.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("Data.CooldownDuration"), CooldownDuration);
-
-    ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 }
 
 void UVengefulDance::ApplyRingDamage()
@@ -102,6 +91,7 @@ void UVengefulDance::ApplyRingDamage()
         if (!Actor || Actor == AvatarActor) // Skip invalid actors or the owner
             continue;
 
+        if (!Actor->Tags.Contains("Enemy")) continue;
         FVector Diff = Actor->GetActorLocation() - Origin; // Vector from origin to actor
         Diff.Z = 0.f; // Ignore vertical distance
 

@@ -23,23 +23,23 @@ public:
     virtual FName GetAbilityName() const override { return FName("Earthquake"); }
 
 protected:
-
-    void OnTick();
-    void EndAbilityTimerCallback();
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Earthquake")
+    float Radius = 800.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Earthquake")
-    float Radius = 400.0f;
+    float DamagePerTick = 200.0f;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Earthquake")
-    float TickRate = 1.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Earthquake|Knockback")
+    float KnockbackStrength = 600.f;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Earthquake")
-    float DamagePerTick = 10.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Earthquake|Knockback")
+    float VerticalKnockback = 500.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Earthquake")
+    float StunDuration = 3.f;
 
     FGameplayAbilityActivationInfo CachedActivationInfo;
 private:
-    FTimerHandle TickTimerHandle;
-    FTimerHandle DurationTimerHandle;
     bool bIsOnCooldown = false;
 
     void ApplyDamageAndStun();

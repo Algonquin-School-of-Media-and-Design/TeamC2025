@@ -2,6 +2,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "RelicRunners/Enemy/EnemyCharacter.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 
@@ -12,7 +13,8 @@ UEarthquakeAbility::UEarthquakeAbility()
     if (Duration <= 0.f) Duration = 8.0f;
     if (CooldownDuration <= 0.f) CooldownDuration = 10.0f;
 
-    
+    ConeAngle = 90.f;
+
 }
 
 void UEarthquakeAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -41,36 +43,12 @@ void UEarthquakeAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
     bIsActive = true;
 
-    DrawDebugSphere(AvatarActor->GetWorld(), AvatarActor->GetActorLocation(), Radius, 32, FColor::Orange, false, Duration);
-
-    // Tick timer
-    AvatarActor->GetWorldTimerManager().SetTimer(TickTimerHandle, this, &UEarthquakeAbility::OnTick, TickRate, true);
-
-    // Duration timer
-    AvatarActor->GetWorldTimerManager().SetTimer(DurationTimerHandle, this, &UEarthquakeAbility::EndAbilityTimerCallback, Duration, false);
-}
-
-void UEarthquakeAbility::OnTick()
-{
-    const FGameplayAbilityActorInfo* Info = GetCurrentActorInfo();
-    if (!Info || !Info->AvatarActor.IsValid())
-    {
-        EndAbility(GetCurrentAbilitySpecHandle(), Info, GetCurrentActivationInfo(), true, true);
-        return;
-    }
-
-    AActor* AvatarActor = Info->AvatarActor.Get();
-    if (!AvatarActor) return;
-
     ApplyDamageAndStun();
 
-    DrawDebugSphere(AvatarActor->GetWorld(), AvatarActor->GetActorLocation(), Radius, 32, FColor::Orange, false, TickRate + 0.1f);
+    EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+
 }
 
-void UEarthquakeAbility::EndAbilityTimerCallback()
-{
-    EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), CachedActivationInfo, true, false);
-}
 
 void UEarthquakeAbility::ApplyDamageAndStun()
 {
@@ -78,6 +56,10 @@ void UEarthquakeAbility::ApplyDamageAndStun()
     if (!AvatarActor) return;
 
     FVector Origin = AvatarActor->GetActorLocation();
+    FVector Forward = AvatarActor->GetActorForwardVector();
+    Forward.Z = 0.f; 
+    Forward.Normalize();
+
     UWorld* World = AvatarActor->GetWorld();
     if (!World) return;
 
@@ -91,16 +73,38 @@ void UEarthquakeAbility::ApplyDamageAndStun()
     {
         if (!Actor) continue;
 
+        if (!Actor->Tags.Contains("Enemy")) continue;
+
+        FVector DirToTarget = Actor->GetActorLocation() - Origin;
+        DirToTarget.Z = 0.f; 
+        float Distance = DirToTarget.Size();
+        if (Distance > Radius) continue; 
+
+        DirToTarget.Normalize();
+
+        
+        float Dot = FVector::DotProduct(Forward, DirToTarget);
+        float HalfAngleRad = FMath::DegreesToRadians(ConeAngle / 2.f);
+        if (Dot < FMath::Cos(HalfAngleRad)) continue; 
+
+        
         UGameplayStatics::ApplyDamage(Actor, DamagePerTick, AvatarActor->GetInstigatorController(), AvatarActor, nullptr);
 
+        
         if (ACharacter* HitChar = Cast<ACharacter>(Actor))
         {
-            FVector KnockDir = (HitChar->GetActorLocation() - Origin).GetSafeNormal();
-            FVector Knockback = KnockDir * 250.f;
-            Knockback.Z = 300.f;
+            FVector Knockback = DirToTarget * KnockbackStrength;
+            Knockback.Z = VerticalKnockback; 
             HitChar->LaunchCharacter(Knockback, true, true);
+
+            
+            if (auto Enemy = Cast<AEnemyCharacter>(HitChar))
+            {
+                Enemy->ReduceStunTime(StunDuration);
+            }
         }
     }
+    DrawDebugCone(World, Origin, Forward, Radius, FMath::DegreesToRadians(ConeAngle / 2.f), FMath::DegreesToRadians(ConeAngle / 2.f), 32, FColor::Orange, false, StunDuration + 0.1f);
 }
 
 void UEarthquakeAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -108,8 +112,6 @@ void UEarthquakeAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, con
     if (ActorInfo && ActorInfo->AvatarActor.IsValid())
     {
         AActor* AvatarActor = ActorInfo->AvatarActor.Get();
-        AvatarActor->GetWorldTimerManager().ClearTimer(TickTimerHandle);
-        AvatarActor->GetWorldTimerManager().ClearTimer(DurationTimerHandle);
     }
 
     bIsActive = false;

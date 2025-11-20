@@ -17,5 +17,12 @@ class RELICRUNNERS_API UCooldownGameplayEffect : public UGameplayEffect
 public:
     UCooldownGameplayEffect();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
+	FGameplayTagContainer GrantedTags;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
+	FGameplayTagContainer OngoingTags;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
+	FGameplayTagContainer RemovedTags;
 };
