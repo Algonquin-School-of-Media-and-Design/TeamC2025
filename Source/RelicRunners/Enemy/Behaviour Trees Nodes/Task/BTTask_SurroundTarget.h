@@ -10,7 +10,6 @@
 
 /*
 To Do:
-- Make sure the task works with moving targets
 - SphereOverlapActors is expensive, to improve preformance it would be better to know all the enemies targetting the player and use circule math for lack of a better turm, but a component would have to be add to player that would keep track of all enemies targeting in order to properly form the circlue
 */
 
@@ -38,7 +37,8 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
-	FBlackboardKeySelector TargetActorKey; // For an Actor or Object Key
+	//for the actor the enemy is trying to surround/target
+	FBlackboardKeySelector TargetActorKey; 
 
 	FVector LastTargetLocation;
 	bool pathWasChanged = false;
