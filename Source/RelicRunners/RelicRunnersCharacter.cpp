@@ -175,12 +175,10 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	PlayerStartingDexterity = 0;
 	PlayerStartingStrength = 0;
 	PlayerStartingIntelligence = 0;
-	PlayerStartingLuck = 0;
 	PlayerArmor = 0;
 	PlayerDexterity = 0;
 	PlayerStrength = 0;
 	PlayerIntelligence = 0;
-	PlayerLuck = 0;
 	PlayerAbilityPoints = 2;
 	//Gold
 	PlayerStartingGold = 0;
@@ -394,7 +392,6 @@ void ARelicRunnersCharacter::OnLevelUp()
 	PlayerStartingDexterity++;
 	PlayerStartingStrength++;
 	PlayerStartingIntelligence++;
-	PlayerStartingLuck++;
 
 	//current health / max health
 	PlayerMaxHealth++;
@@ -409,7 +406,6 @@ void ARelicRunnersCharacter::OnLevelUp()
 	PlayerDexterity++;
 	PlayerStrength++;
 	PlayerIntelligence++;
-	PlayerLuck++;
 	PlayerNumInventorySlots++;
 
 	//ability points

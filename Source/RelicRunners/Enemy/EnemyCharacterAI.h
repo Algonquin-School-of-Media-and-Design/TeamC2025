@@ -97,8 +97,6 @@ public:
 	int EnemyStrength = 0;
 	UPROPERTY()
 	int EnemyIntelligence = 0;
-	UPROPERTY()
-	int EnemyLuck = 0;
 
 	int GetEnemyHealth() { return EnemyHealth; }
 	int GetEnemyMaxHealth() { return EnemyMaxHealth; }

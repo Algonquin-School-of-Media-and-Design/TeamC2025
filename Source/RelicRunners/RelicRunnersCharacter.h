@@ -171,9 +171,6 @@ public:
 	void SetPlayerStartingIntelligence(int StartingIntelligence) { PlayerStartingIntelligence = StartingIntelligence; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
-	void SetPlayerStartingLuck(int StartingLuck) { PlayerStartingLuck = StartingLuck; }
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
 	void SetPlayerStartingHealth(int StartingHealth) { PlayerStartingMaxHealth = StartingHealth; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
@@ -196,9 +193,6 @@ public:
 
 	UFUNCTION()
 	int GetPlayerStartingIntelligence() const { return PlayerStartingIntelligence; }
-
-	UFUNCTION()
-	int GetPlayerStartingLuck() const { return PlayerStartingLuck; }
 
 	UFUNCTION()
 	int GetPlayerGold() const { return PlayerGold; }
@@ -384,8 +378,6 @@ protected:
 	UPROPERTY()
 	int PlayerIntelligence;
 	UPROPERTY()
-	int PlayerLuck;
-	UPROPERTY()
 	int PlayerStartingMaxHealth;
 	UPROPERTY()
 	int PlayerStartingMaxResource;
@@ -398,10 +390,7 @@ protected:
 	UPROPERTY()
 	int PlayerStartingIntelligence;
 	UPROPERTY()
-	int PlayerStartingLuck;
-	UPROPERTY()
 	int PlayerStartingGold;
-
 	UPROPERTY()
 	int HealthPotionCount;   
 	UPROPERTY()

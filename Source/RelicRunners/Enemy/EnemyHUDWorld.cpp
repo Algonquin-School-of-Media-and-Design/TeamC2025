@@ -30,13 +30,12 @@ void UEnemyHUDWorld::InitWidgetWithCharacter(class ACharacter* InOwnerCharacter)
 
 void UEnemyHUDWorld::UpdateInfo(AEnemyCharacterAI* enemy)
 {
-	// --- Health ---
-	const int32 CurrentHealth = enemy->GetEnemyHealth();
-	const int32 MaxHealth = enemy->GetEnemyMaxHealth();
+	int CurrentHealth = enemy->GetEnemyHealth();
+	int MaxHealth = enemy->GetEnemyMaxHealth();
 
 	if (HealthBar)
 	{
-		const float Percent = (MaxHealth > 0) ? (float)CurrentHealth / (float)MaxHealth : 0.f;
+		float Percent = (MaxHealth > 0) ? (float)CurrentHealth / (float)MaxHealth : 0.f;
 		HealthBar->SetPercent(Percent);
 	}
 
@@ -45,17 +44,15 @@ void UEnemyHUDWorld::UpdateInfo(AEnemyCharacterAI* enemy)
 		TB_Health->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentHealth, MaxHealth)));
 	}
 
-	// --- Resource ---
-	const int32 CurrentResource = enemy->GetEnemyResource();
-	const int32 MaxResource = enemy->GetEnemyMaxResource();
+	int CurrentResource = enemy->GetEnemyResource();
+	int MaxResource = enemy->GetEnemyMaxResource();
 
 	if (ResourceBar)
 	{
-		const float ResourcePercent = (MaxResource > 0) ? (float)CurrentResource / (float)MaxResource : 0.f;
+		float ResourcePercent = (MaxResource > 0) ? (float)CurrentResource / (float)MaxResource : 0.f;
 		ResourceBar->SetPercent(ResourcePercent);
 	}
 
-	// --- Name ---
 	if (TB_Name)
 	{
 		FName EnemyName = enemy->GetEnemyName();
@@ -65,19 +62,17 @@ void UEnemyHUDWorld::UpdateInfo(AEnemyCharacterAI* enemy)
 		}
 	}
 
-	// --- Level ---
 	if (TB_Level)
 	{
-		int32 Level = enemy->GetEnemyLevel();
+		int Level = enemy->GetEnemyLevel();
 		TB_Level->SetText(FText::AsNumber(Level));
 	}
 }
 
 void UEnemyHUDWorld::UpdateInfo(AEnemyCharacter* enemy)
 {
-	// --- Health ---
-	const int32 CurrentHealth = enemy->GetCurrentHealth();
-	const int32 MaxHealth = enemy->GetMaxHealth();
+	int CurrentHealth = enemy->GetCurrentHealth();
+	int MaxHealth = enemy->GetMaxHealth();
 
 	if (HealthBar)
 	{
@@ -90,9 +85,8 @@ void UEnemyHUDWorld::UpdateInfo(AEnemyCharacter* enemy)
 		TB_Health->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentHealth, MaxHealth)));
 	}
 
-	// --- Resource ---
-	const int32 CurrentResource = enemy->GetEnemyResource();
-	const int32 MaxResource = enemy->GetEnemyMaxResource();
+	int CurrentResource = enemy->GetEnemyResource();
+	int MaxResource = enemy->GetEnemyMaxResource();
 
 	if (ResourceBar)
 	{
@@ -100,7 +94,6 @@ void UEnemyHUDWorld::UpdateInfo(AEnemyCharacter* enemy)
 		ResourceBar->SetPercent(ResourcePercent);
 	}
 
-	// --- Name ---
 	if (TB_Name)
 	{
 		FName EnemyName = enemy->GetEnemyName();
@@ -110,10 +103,9 @@ void UEnemyHUDWorld::UpdateInfo(AEnemyCharacter* enemy)
 		}
 	}
 
-	// --- Level ---
 	if (TB_Level)
 	{
-		int32 Level = enemy->GetEnemyLevel();
+		int Level = enemy->GetEnemyLevel();
 		TB_Level->SetText(FText::AsNumber(Level));
 	}
 }

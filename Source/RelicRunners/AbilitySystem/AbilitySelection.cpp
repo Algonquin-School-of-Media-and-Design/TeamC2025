@@ -68,8 +68,6 @@ void UAbilitySelection::BuffStatValue(StatBuff Buff)
     // Apply stat buff based on type
     if (Buff.StatType == EStats::Health)
         OwningCharacter->SetPlayerStartingHealth(OwningCharacter->GetPlayerStartingMaxHealth() + Buff.Percentage);
-    if (Buff.StatType == EStats::Luck)
-        OwningCharacter->SetPlayerStartingLuck(OwningCharacter->GetPlayerStartingLuck() + Buff.Percentage);
     if (Buff.StatType == EStats::Intelligence)
         OwningCharacter->SetPlayerStartingIntelligence(OwningCharacter->GetPlayerStartingIntelligence() + Buff.Percentage);
     if (Buff.StatType == EStats::Strength)
@@ -103,9 +101,6 @@ UAbilitySelection::StatBuff UAbilitySelection::RandomStatBuff()
         break;
     case EStats::Intelligence:
         RandomStatBuff.StatText = FString::Printf(TEXT("+%d Intelligence"), RandomStatBuff.Percentage);
-        break;
-    case EStats::Luck:
-        RandomStatBuff.StatText = FString::Printf(TEXT("+%d Luck"), RandomStatBuff.Percentage);
         break;
     case EStats::Strength:
         RandomStatBuff.StatText = FString::Printf(TEXT("+%d Strength"), RandomStatBuff.Percentage);

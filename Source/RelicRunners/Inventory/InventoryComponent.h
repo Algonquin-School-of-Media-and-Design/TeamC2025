@@ -34,8 +34,6 @@ struct FEquippedStatsSummary
     UPROPERTY(BlueprintReadOnly) int TotalDexterity = 0;
     UPROPERTY(BlueprintReadOnly) int TotalStrength = 0;
     UPROPERTY(BlueprintReadOnly) int TotalIntelligence = 0;
-    UPROPERTY(BlueprintReadOnly) int TotalLuck = 0;
-    UPROPERTY(BlueprintReadOnly) int TotalSlots = 0;
 };
 
 USTRUCT(BlueprintType)

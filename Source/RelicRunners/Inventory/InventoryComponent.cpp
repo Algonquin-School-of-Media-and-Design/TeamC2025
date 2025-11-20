@@ -395,12 +395,10 @@ FEquippedStatsSummary UInventoryComponent::CalculateEquippedStats() const
     if (const ARelicRunnersCharacter* OwnerChar = Cast<ARelicRunnersCharacter>(GetOwner()))
     {
         Summary.TotalHealth = OwnerChar->GetPlayerStartingMaxHealth();
-        Summary.TotalSlots = OwnerChar->GetPlayerNumInventorySlots();
         Summary.TotalArmor = OwnerChar->GetPlayerStartingArmor();
         Summary.TotalDexterity = OwnerChar->GetPlayerStartingDexterity();
         Summary.TotalStrength = OwnerChar->GetPlayerStartingStrength();
         Summary.TotalIntelligence = OwnerChar->GetPlayerStartingIntelligence();
-        Summary.TotalLuck = OwnerChar->GetPlayerStartingLuck();
     }
 
     for (const FEquippedItemEntry& Entry : EquippedItems)
@@ -412,8 +410,6 @@ FEquippedStatsSummary UInventoryComponent::CalculateEquippedStats() const
             Summary.TotalDexterity += Item->ItemData.Dexterity;
             Summary.TotalStrength += Item->ItemData.Strength;
             Summary.TotalIntelligence += Item->ItemData.Intelligence;
-            Summary.TotalLuck += Item->ItemData.Luck;
-            Summary.TotalSlots += Item->ItemData.Slots;
         }
     }
 

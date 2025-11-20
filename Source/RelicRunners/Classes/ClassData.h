@@ -44,7 +44,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float Intelligence = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Luck = 0.f;
 };

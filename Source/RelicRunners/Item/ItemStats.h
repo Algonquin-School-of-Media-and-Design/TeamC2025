@@ -135,10 +135,10 @@ public:
         float Min = BaseMin * ItemData.Level * Multiplier;
         float Max = BaseMax * ItemData.Level * Multiplier;
 
-        const TSet<FString> ArmorTypes = { "Helmet", "Upper", "Lower", "Arms" };
-        const TSet<FString> WeaponTypes = { "Sword" };
-        const TSet<FString> ShieldTypes = { "Shield" };
-        const TSet<FString> MixedTypes = { "Necklace" };
+        TSet<FString> ArmorTypes = { "Helmet", "Upper", "Lower", "Arms" };
+        TSet<FString> WeaponTypes = { "Sword" };
+        TSet<FString> ShieldTypes = { "Shield" };
+        TSet<FString> MixedTypes = { "Necklace" };
 
         if (ArmorTypes.Contains(ItemData.ItemType))
         {
@@ -167,7 +167,6 @@ public:
             ItemData.Dexterity = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
             ItemData.Strength = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
             ItemData.Intelligence = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
-            ItemData.Luck = FMath::RoundToInt(FMath::FRandRange(Min * 0.5f, Max));
             ItemData.Gold = FMath::RoundToInt(FMath::FRandRange(Min * 0.5f, Max));
         }
 

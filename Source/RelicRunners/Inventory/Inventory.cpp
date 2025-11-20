@@ -107,6 +107,7 @@ void UInventory::ToggleVendorUI(bool value)
 void UInventory::DisplaySelectedVendorItems(const TArray<FItemData>& Items, AVendor* Vendor)
 {
     VendorSlots->ClearListItems();
+    if (!Vendor) return;
     CurrentVendor = Vendor;
 
     for (const FItemData& Data : Items)
@@ -858,7 +859,6 @@ void UInventory::OnEquippedStatsUpdated(const FEquippedStatsSummary& Stats)
     if (TB_Dexterity)    TB_Dexterity->SetText(FText::AsNumber(Stats.TotalDexterity));
     if (TB_Strength)     TB_Strength->SetText(FText::AsNumber(Stats.TotalStrength));
     if (TB_Intelligence) TB_Intelligence->SetText(FText::AsNumber(Stats.TotalIntelligence));
-    if (TB_Luck)         TB_Luck->SetText(FText::AsNumber(Stats.TotalLuck));
 
     if (OwningCharacter)
     {
@@ -870,7 +870,7 @@ void UInventory::OnEquippedStatsUpdated(const FEquippedStatsSummary& Stats)
     }
 
     int NumItems = InventoryComponent->InventoryItems.Num();
-    int MaxSlots = Stats.TotalSlots;
+    int MaxSlots = OwningCharacter->GetPlayerNumInventorySlots();
 
     TB_InventorySlots->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), NumItems, MaxSlots)));
 }

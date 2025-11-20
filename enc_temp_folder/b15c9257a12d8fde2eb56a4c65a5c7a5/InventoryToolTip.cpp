@@ -1,0 +1,209 @@
+/************************************************************************************
+ * Author:   Tristan Anglin
+ * Year:     2025
+ *
+ * Notice:
+ *   This source code is the intellectual property of Tristan Anglin.
+ *   It is provided solely for use within:
+ *     - The Relic Runners personal project
+ *     - The Almost A Dozen project
+ *
+ *   Any use, distribution, or modification outside of these projects
+ *   is strictly prohibited without explicit written permission.
+ *
+ *   © 2025 Tristan Anglin. All rights reserved.
+ ************************************************************************************/
+
+#include "InventoryToolTip.h"
+#include "Components/TextBlock.h"
+#include "Components/Border.h"
+#include "Components/HorizontalBox.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/CanvasPanelSlot.h"
+#include "RelicRunners/Item/ItemData.h"
+#include "InventoryComponent.h"
+#include <RelicRunners/Item/ItemStats.h>
+
+void UInventoryToolTip::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+    Super::NativeTick(MyGeometry, InDeltaTime);
+}
+
+void UInventoryToolTip::Setup(FItemData& ItemData, const FLinearColor& RarityColor)
+{
+    UItemObject* Item = NewObject<UItemObject>(this);
+    Item->SetItemData(ItemData);
+
+    Setup(Item, RarityColor, nullptr);
+}
+
+void UInventoryToolTip::Setup(UItemObject* HoveredItem, const FLinearColor& HoveredColor, UItemObject* EquippedItem)
+{
+    B_Rarity->SetBrushColor(HoveredColor);
+    TB_RarityTooltip->SetText(FText::FromString(HoveredItem->GetRarity()));
+    TB_RarityTooltip->SetColorAndOpacity(FLinearColor::White);
+
+    TB_ItemTypeTooltip->SetText(FText::FromString(HoveredItem->GetItemType()));
+    B_ItemType->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1.0f));
+
+    TB_LevelTooltip->SetText(FText::FromString("Lv " + FString::FromInt(HoveredItem->GetLevel())));
+    TB_LevelTooltip->SetColorAndOpacity(FLinearColor::White);
+
+    const bool HasEquipped = EquippedItem != nullptr;
+
+    if (HasEquipped)
+    {
+        FLinearColor EquippedColor = ItemStats::GetRarityDataMap()[EquippedItem->GetRarity()].Color;
+
+        B_Rarity_1->SetBrushColor(EquippedColor);
+        TB_RarityTooltip_1->SetText(FText::FromString(EquippedItem->GetRarity()));
+        TB_RarityTooltip_1->SetColorAndOpacity(FLinearColor::White);
+
+        TB_ItemTypeTooltip_1->SetText(FText::FromString(EquippedItem->GetItemType()));
+        B_ItemType_1->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1.0f));
+
+        TB_LevelTooltip_1->SetText(FText::FromString("Lv " + FString::FromInt(EquippedItem->GetLevel())));
+        TB_LevelTooltip_1->SetColorAndOpacity(FLinearColor::White);
+    }
+    else
+    {
+        B_Rarity_1->SetBrushColor(FLinearColor::Transparent);
+        TB_RarityTooltip_1->SetText(FText::GetEmpty());
+
+        TB_ItemTypeTooltip_1->SetText(FText::GetEmpty());
+        B_ItemType_1->SetBrushColor(FLinearColor::Transparent);
+
+        TB_LevelTooltip_1->SetText(FText::GetEmpty());
+    }
+
+    struct FStatInfo
+    {
+        int Value;
+        FString Label;
+        UTextBlock* HoveredTextValue;
+        UTextBlock* HoveredText;
+        UHorizontalBox* HoveredBox;
+        UBorder* HoveredBorder;
+        UTextBlock* EquippedText;
+        UTextBlock* EquippedTextValue;
+        UHorizontalBox* EquippedBox;
+        UBorder* EquippedBorder;
+        UTextBlock* ComparisonText;
+        UTextBlock* ComparisonTextValue;
+        UHorizontalBox* ComparisonBox;
+        UBorder* ComparisonBorder;
+    };
+
+    TArray<FStatInfo> Stats = {
+        { HoveredItem->ItemData.Health,       "HP",   TB_HealthValue,      TB_HealthTooltip,       HB_Health,       B_Health,       TB_HealthTooltip_1,       TB_HealthValue_1,         HB_Health_1,       B_Health_1,       TB_HealthTooltip_2,       TB_HealthValue_2,        HB_Health_2,        B_Health_2 },
+        { HoveredItem->ItemData.Armor,        "DEF",  TB_ArmorValue,       TB_ArmorTooltip,        HB_Armor,        B_Armor,        TB_ArmorTooltip_1,        TB_ArmorValue_1,          HB_Armor_1,        B_Armor_1,        TB_ArmorTooltip_2,        TB_ArmorValue_2,         HB_Armor_2,         B_Armor_2 },
+        { HoveredItem->ItemData.Dexterity,    "DEX",  TB_DexterityValue,   TB_DexterityTooltip,    HB_Dexterity,    B_Dexterity,    TB_DexterityTooltip_1,    TB_DexterityValue_1,      HB_Dexterity_1,    B_Dexterity_1,    TB_DexterityTooltip_2,    TB_DexterityValue_2,     HB_Dexterity_2,     B_Dexterity_2 },
+        { HoveredItem->ItemData.Strength,     "STR",  TB_StrengthValue,    TB_StrengthTooltip,     HB_Strength,     B_Strength,     TB_StrengthTooltip_1,     TB_StrengthValue_1,       HB_Strength_1,     B_Strength_1,     TB_StrengthTooltip_2,     TB_StrengthValue_2,      HB_Strength_2,      B_Strength_2 },
+        { HoveredItem->ItemData.Intelligence, "INT",  TB_IntelligenceValue,TB_IntelligenceTooltip, HB_Intelligence, B_Intelligence, TB_IntelligenceTooltip_1, TB_IntelligenceValue_1,   HB_Intelligence_1, B_Intelligence_1, TB_IntelligenceTooltip_2, TB_IntelligenceValue_2,  HB_Intelligence_2,  B_Intelligence_2 },
+        { HoveredItem->ItemData.Gold,         "Gold", nullptr,             TB_GoldTooltip,         HB_Gold,         B_Gold,         TB_GoldTooltip_1,         nullptr,                  HB_Gold_1,         B_Gold_1,         TB_GoldTooltip_2,         nullptr,                 HB_Gold_2,          B_Gold_2 }
+    };
+
+    B_Equipped->SetVisibility(HasEquipped ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    B_Comparison->SetVisibility(HasEquipped ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+
+    for (const FStatInfo& Stat : Stats)
+    {
+        if (Stat.Value == 0)
+        {
+            Stat.HoveredBox->SetVisibility(ESlateVisibility::Collapsed);
+            Stat.HoveredBorder->SetVisibility(ESlateVisibility::Collapsed);
+        }
+        else
+        {
+            if (Stat.HoveredTextValue != nullptr)
+            {
+                Stat.HoveredTextValue->SetText(FText::FromString(FString::FromInt(Stat.Value)));
+            }
+
+            Stat.HoveredBox->SetVisibility(ESlateVisibility::Visible);
+            Stat.HoveredBorder->SetVisibility(ESlateVisibility::Visible);
+            Stat.HoveredText->SetText(FText::FromString(Stat.Label));
+            Stat.HoveredText->SetColorAndOpacity(FLinearColor::White);
+            Stat.HoveredBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+
+            if (Stat.Label == "Gold")
+            {
+                Stat.HoveredText->SetText(FText::FromString(FString::FromInt(Stat.Value)));
+                Stat.HoveredText->SetColorAndOpacity(FLinearColor(1, 0.5, 0, 1));
+                Stat.HoveredBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+            }
+        }
+
+        if (HasEquipped)
+        {
+            int EquippedValue = 0;
+            if (Stat.Label == "HP") EquippedValue = EquippedItem->ItemData.Health;
+            else if (Stat.Label == "DEF") EquippedValue = EquippedItem->ItemData.Armor;
+            else if (Stat.Label == "DEX") EquippedValue = EquippedItem->ItemData.Dexterity;
+            else if (Stat.Label == "STR") EquippedValue = EquippedItem->ItemData.Strength;
+            else if (Stat.Label == "INT") EquippedValue = EquippedItem->ItemData.Intelligence;
+            else if (Stat.Label == "Gold") EquippedValue = EquippedItem->ItemData.Gold;
+
+            const int Diff = Stat.Value - EquippedValue;
+
+            // Equipped display
+            if (EquippedValue == 0)
+            {
+                Stat.EquippedBox->SetVisibility(ESlateVisibility::Collapsed);
+                Stat.EquippedBorder->SetVisibility(ESlateVisibility::Collapsed);
+            }
+            else
+            {
+                Stat.EquippedBox->SetVisibility(ESlateVisibility::Visible);
+                Stat.EquippedBorder->SetVisibility(ESlateVisibility::Visible);
+
+                // Display equipped stat with label, "HP 5"
+                if (Stat.EquippedTextValue != nullptr)
+                {
+                    Stat.EquippedTextValue->SetText(FText::FromString(FString::FromInt(EquippedValue)));
+                }
+                Stat.EquippedText->SetText(FText::FromString(Stat.Label));
+                Stat.EquippedText->SetColorAndOpacity(FLinearColor::White);
+                Stat.EquippedBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+
+                if (Stat.Label == "Gold")
+                {
+                    Stat.EquippedText->SetText(FText::FromString(FString::FromInt(EquippedValue)));
+                    Stat.EquippedText->SetColorAndOpacity(FLinearColor(1,0.5,0,1));
+                    Stat.EquippedBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+                }
+            }
+
+            // Comparison display
+            if (Stat.Label == "Gold")
+            {
+                Stat.ComparisonBox->SetVisibility(ESlateVisibility::Visible);
+                Stat.ComparisonText->SetText(FText::FromString(""));
+            }
+            else if (Diff != 0)
+            {
+                Stat.ComparisonBox->SetVisibility(ESlateVisibility::Visible);
+                const bool bPositive = Diff > 0;
+                FLinearColor DiffColor = bPositive ? FLinearColor::Green : FLinearColor::Red;
+                if (Stat.ComparisonTextValue != nullptr)
+                {
+                    Stat.ComparisonTextValue->SetText(FText::FromString((bPositive ? "+" : "") + FString::FromInt(Diff)));
+                }
+                Stat.ComparisonText->SetText(FText::FromString(Stat.Label));
+                Stat.ComparisonText->SetColorAndOpacity(DiffColor);
+                Stat.ComparisonBorder->SetBrushColor(FLinearColor(0.2f, 0.2f, 0.2f, 1));
+            }
+            else
+            {
+                Stat.ComparisonBox->SetVisibility(ESlateVisibility::Collapsed);
+                Stat.ComparisonBorder->SetVisibility(ESlateVisibility::Collapsed);
+            }
+        }
+        else
+        {
+            // No equipped item: collapse both equipped + comparison columns
+            Stat.EquippedBox->SetVisibility(ESlateVisibility::Collapsed);
+            Stat.ComparisonBox->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+}

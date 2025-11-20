@@ -197,8 +197,6 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Intelligence;
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_Luck;
-	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Gold;
 	UPROPERTY(meta = (BindWidget))
 	class UButton* B_Helmet;

@@ -181,7 +181,6 @@ void UJoinUserWidget::SetSelectedClass(FName ClassKey)
 	if (DexterityBar)    DexterityBar->SetPercent(Normalize(Info.Dexterity, MaxValues.Dexterity)); TB_Dexterity->SetText(FText::FromString(FString::FromInt(Info.Dexterity)));
 	if (StrengthBar)     StrengthBar->SetPercent(Normalize(Info.Strength, MaxValues.Strength)); TB_Strength->SetText(FText::FromString(FString::FromInt(Info.Strength)));
 	if (IntelligenceBar) IntelligenceBar->SetPercent(Normalize(Info.Intelligence, MaxValues.Intelligence)); TB_Intelligence->SetText(FText::FromString(FString::FromInt(Info.Intelligence)));
-	if (LuckBar)         LuckBar->SetPercent(Normalize(Info.Luck, MaxValues.Luck)); TB_Luck->SetText(FText::FromString(FString::FromInt(Info.Luck)));
 
 	APlayerController* PC = GetOwningPlayer();
 	if (PC)
