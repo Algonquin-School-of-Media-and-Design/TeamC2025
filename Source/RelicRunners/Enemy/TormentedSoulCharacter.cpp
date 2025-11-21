@@ -14,11 +14,13 @@
 
 ATormentedSoulCharacter::ATormentedSoulCharacter() : Super()
 {
+	//set up the collider
 	AttackOverlapCollider = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Attack Collider"));
 	AttackOverlapCollider->BodyInstance.SetCollisionProfileName("OverlapAll");
 	AttackOverlapCollider->SetupAttachment(GetMesh());
 	EnemyName = "Tormented Soul";
 
+	//make sure to set the default controller to the right one
 	AIControllerClass = ASoldierController::StaticClass();
 }
 
@@ -37,7 +39,7 @@ float ATormentedSoulCharacter::TakeDamage(float DamageAmount, FDamageEvent const
 
 void ATormentedSoulCharacter::BasicAttack(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	//UE_LOG(LogTemp, Log, TEXT("should damage"));
+	//check to make sure we are attacking and that we did overlap with the player
 	if (IsAttacking && OtherActor->Tags.Contains("Player"))
 	{
 		UGameplayStatics::ApplyDamage(OtherActor, AttackDamage, this->Controller, this, nullptr);

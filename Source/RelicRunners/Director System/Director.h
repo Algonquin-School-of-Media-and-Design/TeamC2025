@@ -1,8 +1,10 @@
 /***************************************************************************************
 Class Name:  ADirector
-Author:      Thomas Johnson
 Description: This Class communicates with the spawner and keep track of what spawner should be spwaning and other factors related to spawning or enemy behavior as a collective
 Date Last Changed:        2025/10/27
+Author:      Thomas Johnson
+Contributors:
+	Description Of Contributions:
 ****************************************************************************************/
 #pragma once
 

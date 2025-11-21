@@ -16,14 +16,15 @@
 // Sets default values
 AEnemyCharacter::AEnemyCharacter() : ACharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+ 	
+	//setting up default values
 	CurrentHealth = 100;
 	MaxHealth = 100;
 	RemainingStunTime = 0;
 	Level = 1;
 	TypeOfEnemy = EEnemyType::UNKNOWN;
 
+	//Make the collision profile is set to the right one
 	GetCapsuleComponent()->SetCollisionProfileName("Enemy");
 
 	//tristan UI stuff
@@ -36,8 +37,12 @@ AEnemyCharacter::AEnemyCharacter() : ACharacter()
 	EnemyHUDWorld->SetVisibility(true);
 	EnemyHUDWorld->CastShadow = false;
 
+	//tick moment :O
+	PrimaryActorTick.bCanEverTick = true;
+	//Setting up networking for the actor
 	bReplicates = true;
 	SetReplicateMovement(true);
+	//add the holy tag
 	Tags.Add("Enemy");
 }
 
@@ -57,19 +62,24 @@ void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	//call the super for important stuff
 	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
+	//add the damage
 	CurrentHealth -= DamageAmount;
 
+	//make sure we don't go below zero
 	if (DamageAmount < 0)
 	{
 		DamageAmount = 0;
 	}
 
+	//check if we meet the conditions to be dead and then die
 	if (IsDead())
 	{
 		Die(EventInstigator);
 	}
+	//if we are not dead check the damage events for stun
 	else
 	{
 		if (DamageEvent.IsOfType(FAttackDamageEvent::ClassID))
@@ -91,10 +101,13 @@ float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 
 void AEnemyCharacter::Die(AController* EventInstigator)
 {
+	//make sure we are server side
 	if (HasAuthority())
 	{
+		//spawn item
 		SpawnItem();
 
+		//check to make sure it a play and if do add experience
 		if (EventInstigator)
 		{
 			if (ARelicRunnersCharacter* player = Cast<ARelicRunnersCharacter>(EventInstigator->GetPawn()))
@@ -103,17 +116,20 @@ void AEnemyCharacter::Die(AController* EventInstigator)
 			}
 		}
 		
+		//be gone hud of my enemy
 		if (EnemyHUDWorld)
 		{
 			EnemyHUDWorld->DestroyComponent();
 		}
 
+		//The actor destroy 
 		Destroy();
 	}
 }
 
 void AEnemyCharacter::ReduceStunTime(float DeltaTime)
 {
+	//do I really need to explain this?
 	if (RemainingStunTime > 0)
 	{
 		RemainingStunTime -= DeltaTime;
@@ -131,6 +147,7 @@ void AEnemyCharacter::BeginPlay()
 
 	CurrentHealth = MaxHealth;
 
+	//set up the enemy hud
 	if (EnemyHUDWorld)
 	{
 		UUserWidget* Widget = EnemyHUDWorld->GetUserWidgetObject();
@@ -144,29 +161,38 @@ void AEnemyCharacter::BeginPlay()
 		}
 	}
 
+
 	//mesh data
 	if (ItemMeshDataClass)
 	{
 		ItemMeshData = ItemMeshDataClass->GetDefaultObject<UItemMeshData>();
 	}
+	//make sure we are client side
 
 	if (HasAuthority())
 	{
+		//get refernce to objects that we need to get the director
 		UWorld* World = GetWorld();
 		APawn* enemy = static_cast<APawn*>(this);
 
+		//call it next tick so their no problem with stuff not loaded in yet
 		GetWorld()->GetTimerManager().SetTimerForNextTick([World, enemy] {
+			//get the director
 			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
 
-			if (Director != nullptr)
+			if (Director)
 			{
+				//add the enemy to the director
 				Director->AddEnemy(enemy);
+				//add the remove enemy method to the OnDestroyed delegate
 				enemy->OnDestroyed.AddDynamic(Director, &ADirector::RemoveEnemy);
 			}
+		#if WITH_EDITOR || UE_BUILD_TEST
 			else
 			{
 				UE_LOG(LogTemp, Error, TEXT("missing director"));
 			}
+		#endif
 		});
 	}
 }
@@ -195,11 +221,14 @@ void AEnemyCharacter::SpawnItem()
 
 float AEnemyCharacter::CalculateXP() const
 {
+	//calculate the xp
 	return Level * FMath::RandRange(100, 150);
 }
 
 void AEnemyCharacter::PlayMontageOnClient_Implementation(UAnimMontage* Montage, float PlayRate)
 {
+	//if we are not server side run montage
+	//This is because in the engine I have a blueprint that runs play montage for the server. Once I get more time I will rewrite this function to have the functionality as the blueprint node but also run the client
 	if (!HasAuthority())
 	{
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -242,6 +271,43 @@ void AEnemyCharacter::UpdateEnemyHUDWorldFacing()
 	}
 }
 
+#if WITH_EDITOR
+void AEnemyCharacter::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	//calling the super
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	//crabing the property name
+	FName PropertyName = NAME_None; 
+	
+	//check to make sure this is a actual property
+	if (PropertyChangedEvent.Property)
+	{
+		//update the name
+		PropertyName = PropertyChangedEvent.Property->GetFName();
+	}
+
+	//go throught and check the possible properties that need to update other variables
+	//GET_MEMBER_NAME_CHECKED is a compiler time macro that gets the name of a property for anyone who is readying this and if so thank you for reading my comments
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AEnemyCharacter, MaxHealth))
+	{
+		CurrentHealth = FMath::Min(CurrentHealth, MaxHealth);
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(AEnemyCharacter, CurrentHealth))
+	{
+		CurrentHealth = FMath::Clamp(CurrentHealth, 0.f, MaxHealth);
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(AEnemyCharacter, EnemyMaxResource))
+	{
+		EnemyResource = FMath::Min(EnemyResource, EnemyMaxResource);
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(AEnemyCharacter, EnemyResource))
+	{
+		EnemyResource = FMath::Clamp(EnemyResource, 0, EnemyMaxResource);
+	}
+}
+#endif
+
 // Called every frame
 void AEnemyCharacter::Tick(float DeltaTime)
 {
@@ -255,3 +321,14 @@ void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+
+void AEnemyCharacter::SetCurrentHealth(const float& NewHealth)
+{
+	CurrentHealth = FMath::Clamp(NewHealth, 0.f, MaxHealth);
+}
+
+void AEnemyCharacter::SetMaxHealth(const float& newHealth)
+{
+	MaxHealth = FMath::Max(0.f, newHealth);
+	CurrentHealth = FMath::Min(CurrentHealth, MaxHealth);
+}

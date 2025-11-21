@@ -29,28 +29,28 @@ public:
 	// Sets default values for this character's properties
 	AEnemyCharacterAI();
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, meta = (DisplayThumbnail = true))
 	USkeletalMeshComponent* LowerMesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, meta = (DisplayThumbnail = true))
 	USkeletalMeshComponent* UpperMesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, meta = (DisplayThumbnail = true))
 	USkeletalMeshComponent* HelmetMesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, meta = (DisplayThumbnail = true))
 	USkeletalMeshComponent* ArmsMesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, meta = (DisplayThumbnail = true))
 	USkeletalMeshComponent* NecklaceMesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, meta = (DisplayThumbnail = true))
 	UStaticMeshComponent* MainhandItemMesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, meta = (DisplayThumbnail = true))
 	UStaticMeshComponent* OffhandItemMesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, meta = (DisplayThumbnail = true))
 	class UWidgetComponent* EnemyHUDWorld;
 
 	UPROPERTY(EditDefaultsOnly, Category = "ItemActor")
