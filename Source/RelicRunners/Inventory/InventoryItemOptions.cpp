@@ -18,6 +18,7 @@
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 #include "Inventory.h"
+#include "RelicRunners/Item/ItemData.h"
 #include <Blueprint/WidgetLayoutLibrary.h>
 #include "Blueprint/WidgetBlueprintLibrary.h"             
 
@@ -102,6 +103,18 @@ void UInventoryItemOptions::ConfigureButtons(bool ShowEquip, bool ShowUnequip, b
         UnequipButton->SetVisibility(ShowUnequip ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
 
+    if (DropButton)
+    {
+        if (ShowEquip || ShowUnequip)
+        {
+            DropButton->SetVisibility(ESlateVisibility::Visible);
+        }
+        else
+        {
+            DropButton->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+
     if (SellButton)
     {
         SellButton->SetVisibility(ShowSell ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
@@ -158,19 +171,31 @@ void UInventoryItemOptions::OnDropClicked()
 {
     if (!Item) return;
 
-    if (UInventory* inventory = UInventory::Get(this))
+    if (UInventory* Inventory = UInventory::Get(this))
     {
-        inventory->DropItem(Item);
+        Inventory->DropItem(Item);
         RemoveFromParent();
     }
 }
 
 void UInventoryItemOptions::OnBuyClicked()
 {
+    if (!Item) return;
 
+    if (UInventory* Inventory = UInventory::Get(this))
+    {
+        Inventory->BuyItem(Item);
+        RemoveFromParent();
+    }
 }
 
 void UInventoryItemOptions::OnSellClicked()
 {
+    if (!Item) return;
 
+    if (UInventory* Inventory = UInventory::Get(this))
+    {
+        Inventory->SellItem(Item);
+        RemoveFromParent();
+    }
 }

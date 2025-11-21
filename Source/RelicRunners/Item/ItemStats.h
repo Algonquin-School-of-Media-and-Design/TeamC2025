@@ -108,10 +108,22 @@ public:
         return Item;
     }
 
+    static UItemObject* CreateItemFromData(const FItemData& ItemData)
+    {
+        UItemObject* Item = NewObject<UItemObject>();
+        Item->SetItemData(ItemData);
+        return Item;
+    }
+
     static FItemData CreateSpecificItemData(int Level, FString ItemType, UItemMeshData* MeshData)
     {
+        return CreateSpecificItemData(Level, ItemType, GetRandomRarity(), MeshData);
+    }
+
+    static FItemData CreateSpecificItemData(int Level, FString ItemType, FString Rarity, UItemMeshData* MeshData)
+    {
         FItemData ItemData;
-        ItemData.Rarity = GetRandomRarity();
+        ItemData.Rarity = Rarity;
         ItemData.ItemType = ItemType;
         ItemData.Name = ItemData.ItemType;
         ItemData.Level = Level;
@@ -123,10 +135,10 @@ public:
         float Min = BaseMin * ItemData.Level * Multiplier;
         float Max = BaseMax * ItemData.Level * Multiplier;
 
-        const TSet<FString> ArmorTypes = { "Helmet", "Upper", "Lower", "Arms" };
-        const TSet<FString> WeaponTypes = { "Sword" };
-        const TSet<FString> ShieldTypes = { "Shield" };
-        const TSet<FString> MixedTypes = { "Necklace" };
+        TSet<FString> ArmorTypes = { "Helmet", "Upper", "Lower", "Arms" };
+        TSet<FString> WeaponTypes = { "Sword" };
+        TSet<FString> ShieldTypes = { "Shield" };
+        TSet<FString> MixedTypes = { "Necklace" };
 
         if (ArmorTypes.Contains(ItemData.ItemType))
         {
@@ -155,13 +167,19 @@ public:
             ItemData.Dexterity = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
             ItemData.Strength = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
             ItemData.Intelligence = FMath::RoundToInt(FMath::FRandRange(Min * 0.8f, Max * 1.2f));
-            ItemData.Luck = FMath::RoundToInt(FMath::FRandRange(Min * 0.5f, Max));
             ItemData.Gold = FMath::RoundToInt(FMath::FRandRange(Min * 0.5f, Max));
         }
 
         if (MeshData)
         {
             SetItemMeshes(ItemData, MeshData);
+        }
+
+        // Load and assign icon texture
+        FString ImagePath = FString::Printf(TEXT("Texture2D'/Game/ThirdPerson/Icons/%s.%s'"), *ItemData.ItemType, *ItemData.ItemType);
+        if (UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *ImagePath)))
+        {
+            ItemData.Icon = Texture;
         }
 
         return ItemData;

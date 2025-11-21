@@ -15,13 +15,16 @@
  ************************************************************************************/
 
 #include "Inventory.h"
+#include "RelicRunners/Vendor/Vendor.h"
 #include "Components/TileView.h"
 #include "Components/TextBlock.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/HorizontalBox.h"
 #include "Components/Button.h"
 #include "Components/Border.h"
+#include "Components/VerticalBox.h"
 #include "Components/Image.h"
+#include "Components/Throbber.h"
 #include "Components/CanvasPanel.h"
 #include "InventoryToolTip.h"
 #include "InventorySortingOptions.h"
@@ -41,6 +44,7 @@
 #include "RelicRunners/PlayerPreview/PlayerPreview.h"
 #include "RelicRunners/PlayerState/RelicRunnersPlayerState.h"
 #include <RelicRunners/Game/RelicRunnersGameInstance.h>
+#include "InventoryDragOperation.h"
 
 void UInventory::NativeConstruct()
 {
@@ -63,6 +67,57 @@ void UInventory::NativeConstruct()
     //Vendor
     if (VendorCanvas) VendorCanvas->SetVisibility(ESlateVisibility::Collapsed);
     if (VendorSlots) VendorSlots->ClearListItems();
+    if (FuseButton) FuseButton->OnClicked.AddDynamic(this, &UInventory::OnFuseButtonPressed);
+}
+
+void UInventory::ToggleVendorUI(bool value)
+{
+    if (!VendorCanvas) return;
+
+    if (!value)
+    {
+        VendorCanvas->SetVisibility(ESlateVisibility::Collapsed);
+        VendorSlots->ClearListItems();
+        CurrentVendor = nullptr;
+        if (ForgeItemLeft)
+        {
+            InventoryComponent->AddItem(ForgeItemLeft);
+            ForgeItemLeft = nullptr;
+        }
+
+        if (ForgeItemRight)
+        {
+            InventoryComponent->AddItem(ForgeItemRight);
+            ForgeItemRight = nullptr;
+        }
+        ForgeItemResult = nullptr;
+        SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, nullptr);
+        SetForgeTooltip(I_ForgeItem2, B_ForgeItem2, nullptr);
+        SetForgeTooltip(I_ForgeItem1, B_ForgeItem1, nullptr);
+        if (ForgeCompleted) StopAnimation(ForgeCompleted);
+        UpdateForgeUI();
+    }
+    else
+    {
+        VendorCanvas->SetVisibility(ESlateVisibility::Visible);
+        UpdateForgeUI();
+    }
+}
+
+void UInventory::DisplaySelectedVendorItems(const TArray<FItemData>& Items, AVendor* Vendor)
+{
+    VendorSlots->ClearListItems();
+    if (!Vendor) return;
+    CurrentVendor = Vendor;
+
+    for (const FItemData& Data : Items)
+    {
+        UItemObject* NewItem = NewObject<UItemObject>(this);
+
+        NewItem->ItemData = Data;
+
+        VendorSlots->AddItem(NewItem);
+    }
 }
 
 void UInventory::HandleSortSelected(EInventorySorting Method)
@@ -299,6 +354,32 @@ void UInventory::DropItem(UItemObject* Item)
     OwningCharacter->Server_DropItem(Item->ItemData);
 }
 
+void UInventory::BuyItem(UItemObject* Item)
+{
+    if (!Item) return;
+
+    if (OwningCharacter)
+    {
+        OwningCharacter->Server_BuyItem(Item->ItemData, CurrentVendor);
+    }
+}
+
+void UInventory::SellItem(UItemObject* Item)
+{
+    if (!Item) return;
+
+    if (OwningCharacter)
+    {
+        OwningCharacter->Server_SellItem(Item->ItemData, CurrentVendor);
+    }
+}
+
+void UInventory::NativeTick(const FGeometry& MyGeometry, float DeltaTime)
+{
+    Super::NativeTick(MyGeometry, DeltaTime);
+
+}
+
 FReply UInventory::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
     UInventoryItemOptions::CloseAnyOpenPopup();
@@ -392,23 +473,85 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
 {
     Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 
-    if (!InOperation)
-        return false;
+    if (!InOperation) return false;
 
-    UItemObject* DraggedItem = Cast<UItemObject>(InOperation->Payload);
+    UInventoryDragOperation* DragOp = Cast<UInventoryDragOperation>(InOperation);
+    if (!DragOp) return false;
+
+    UItemObject* DraggedItem = Cast<UItemObject>(DragOp->Payload);
     if (!DraggedItem) return false;
 
     FVector2D DropPosition = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
-    FGeometry EquippedGeometry = EquippedCanvas->GetCachedGeometry();
 
+    //Equipped Items Location
+    FGeometry EquippedGeometry = EquippedCanvas->GetCachedGeometry();
     const FVector2D EquippedLocal = EquippedGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
     const FVector2D EquippedSize = EquippedGeometry.GetLocalSize();
+    const bool bInsideEquipped =
+        EquippedLocal.X >= 0.f &&
+        EquippedLocal.Y >= 0.f &&
+        EquippedLocal.X <= EquippedSize.X &&
+        EquippedLocal.Y <= EquippedSize.Y;
 
-    const bool bInsideEquipped = EquippedLocal.X >= 0.f && EquippedLocal.Y >= 0.f && EquippedLocal.X <= EquippedSize.X && EquippedLocal.Y <= EquippedSize.Y;
+    //Inventory Items Location
+    FGeometry InventoryGeometry = InventorySlots->GetCachedGeometry();
+    const FVector2D InventoryLocal = InventoryGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D InventorySize = InventoryGeometry.GetLocalSize();
+    const bool bInsideInventory =
+        InventoryLocal.X >= 0.f &&
+        InventoryLocal.Y >= 0.f &&
+        InventoryLocal.X <= InventorySize.X &&
+        InventoryLocal.Y <= InventorySize.Y;
+
+    //Vendor Forge Location
+    FGeometry ForgeGeometry = ForgeBox->GetCachedGeometry();
+    const FVector2D ForgeLocal = ForgeGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D ForgeSize = ForgeGeometry.GetLocalSize();
+    const bool bInsideForge =
+        ForgeLocal.X >= 0.f &&
+        ForgeLocal.Y >= 0.f &&
+        ForgeLocal.X <= ForgeSize.X &&
+        ForgeLocal.Y <= ForgeSize.Y;
+
+    //Vendor Shop Location
+    FGeometry ShopGeometry = ShopBox->GetCachedGeometry();
+    const FVector2D ShopLocal = ShopGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+    const FVector2D ShopSize = ShopGeometry.GetLocalSize();
+    const bool bInsideShop =
+        ShopLocal.X >= 0.f &&
+        ShopLocal.Y >= 0.f &&
+        ShopLocal.X <= ShopSize.X &&
+        ShopLocal.Y <= ShopSize.Y;
 
     if (bInsideEquipped)
     {
         EquipItem(DraggedItem);
+    }
+    else if (bInsideForge && VendorCanvas->IsVisible() && DragOp->FromWhere == UInventoryDragOperation::Locations::Inventory && DraggedItem->GetRarity() != "Relic")
+    {
+        if (!ForgeItemLeft)
+        {
+            ForgeItemLeft = DraggedItem;
+            SetForgeTooltip(I_ForgeItem1, B_ForgeItem1, ForgeItemLeft);
+            InventoryComponent->RemoveItemByID(DraggedItem->ItemData.UniqueID);
+        }
+        else if (!ForgeItemRight)
+        {
+            ForgeItemRight = DraggedItem;
+            SetForgeTooltip(I_ForgeItem2, B_ForgeItem2, ForgeItemRight);
+            InventoryComponent->RemoveItemByID(DraggedItem->ItemData.UniqueID);
+        }
+        ForgeItemResult = nullptr;    
+        SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, nullptr);
+        UpdateForgeUI();
+    }
+    else if (bInsideShop && VendorCanvas->IsVisible() && DragOp->FromWhere == UInventoryDragOperation::Locations::Inventory)
+    {
+        SellItem(DraggedItem);
+    }
+    else if (bInsideInventory && DragOp->FromWhere == UInventoryDragOperation::Locations::Shop)
+    {
+        BuyItem(DraggedItem);
     }
     else
     {
@@ -418,6 +561,297 @@ bool UInventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent&
     return true;
 }
 
+void UInventory::SetForgeTooltip(UImage* IconWidget, UBorder* BorderWidget, UItemObject* Item)
+{
+    if (!Item)
+    {
+        if (BorderWidget) BorderWidget->SetToolTip(nullptr);
+        return;
+    }
+
+    if (!TooltipWidgetClass || !BorderWidget) return;
+
+    UInventoryToolTip* ToolTip = CreateWidget<UInventoryToolTip>(GetWorld(), TooltipWidgetClass);
+    if (!ToolTip) return;
+
+    const FLinearColor RarityColor = ItemStats::GetRarityDataMap()[Item->GetRarity()].Color;
+
+    ToolTip->Setup(Item, RarityColor, nullptr);
+
+    BorderWidget->SetToolTip(ToolTip);
+}
+
+
+void UInventory::OnFuseButtonPressed()
+{
+    if (!ForgeItemLeft || !ForgeItemRight) return;
+
+    FString Rarity1 = ForgeRarity1;
+    FString Rarity2 = ForgeRarity2;
+    FString Rarity3 = ForgeRarity3;
+
+    float Chance1 = ForgeChance1;
+    float Chance2 = ForgeChance2;
+    float Chance3 = ForgeChance3;
+
+    //Determine new data
+    FString NewRarity = RollForgeRarity(Rarity1, Chance1, Rarity2, Chance2, Rarity3, Chance3);
+    FString NewType = ForgeItemLeft->ItemData.ItemType;
+    int NewLevel = FMath::RandRange(ForgeItemLeft->ItemData.Level, ForgeItemRight->ItemData.Level);
+    FItemData NewItemData = ItemStats::CreateSpecificItemData(NewLevel, NewType, NewRarity, OwningCharacter->ItemMeshData);
+    UItemObject* NewItem = ItemStats::CreateItemFromData(NewItemData);
+
+    //Clear forge items from inventory and UI
+    ForgeItemLeft = nullptr;
+    ForgeItemRight = nullptr;
+
+    InventoryComponent->AddItem(NewItem);
+    ForgeItemResult = NewItem;
+
+    UpdateForgeUI();
+
+    if (NewRarity == Rarity1)
+    {
+        TB_Odds->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
+        TB_Odds->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds->SetText(FText::FromString(FString::Printf(TEXT("Diminished"))));
+    }
+    if (NewRarity == Rarity2)
+    {
+        TB_Odds->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
+        TB_Odds->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds->SetText(FText::FromString(FString::Printf(TEXT("Unaltered"))));
+    }
+    if (NewRarity == Rarity3)
+    {
+        TB_Odds->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
+        TB_Odds->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds->SetText(FText::FromString(FString::Printf(TEXT("Refined"))));
+    }
+
+    TB_Odds1->SetVisibility(ESlateVisibility::Visible);
+    TB_Odds1->SetText(FText::FromString(FString::Printf(TEXT("%s item added to Inventory"), *NewRarity)));
+    TB_Odds1->SetColorAndOpacity(ItemStats::GetRarityDataMap()[NewRarity].Color);
+
+    SetForgeTooltip(I_ForgeItemResult, B_ForgeItemResult, ForgeItemResult);
+    SetForgeTooltip(I_ForgeItem2, B_ForgeItem2, nullptr);
+    SetForgeTooltip(I_ForgeItem1, B_ForgeItem1, nullptr);
+
+    if (ForgeCompleted)
+    {
+        PlayAnimation(ForgeCompleted, 0.f, 1); 
+    }
+}
+
+
+FString UInventory::RollForgeRarity(const FString R1, float C1, const FString R2, float C2, const FString R3, float C3)
+{
+    float Roll = FMath::FRandRange(0.f, 100.f);
+
+    if (Roll <= C1) return R1;
+    if (Roll <= C1 + C2) return R2;
+    return R3;
+}
+
+
+void UInventory::UpdateForgeOdds(const FString& LeftRarity, const FString& RightRarity)
+{
+    static const TArray<FString> RarityOrder = {
+        "Common",
+        "Uncommon",
+        "Rare",
+        "Epic",
+        "Legendary",
+        "Mythic",
+        "Relic"
+    };
+
+    static const float UpgradeSameTier[7] = {
+        90.f, // Common
+        80.f, // Uncommon
+        70.f, // Rare
+        60.f, // Epic
+        50.f, // Legendary
+        40.f, // Mythic
+        0.f   // Relic
+    };
+
+    auto GetIndex = [&](const FString& R) { return RarityOrder.IndexOfByKey(R); };
+
+    int IndexA = GetIndex(LeftRarity);
+    int IndexB = GetIndex(RightRarity);
+
+    int Highest = FMath::Max(IndexA, IndexB);
+    int Lowest = FMath::Min(IndexA, IndexB);
+    int Distance = Highest - Lowest;
+
+    int DownIndex = FMath::Clamp(Highest - 1, 0, RarityOrder.Num() - 1);
+    int StayIndex = Highest;
+    int UpIndex = FMath::Clamp(Highest + 1, 0, RarityOrder.Num() - 1);
+
+    ForgeRarity1 = RarityOrder[DownIndex];  
+    ForgeRarity2 = RarityOrder[StayIndex]; 
+    ForgeRarity3 = RarityOrder[UpIndex];   
+
+    float Chance1 = 0.f;
+    float Chance2 = 0.f; 
+    float Chance3 = 0.f; 
+
+    //Same rarity
+    if (IndexA == IndexB)
+    {
+        float Up = UpgradeSameTier[Highest];
+        float RemainingPercent = 100.0f - Up;
+        float Stay = RemainingPercent * 0.6f;
+        float Down = RemainingPercent * 0.4f;
+
+        Chance1 = Down;
+        Chance2 = Stay;
+        Chance3 = Up;
+    }
+    //Different rarity
+    else
+    {
+        float Proximity = 1.f / float(Distance);
+
+        float Up = UpgradeSameTier[Highest] * Proximity * 0.8f;
+        float RemainingPercent = 100.0f - Up;
+        float Stay = RemainingPercent * 0.6f;
+        float Down = RemainingPercent * 0.4f;
+
+        Chance1 = Down;
+        Chance2 = Stay;
+        Chance3 = Up;
+    }
+
+    //Normalize
+    float Total = Chance1 + Chance2 + Chance3;
+    Chance1 = (Chance1 / Total) * 100.f;
+    Chance2 = (Chance2 / Total) * 100.f;
+    Chance3 = (Chance3 / Total) * 100.f;
+
+    ForgeChance1 = Chance1;
+    ForgeChance2 = Chance2;
+    ForgeChance3 = Chance3;
+
+    //Check if textblocks are showing the same rarity and merge
+    bool MergeDownAndStay = (DownIndex == StayIndex);
+    if (MergeDownAndStay)
+    {
+        float Combined = Chance1 + Chance2;
+
+        TB_Odds->SetVisibility(ESlateVisibility::Hidden);
+        TB_Odds1->SetText(FText::FromString(FString::Printf(TEXT("%s: %.1f%%"), *ForgeRarity2, Combined)));
+        TB_Odds2->SetText(FText::FromString(FString::Printf(TEXT("%s: %.1f%%"), *ForgeRarity3, Chance3)));
+    }
+    else
+    {
+        TB_Odds->SetText(FText::FromString(FString::Printf(TEXT("%s: %.1f%%"), *ForgeRarity1, Chance1)));
+        TB_Odds->SetVisibility(ESlateVisibility::Visible);
+        TB_Odds1->SetText(FText::FromString(FString::Printf(TEXT("%s: %.1f%%"), *ForgeRarity2, Chance2)));
+        TB_Odds2->SetText(FText::FromString(FString::Printf(TEXT("%s: %.1f%%"), *ForgeRarity3, Chance3)));
+    }
+
+    TB_Odds1->SetVisibility(ESlateVisibility::Visible);
+    TB_Odds2->SetVisibility(ESlateVisibility::Visible);
+
+    TB_Odds->SetColorAndOpacity(ItemStats::GetRarityDataMap()[ForgeRarity1].Color);
+    TB_Odds1->SetColorAndOpacity(ItemStats::GetRarityDataMap()[ForgeRarity2].Color);
+    TB_Odds2->SetColorAndOpacity(ItemStats::GetRarityDataMap()[ForgeRarity3].Color);
+}
+
+void UInventory::UpdateForgeUI()
+{
+    const bool bLeftFilled = (ForgeItemLeft != nullptr);
+    const bool bRightFilled = (ForgeItemRight != nullptr);
+    const bool bBothFilled = bLeftFilled && bRightFilled;
+
+    Throbber1->SetVisibility(bLeftFilled ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+    Throbber2->SetVisibility(bRightFilled ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+
+    if (bLeftFilled)
+    {
+        TB_ForgeItemLevel1->SetText(FText::AsNumber(ForgeItemLeft->ItemData.Level));
+
+        FSlateBrush Brush;
+        Brush.SetResourceObject(ForgeItemLeft->ItemData.Icon);
+        Brush.ImageSize = FVector2D(75.f, 75.f);
+        Brush.TintColor = FSlateColor(FLinearColor::White);
+        I_ForgeItem1->SetBrush(Brush);
+        B_ForgeItem1->SetBrushColor(ItemStats::GetRarityDataMap()[ForgeItemLeft->GetRarity()].Color);
+    }
+    else
+    {
+        TB_ForgeItemLevel1->SetText(FText::GetEmpty());
+
+        FSlateBrush Brush;
+        Brush.SetResourceObject(nullptr);
+        Brush.ImageSize = FVector2D(75.f, 75.f);
+        Brush.TintColor = FSlateColor(FLinearColor(1, 1, 1, 0)); 
+        I_ForgeItem1->SetBrush(Brush);
+        B_ForgeItem1->SetBrushColor(FLinearColor::Transparent);
+    }
+
+    if (bRightFilled)
+    {
+        TB_ForgeItemLevel2->SetText(FText::AsNumber(ForgeItemRight->ItemData.Level));
+
+        FSlateBrush Brush;
+        Brush.SetResourceObject(ForgeItemRight->ItemData.Icon);
+        Brush.ImageSize = FVector2D(75.f, 75.f);
+        Brush.TintColor = FSlateColor(FLinearColor::White);
+        I_ForgeItem2->SetBrush(Brush);
+        B_ForgeItem2->SetBrushColor(ItemStats::GetRarityDataMap()[ForgeItemRight->GetRarity()].Color);
+    }
+    else
+    {
+        TB_ForgeItemLevel2->SetText(FText::GetEmpty());
+
+        FSlateBrush Brush;
+        Brush.SetResourceObject(nullptr);
+        Brush.ImageSize = FVector2D(75.f, 75.f);
+        Brush.TintColor = FSlateColor(FLinearColor(1, 1, 1, 0));
+        I_ForgeItem2->SetBrush(Brush);
+        B_ForgeItem2->SetBrushColor(FLinearColor::Transparent);
+    }
+
+    FuseBorder->SetVisibility(bBothFilled ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+    TB_Odds->SetVisibility(bBothFilled ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+    TB_Odds1->SetVisibility(bBothFilled ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+    TB_Odds2->SetVisibility(bBothFilled ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
+
+    if (bBothFilled)
+    {
+        UpdateForgeOdds(ForgeItemLeft->ItemData.Rarity, ForgeItemRight->ItemData.Rarity);
+    }
+
+    if (!bLeftFilled || !bRightFilled)
+    {
+        B_ForgeItemResult->SetVisibility(ESlateVisibility::Collapsed);
+        TB_ForgeItemResultLevel->SetText(FText::GetEmpty());
+
+        // Clear icon
+        FSlateBrush ClearBrush;
+        ClearBrush.SetResourceObject(nullptr);
+        ClearBrush.ImageSize = FVector2D(75.f, 75.f);
+        ClearBrush.TintColor = FSlateColor(FLinearColor(1, 1, 1, 0));
+        I_ForgeItemResult->SetBrush(ClearBrush);
+    }
+    if (ForgeItemResult)
+    {
+        B_ForgeItemResult->SetVisibility(ESlateVisibility::Visible);
+
+        FSlateBrush ResultBrush;
+        ResultBrush.SetResourceObject(ForgeItemResult->ItemData.Icon);
+        ResultBrush.ImageSize = FVector2D(75.f, 75.f);
+        ResultBrush.TintColor = FSlateColor(FLinearColor::White);
+        I_ForgeItemResult->SetBrush(ResultBrush);
+        TB_ForgeItemResultLevel->SetText(FText::AsNumber(ForgeItemResult->ItemData.Level));
+        FLinearColor RarityColor = ItemStats::GetRarityDataMap()[ForgeItemResult->GetRarity()].Color;
+        B_ForgeItemResult->SetBrushColor(RarityColor);
+    }
+}
+
 void UInventory::OnEquippedStatsUpdated(const FEquippedStatsSummary& Stats)
 {
     if (TB_Health)       TB_Health->SetText(FText::AsNumber(Stats.TotalHealth));
@@ -425,18 +859,18 @@ void UInventory::OnEquippedStatsUpdated(const FEquippedStatsSummary& Stats)
     if (TB_Dexterity)    TB_Dexterity->SetText(FText::AsNumber(Stats.TotalDexterity));
     if (TB_Strength)     TB_Strength->SetText(FText::AsNumber(Stats.TotalStrength));
     if (TB_Intelligence) TB_Intelligence->SetText(FText::AsNumber(Stats.TotalIntelligence));
-    if (TB_Luck)         TB_Luck->SetText(FText::AsNumber(Stats.TotalLuck));
 
-    if (TB_Username && OwningCharacter)
+    if (OwningCharacter)
     {
+        if (TB_Gold) TB_Gold->SetText(FText::AsNumber(OwningCharacter->GetPlayerGold()));
         if (ARelicRunnersPlayerState* PS = Cast<ARelicRunnersPlayerState>(OwningCharacter->GetPlayerState()))
         {
-            TB_Username->SetText(FText::FromString(PS->GetPlayerName()));
+            if(TB_Username) TB_Username->SetText(FText::FromString(PS->GetPlayerName()));
         }
     }
 
     int NumItems = InventoryComponent->InventoryItems.Num();
-    int MaxSlots = Stats.TotalSlots;
+    int MaxSlots = OwningCharacter->GetPlayerNumInventorySlots();
 
     TB_InventorySlots->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), NumItems, MaxSlots)));
 }

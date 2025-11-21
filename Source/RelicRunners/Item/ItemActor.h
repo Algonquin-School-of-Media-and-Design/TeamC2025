@@ -59,6 +59,8 @@ public:
     class UWidgetComponent* TooltipWidgetComponent;
     UPROPERTY(EditAnywhere)
     TSubclassOf<UUserWidget> TooltipWidgetClass;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UStaticMeshComponent* ItemCoverMesh;
 
 protected:
     // IInteractInterface overrides

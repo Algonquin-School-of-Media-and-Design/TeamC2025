@@ -34,8 +34,6 @@ struct FEquippedStatsSummary
     UPROPERTY(BlueprintReadOnly) int TotalDexterity = 0;
     UPROPERTY(BlueprintReadOnly) int TotalStrength = 0;
     UPROPERTY(BlueprintReadOnly) int TotalIntelligence = 0;
-    UPROPERTY(BlueprintReadOnly) int TotalLuck = 0;
-    UPROPERTY(BlueprintReadOnly) int TotalSlots = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -69,8 +67,12 @@ public:
     EInventorySorting CurrentSortingMethod;
 
     //Functions
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    void RemoveItemByID(FGuid ItemID);
     UFUNCTION(BlueprintCallable)
     void AddItem(UItemObject* Item);
+    UFUNCTION(BlueprintCallable)
+    void RemoveItem(UItemObject* Item);
     void SortInventoryByCurrentMethod();
     UFUNCTION(BlueprintCallable)
     void SwapItems(UItemObject* ItemA, UItemObject* ItemB);
@@ -88,6 +90,8 @@ public:
     void UnequipItem(UItemObject* Item);
     void UpdateTotalEquippedStats(class ARelicRunnersCharacter* Char);
     void UpdateTotalEquippedStats(class AEnemyCharacterAI* Char);
+    UFUNCTION()
+    UItemObject* FindItemByID(FGuid ItemID) const;
     FEquippedStatsSummary CalculateEquippedStats() const;
     FEquippedStatsSummary CachedEquippedStats;
     UFUNCTION()

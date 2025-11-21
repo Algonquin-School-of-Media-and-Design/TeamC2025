@@ -53,11 +53,9 @@ void AVendor::GenerateStock()
 		return;
 	}
 
-	for (int32 i = 0; i < 10; ++i)
+	for (int i = 0; i < 20; ++i)
 	{
-		FVendorEntry Entry;
-		Entry.Item = ItemStats::CreateRandomItemData(ItemMeshData);
-		Stock.Add(Entry);
+		Stock.Add(ItemStats::CreateSpecificItemData(1, ItemStats::GetRandomItemType(), ItemMeshData));
 	}
 }
 
@@ -69,24 +67,36 @@ void AVendor::RerollStock()
 	}
 }
 
-bool AVendor::BuyItemByIndex(int32 Index, ARelicRunnersCharacter* Buyer)
+void AVendor::AddStock(const FItemData& ItemData)
 {
-	return false;
+	if (HasAuthority())
+	{
+		Stock.Add(ItemData);
+		OnRep_Stock();
+	}
 }
 
-bool AVendor::SellItemByGuid(FGuid ItemGuid, ARelicRunnersCharacter* Seller)
+void AVendor::RemoveStock(const FItemData& ItemData)
 {
-	return false;
+	for (int i = 0; i < Stock.Num(); ++i)
+	{
+		if (Stock[i].UniqueID == ItemData.UniqueID)
+		{
+			Stock.RemoveAt(i);
+			OnRep_Stock();
+			return;
+		}
+	}
 }
 
 void AVendor::Interact_Implementation(ARelicRunnersCharacter* Char)
 {
 	if (!Char) return;
 
-	if (APlayerController* PC = Cast<APlayerController>(Char->GetController()))
-	{
-		
-	}
+	Char->InventoryUI();
+	LinkedInventoryWidget = Char->GetInventory();
+	LinkedInventoryWidget->ToggleVendorUI(true);
+	LinkedInventoryWidget->DisplaySelectedVendorItems(Stock, this);
 }
 
 FItemData AVendor::GetItemData_Implementation()
@@ -104,4 +114,12 @@ void AVendor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AVendor, Stock);
+}
+
+void AVendor::OnRep_Stock()
+{
+	if (LinkedInventoryWidget)
+	{
+		LinkedInventoryWidget->DisplaySelectedVendorItems(Stock, this);
+	}
 }

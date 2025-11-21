@@ -20,19 +20,22 @@
 #include "Components/Border.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/TileView.h"
 #include "Components/TextBlock.h"
+#include "Components/CanvasPanel.h"
 #include "SlateBasics.h"
 #include "InventoryToolTip.h"
 #include "InventoryItemOptions.h"
 #include "InventorySortingOptions.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include <Blueprint/WidgetBlueprintLibrary.h>
+#include "InventoryDragOperation.h"
 #include "RelicRunners/Item/ItemStats.h"
 #include "RelicRunners/Item/ItemData.h"
 #include "Inventory.h"
 #include <RelicRunners/PlayerController/RelicRunnersPlayerController.h>
 #include "InventoryComponent.h"
 #include <RelicRunners/RelicRunnersCharacter.h>
-#include <Blueprint/WidgetBlueprintLibrary.h>
 
 void UInventorySlotsEntry::NativeConstruct()
 {
@@ -46,6 +49,8 @@ void UInventorySlotsEntry::NativeOnListItemObjectSet(UObject* ListItemObject)
     Item = Cast<UItemObject>(ListItemObject);
     if (!Item) return;
 
+    ParentInventory = GetTypedOuter<UInventory>();
+
     TB_Level->SetText(FText::FromString(FString::FromInt(Item->GetLevel())));
     TB_Level->SetColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1));
 
@@ -53,13 +58,7 @@ void UInventorySlotsEntry::NativeOnListItemObjectSet(UObject* ListItemObject)
     FLinearColor ItemFrameColor = ItemStats::GetRarityDataMap()[Item->GetRarity()].Color;
     B_Item->SetBrushColor(ItemFrameColor);
     B_Color->SetBrushColor(ItemFrameColor);
-
-    // Load and assign icon texture
-    FString ImagePath = FString::Printf(TEXT("Texture2D'/Game/ThirdPerson/Icons/%s.%s'"), *Item->GetItemType(), *Item->GetItemType());
-    if (UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *ImagePath)))
-    {
-        I_Item->SetBrushFromTexture(Texture);
-    }
+    I_Item->SetBrushFromTexture(Item->ItemData.Icon);
 }
 
 FReply UInventorySlotsEntry::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -99,11 +98,23 @@ void UInventorySlotsEntry::NativeOnDragDetected(const FGeometry& InGeometry, con
     if (!Item) return;
 
     IsDragging = true;
-
-    UDragDropOperation* DragOp = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
+    
+    //Start drag operation
+    UInventoryDragOperation* DragOp = NewObject<UInventoryDragOperation>();
     DragOp->Payload = Item;
     DragOp->DefaultDragVisual = this;
     DragOp->Pivot = EDragPivot::MouseDown;
+
+    //Get starting location 
+    UTileView* TileView = Cast<UTileView>(GetOwningListView());
+    if (TileView->GetName() == "InventorySlots")
+    {
+        DragOp->FromWhere = UInventoryDragOperation::Locations::Inventory;
+    }
+    else if (TileView->GetName() == "VendorSlots")
+    {
+        DragOp->FromWhere = UInventoryDragOperation::Locations::Shop;
+    }
     OutOperation = DragOp;
 }
 
@@ -147,13 +158,40 @@ void UInventorySlotsEntry::OnEntryClicked()
     UInventorySortingOptions::CloseAnyOpenPopup();
 
     if (!InventoryItemOptionsClass || !Item) return;
+    
+    //Determining if vendor is active and which tileview its part of.
+    bool VendorActive = false;
+    if (ParentInventory)
+    {
+        if (ParentInventory->VendorCanvas->IsVisible())
+        {
+            VendorActive = true;
+        }
+    }
+
+    UTileView* TileView = Cast<UTileView>(GetOwningListView());
 
     UInventoryItemOptions* Popup = CreateWidget<UInventoryItemOptions>(GetWorld(), InventoryItemOptionsClass);
     if (Popup)
     {
         Popup->AddToViewport();
         Popup->Setup(Item);
-        Popup->ConfigureButtons(true, false, false, false);
+
+        if (VendorActive)
+        {
+            if (TileView->GetName() == "InventorySlots")
+            {
+                Popup->ConfigureButtons(true, false, true, false);
+            }
+            else if (TileView->GetName() == "VendorSlots")
+            {
+                Popup->ConfigureButtons(false, false, false, true);
+            }
+        }
+        else
+        {
+            Popup->ConfigureButtons(true, false, false, false);
+        }
 
         FVector2D ScreenPosition;
         UWidgetLayoutLibrary::GetMousePositionScaledByDPI(GetWorld()->GetFirstPlayerController(), ScreenPosition.X, ScreenPosition.Y);

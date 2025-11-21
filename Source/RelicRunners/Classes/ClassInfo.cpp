@@ -11,7 +11,6 @@ FClassData UClassInfo::GetMaxStats() const
 	MaxValues.Dexterity = 0.f;
 	MaxValues.Strength = 0.f;
 	MaxValues.Intelligence = 0.f;
-	MaxValues.Luck = 0.f;
 
 	for (const auto& Pair : Classes)
 	{
@@ -22,7 +21,6 @@ FClassData UClassInfo::GetMaxStats() const
 		MaxValues.Dexterity = FMath::Max(MaxValues.Dexterity, Info.Dexterity);
 		MaxValues.Strength = FMath::Max(MaxValues.Strength, Info.Strength);
 		MaxValues.Intelligence = FMath::Max(MaxValues.Intelligence, Info.Intelligence);
-		MaxValues.Luck = FMath::Max(MaxValues.Luck, Info.Luck);
 	}
 
 	return MaxValues;

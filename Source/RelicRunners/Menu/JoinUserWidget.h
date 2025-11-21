@@ -94,9 +94,6 @@ public:
 	class UProgressBar* IntelligenceBar = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UProgressBar* LuckBar = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* TB_ClassName = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -146,9 +143,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* TB_Intelligence = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* TB_Luck = nullptr;
 
 	UFUNCTION()
 	void UpdateFindGamesButtonVisibility();

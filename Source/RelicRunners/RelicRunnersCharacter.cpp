@@ -43,6 +43,7 @@
 #include "Inventory/InventorySortingOptions.h"
 #include "Item/ItemStats.h"
 #include "Item/ItemActor.h"
+#include "RelicRunners/Vendor/Vendor.h"
 #include "Interact/InteractInterface.h"
 #include "Menu/PauseMenu.h"
 #include "AbilitySystem/AbilityPointCounter.h"
@@ -156,30 +157,32 @@ ARelicRunnersCharacter::ARelicRunnersCharacter()
 	//Inventory
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetIsReplicated(true);
-	
-	//Starting Stats
+	PlayerNumInventorySlots = 20;
+	//Health
 	PlayerStartingMaxHealth = 100;
 	PlayerMaxHealth = PlayerStartingMaxHealth;
 	PlayerHealth = 20;
+	//Resource
 	PlayerStartingMaxResource = 100;
 	PlayerMaxResource = PlayerStartingMaxResource;
 	PlayerResource = PlayerMaxResource;
+	//Level
 	PlayerLevel = 1;
 	PlayerXP = 0;
 	PlayerXPToLevel = 100;
+	//Stats
 	PlayerStartingArmor = 0;
 	PlayerStartingDexterity = 0;
 	PlayerStartingStrength = 0;
 	PlayerStartingIntelligence = 0;
-	PlayerStartingLuck = 0;
 	PlayerArmor = 0;
 	PlayerDexterity = 0;
 	PlayerStrength = 0;
 	PlayerIntelligence = 0;
-	PlayerLuck = 0;
 	PlayerAbilityPoints = 2;
-	PlayerNumInventorySlots = 20;
-
+	//Gold
+	PlayerStartingGold = 0;
+	PlayerGold = PlayerStartingGold;
 	//Potions
 	HealthPotionCount = 3;
 	HealthGranted = 0.5;
@@ -205,6 +208,7 @@ void ARelicRunnersCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXP);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerXPToLevel);
 	DOREPLIFETIME(ARelicRunnersCharacter, PlayerAbilityPoints);
+	DOREPLIFETIME(ARelicRunnersCharacter, PlayerGold);
 
 	//equipped items
 	DOREPLIFETIME(ARelicRunnersCharacter, ReplicatedArmsMesh);
@@ -272,6 +276,11 @@ void ARelicRunnersCharacter::Server_UnequipItemByID_Implementation(FGuid ID)
 void ARelicRunnersCharacter::Server_SetReplicatedMeshByItemType_Implementation(UObject* MeshAsset, const FString& ItemType)
 {
 	SetReplicatedMeshByItemType(MeshAsset, ItemType);
+}
+
+void ARelicRunnersCharacter::OnRep_PlayerGold()
+{
+	InventoryComponent->UpdateTotalEquippedStats(this);
 }
 
 void ARelicRunnersCharacter::OnRep_UpperMesh()
@@ -367,6 +376,7 @@ void ARelicRunnersCharacter::AddExperience(int Amount)
 	{
 		OnLevelUp();
 	}
+	UpdateHUD();
 }
 
 void ARelicRunnersCharacter::OnLevelUp()
@@ -382,7 +392,6 @@ void ARelicRunnersCharacter::OnLevelUp()
 	PlayerStartingDexterity++;
 	PlayerStartingStrength++;
 	PlayerStartingIntelligence++;
-	PlayerStartingLuck++;
 
 	//current health / max health
 	PlayerMaxHealth++;
@@ -397,7 +406,6 @@ void ARelicRunnersCharacter::OnLevelUp()
 	PlayerDexterity++;
 	PlayerStrength++;
 	PlayerIntelligence++;
-	PlayerLuck++;
 	PlayerNumInventorySlots++;
 
 	//ability points
@@ -625,9 +633,9 @@ void ARelicRunnersCharacter::SpawnStarterItems()
 {
 	if (ItemMeshData && InventoryComponent)
 	{
-		for (int i = 0; i < 50; ++i)
+		for (int i = 0; i < 1000; ++i)
 		{
-			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateRandomItemData(ItemMeshData), InventoryComponent);
+			UItemObject* Item = ItemStats::CreateItemFromData(ItemStats::CreateSpecificItemData(1, ItemStats::GetRandomItemType(), ItemMeshData), InventoryComponent);
 			InventoryComponent->AddItem(Item);
 		}
 	}
@@ -651,8 +659,6 @@ void ARelicRunnersCharacter::TraceForInteractables()
 {
 	if (!IsLocallyControlled()) return;
 
-	//const FVector PlayerLocation = FollowCamera->GetComponentLocation();
-	//const FVector PlayerForward = FollowCamera->GetForwardVector();
 	const FVector PlayerLocation = GetActorLocation();
 	const FVector PlayerForward = FollowCamera->GetForwardVector();
 
@@ -895,7 +901,7 @@ void ARelicRunnersCharacter::Interact()
 	}
 }
 
-void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget, bool bClosePopups = false)
+void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget)
 {
 	if (!IsLocallyControlled() || !UIWidget) return;
 
@@ -920,7 +926,7 @@ void ARelicRunnersCharacter::ToggleUI(UUserWidget* UIWidget, bool bClosePopups =
 	}
 	PlayerController->SetShowMouseCursor(bEnable);
 
-	if (bClosePopups && UIWidget == Inventory)
+	if (UIWidget == Inventory)
 	{
 		UInventoryItemOptions::CloseAnyOpenPopup();
 		UInventorySortingOptions::CloseAnyOpenPopup();
@@ -931,7 +937,8 @@ void ARelicRunnersCharacter::InventoryUI()
 {
 	if (!Inventory) return;
 	RemoveOtherUI("Inventory", Cast<APlayerController>(Controller));
-	ToggleUI(Inventory, true);
+	ToggleUI(Inventory);
+	Inventory->ToggleVendorUI(false);
 }
 
 void ARelicRunnersCharacter::PauseUI()
@@ -1078,6 +1085,69 @@ void ARelicRunnersCharacter::Server_SetMaxHealth_Implementation(int health)
 {
 	PlayerMaxHealth = health;
 	UpdateHUD();
+}
+
+void ARelicRunnersCharacter::AddGold(int Value)
+{
+	Server_AddGold(Value);
+}
+
+void ARelicRunnersCharacter::Server_AddGold_Implementation(int Value)
+{
+	PlayerGold += Value;
+	InventoryComponent->UpdateTotalEquippedStats(this);
+}
+
+bool ARelicRunnersCharacter::CheckEnoughGold(int Value)
+{
+	if (PlayerGold >= Value)
+	{
+		PlayerGold -= Value;
+		InventoryComponent->UpdateTotalEquippedStats(this);
+		return true;
+	}
+	return false;
+}
+
+void ARelicRunnersCharacter::Server_BuyItem_Implementation(const FItemData& ItemData, AVendor* Vendor)
+{
+	if (!Vendor || !InventoryComponent) return;
+
+	if (!CheckEnoughGold(ItemData.Gold)) return;
+
+	UItemObject* NewItem = ItemStats::CreateItemFromData(ItemData);
+	InventoryComponent->AddItem(NewItem);
+	Vendor->RemoveStock(ItemData);
+
+	//Get client to update its inventory
+	Client_UpdateVendorUI(Vendor);
+}
+
+void ARelicRunnersCharacter::Server_SellItem_Implementation(const FItemData& ItemData, AVendor* Vendor)
+{
+	if (!Vendor || !InventoryComponent) return;
+
+	// Unequip if equipped
+	UItemObject* EquippedItem = InventoryComponent->GetEquippedItemReference(ItemData.ItemType);
+	if (EquippedItem && EquippedItem->ItemData.UniqueID == ItemData.UniqueID)
+	{
+		InventoryComponent->UnequipItem(EquippedItem);
+	}
+
+	InventoryComponent->RemoveItemByID(ItemData.UniqueID);
+	AddGold(ItemData.Gold);
+	Vendor->AddStock(ItemData);
+
+	//Get client to update its inventory
+	Client_UpdateVendorUI(Vendor);
+}
+
+void ARelicRunnersCharacter::Client_UpdateVendorUI_Implementation(AVendor* Vendor)
+{
+	if (Inventory)
+	{
+		Inventory->DisplaySelectedVendorItems(Vendor->GetStock(), Vendor);
+	}
 }
 
 void  ARelicRunnersCharacter::SetInventoryComponent(UInventoryComponent* InvComp)
@@ -1268,7 +1338,6 @@ void ARelicRunnersCharacter::UpdateHUD()
 			PlayerXP,
 			PlayerXPToLevel
 		);
-
 	}
 
 	if (AbilityPointCounter)

@@ -51,19 +51,41 @@ public:
 	class ARelicRunnersCharacter* OwningCharacter;
 	UPROPERTY()
 	class UInventoryComponent* LocalInventory;
+	class AVendor* CurrentVendor;
+	UPROPERTY()
+	class UItemObject* ForgeItemLeft = nullptr;
+	UPROPERTY()
+	class UItemObject* ForgeItemRight = nullptr;
+	UPROPERTY()
+	class UItemObject* ForgeItemResult = nullptr;
+	FString ForgeRarity1;
+	FString ForgeRarity2;
+	FString ForgeRarity3;
+	float ForgeChance1;
+	float ForgeChance2;
+	float ForgeChance3;
 
 	//Functions
 	virtual void NativeConstruct() override;
+	void ToggleVendorUI(bool value);
+	void DisplaySelectedVendorItems(const TArray<struct FItemData>& Items, AVendor* Vendor);
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	void SetForgeTooltip(class UImage* IconWidget, class UBorder* BorderWidget, class UItemObject* Item);
+	FString RollForgeRarity(const FString R1, float C1, const FString R2, float C2, const FString R3, float C3);
+	void UpdateForgeOdds(const FString& LeftRarity, const FString& RightRarity);
+	void UpdateForgeUI();
 	virtual FReply NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	FSlotUIComponents GetUIComponentsForItemType(const FString& ItemType);
 	void UpdateButtonWithTooltip(class UItemObject* Item, const FString& itemType, class UInventoryToolTip* ToolTip, const FLinearColor& Color);
 	void SetInventoryComponent(UInventoryComponent* NewComponent);
 	void SetPreviewActorImage(class UTextureRenderTarget2D* RenderTarget);
 	static UInventory* Get(UObject* Context);
-	void UnequipItem(UItemObject* Item);
+	void UnequipItem(class UItemObject* Item);
 	void EquipItem(class UItemObject* Item);
 	void DropItem(class UItemObject* Item);
+	void BuyItem(class UItemObject* Item);
+	void SellItem(class UItemObject* Item);
 	void OnEquippedSlotClick(class UItemObject* EquippedItem);
 	UFUNCTION()
 	void RefreshInventoryUI();
@@ -89,17 +111,76 @@ public:
 	void OffhandlotClicked();
 	UFUNCTION()
 	void SortingTypeClicked();
-
+	UFUNCTION()
+	void OnFuseButtonPressed();
 
 	//UI Elements
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTileView* InventorySlots;
-
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UVerticalBox* InventorySide;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTileView* VendorSlots;
 
 	UPROPERTY(meta = (BindWidget))
 	class UCanvasPanel* VendorCanvas;
+
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	class UWidgetAnimation* ForgeCompleted;
+
+	UPROPERTY(meta = (BindWidget))
+	class UHorizontalBox* ForgeBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* FuseButton;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_ForgeItemLevel1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_ForgeItemResultLevel;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_ForgeItemLevel2;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* I_ForgeItem1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* I_ForgeItemResult;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* I_ForgeItem2;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* B_ForgeItem1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* B_ForgeItem2;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* B_ForgeItemResult;
+
+	UPROPERTY(meta = (BindWidget))
+	class UThrobber* Throbber1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UThrobber* Throbber2;
+
+	UPROPERTY(meta = (BindWidget))
+	class UHorizontalBox* ShopBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* FuseBorder;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_Odds;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_Odds1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TB_Odds2;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_InventorySlots;
@@ -115,8 +196,6 @@ public:
 	class UTextBlock* TB_Strength;
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Intelligence;
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* TB_Luck;
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TB_Gold;
 	UPROPERTY(meta = (BindWidget))

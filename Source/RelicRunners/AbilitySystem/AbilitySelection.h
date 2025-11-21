@@ -65,7 +65,6 @@ public:
 		Dexterity      UMETA(DisplayName = "Dexterity"),
 		Strength       UMETA(DisplayName = "Strength"),
 		Intelligence   UMETA(DisplayName = "Intelligence"),
-		Luck		   UMETA(DisplayName = "Luck")
 	};
 
 	struct StatBuff
@@ -90,7 +89,6 @@ public:
 		Dexterity1     UMETA(DisplayName = "Dexterity"),
 		Strength1       UMETA(DisplayName = "Strength"),
 		Intelligence1   UMETA(DisplayName = "Intelligence"),
-		Luck1		   UMETA(DisplayName = "Luck")
 	};
 
 

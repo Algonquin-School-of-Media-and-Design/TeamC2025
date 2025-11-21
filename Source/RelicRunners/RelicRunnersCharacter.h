@@ -126,7 +126,7 @@ public:
 	void MoveInDirection(EAxis::Type Axis, float Value);
 	void Look(const FInputActionValue& Value);
 	void Interact();
-	void ToggleUI(UUserWidget* UIWidget, bool bClosePopups);
+	void ToggleUI(UUserWidget* UIWidget);
 	void InventoryUI();
 	void PauseUI();
 	void AbilitySystemUI();
@@ -171,9 +171,6 @@ public:
 	void SetPlayerStartingIntelligence(int StartingIntelligence) { PlayerStartingIntelligence = StartingIntelligence; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
-	void SetPlayerStartingLuck(int StartingLuck) { PlayerStartingLuck = StartingLuck; }
-
-	UFUNCTION(BlueprintCallable, Category = "Stats")
 	void SetPlayerStartingHealth(int StartingHealth) { PlayerStartingMaxHealth = StartingHealth; }
 
 	UFUNCTION(BlueprintCallable, Category = "Stats")
@@ -198,7 +195,25 @@ public:
 	int GetPlayerStartingIntelligence() const { return PlayerStartingIntelligence; }
 
 	UFUNCTION()
-	int GetPlayerStartingLuck() const { return PlayerStartingLuck; }
+	int GetPlayerGold() const { return PlayerGold; }
+
+	UFUNCTION()
+	void AddGold(int Value);
+
+	UFUNCTION(Server, Reliable)
+	void Server_AddGold(int Value);
+
+	UFUNCTION()
+	bool CheckEnoughGold(int Value);
+
+	UFUNCTION(Server, Reliable)
+	void Server_BuyItem(const FItemData& ItemData, class AVendor* Vendor);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SellItem(const FItemData& ItemData, class AVendor* Vendor);
+
+	UFUNCTION(Client, Reliable)
+	void Client_UpdateVendorUI(class AVendor* Vendor);
 
 	class UInventory* GetInventory() { return Inventory; };
 
@@ -330,6 +345,8 @@ protected:
 	//Replication
 	UFUNCTION()
 	void OnRep_HUD();
+	UFUNCTION()
+	void OnRep_PlayerGold();
 
 	//Stats
 	UPROPERTY()
@@ -350,6 +367,8 @@ protected:
 	int PlayerLevel;
 	UPROPERTY(ReplicatedUsing = OnRep_HUD)
 	int PlayerAbilityPoints;
+	UPROPERTY(ReplicatedUsing = OnRep_PlayerGold, BlueprintReadOnly, Category = "Player")
+	int PlayerGold;
 	UPROPERTY()
 	int PlayerArmor;
 	UPROPERTY()
@@ -358,8 +377,6 @@ protected:
 	int PlayerStrength;
 	UPROPERTY()
 	int PlayerIntelligence;
-	UPROPERTY()
-	int PlayerLuck;
 	UPROPERTY()
 	int PlayerStartingMaxHealth;
 	UPROPERTY()
@@ -373,8 +390,7 @@ protected:
 	UPROPERTY()
 	int PlayerStartingIntelligence;
 	UPROPERTY()
-	int PlayerStartingLuck;
-
+	int PlayerStartingGold;
 	UPROPERTY()
 	int HealthPotionCount;   
 	UPROPERTY()

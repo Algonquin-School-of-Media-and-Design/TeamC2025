@@ -70,6 +70,23 @@ void UInventoryComponent::AddItem(UItemObject* Item)
     OnInventoryChanged.Broadcast();
 }
 
+void UInventoryComponent::RemoveItem(UItemObject* Item)
+{
+    if (!Item) return;
+
+    for (int i = 0; i < InventoryItems.Num(); i++)
+    {
+        if (InventoryItems[i] && InventoryItems[i]->ItemData.UniqueID == Item->ItemData.UniqueID)
+        {
+            InventoryItems.RemoveAt(i);
+            SortInventoryByCurrentMethod();
+            OnInventoryChanged.Broadcast();
+            return;
+        }
+    }
+}
+
+
 void UInventoryComponent::OnRep_SortingMethod()
 {
     HandleSortingNow(); // Show sorted inventory on client UI
@@ -333,6 +350,44 @@ void UInventoryComponent::UpdateTotalEquippedStats(AEnemyCharacterAI* Char)
     OnStatsChanged.Broadcast(Stats);
 }
 
+UItemObject* UInventoryComponent::FindItemByID(FGuid ID) const
+{
+    //Check inventory items
+    for (UItemObject* Item : InventoryItems)
+    {
+        if (Item && Item->ItemData.UniqueID == ID)
+        {
+            return Item;
+        }
+    }
+
+    //Check equipped items
+    for (const FEquippedItemEntry& Entry : EquippedItems)
+    {
+        if (Entry.Item && Entry.Item->ItemData.UniqueID == ID)
+        {
+            return Entry.Item;
+        }
+    }
+
+    return nullptr;
+}
+
+void UInventoryComponent::RemoveItemByID(FGuid ItemID)
+{
+    for (int i = 0; i < InventoryItems.Num(); ++i)
+    {
+        UItemObject* Item = InventoryItems[i];
+        if (Item && Item->ItemData.UniqueID == ItemID)
+        {
+            InventoryItems.RemoveAt(i);
+            OnInventoryChanged.Broadcast();
+            return; 
+        }
+    }
+}
+
+
 FEquippedStatsSummary UInventoryComponent::CalculateEquippedStats() const
 {
     FEquippedStatsSummary Summary;
@@ -340,12 +395,10 @@ FEquippedStatsSummary UInventoryComponent::CalculateEquippedStats() const
     if (const ARelicRunnersCharacter* OwnerChar = Cast<ARelicRunnersCharacter>(GetOwner()))
     {
         Summary.TotalHealth = OwnerChar->GetPlayerStartingMaxHealth();
-        Summary.TotalSlots = OwnerChar->GetPlayerNumInventorySlots();
         Summary.TotalArmor = OwnerChar->GetPlayerStartingArmor();
         Summary.TotalDexterity = OwnerChar->GetPlayerStartingDexterity();
         Summary.TotalStrength = OwnerChar->GetPlayerStartingStrength();
         Summary.TotalIntelligence = OwnerChar->GetPlayerStartingIntelligence();
-        Summary.TotalLuck = OwnerChar->GetPlayerStartingLuck();
     }
 
     for (const FEquippedItemEntry& Entry : EquippedItems)
@@ -357,8 +410,6 @@ FEquippedStatsSummary UInventoryComponent::CalculateEquippedStats() const
             Summary.TotalDexterity += Item->ItemData.Dexterity;
             Summary.TotalStrength += Item->ItemData.Strength;
             Summary.TotalIntelligence += Item->ItemData.Intelligence;
-            Summary.TotalLuck += Item->ItemData.Luck;
-            Summary.TotalSlots += Item->ItemData.Slots;
         }
     }
 

@@ -55,12 +55,6 @@ public:
     int Intelligence = 0;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    int Luck = 0;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    int Slots = 0;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
     int Gold = 0;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere)
@@ -112,12 +106,6 @@ public:
 
     UFUNCTION(BlueprintCallable)
     int GetIntelligence() const { return ItemData.Intelligence; }
-
-    UFUNCTION(BlueprintCallable)
-    int GetLuck() const { return ItemData.Luck; }
-
-    UFUNCTION(BlueprintCallable)
-    int GetSlots() const { return ItemData.Slots; }
 
     UFUNCTION(BlueprintCallable)
     FGuid GetUniqueID() const { return ItemData.UniqueID; }
