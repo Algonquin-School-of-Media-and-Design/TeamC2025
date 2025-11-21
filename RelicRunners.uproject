@@ -13,8 +13,7 @@
 				"Engine",
 				"AIModule",
 				"CoreUObject",
-				"GameplayAbilities",
-				"ViewportInteraction"
+				"GameplayAbilities"
 			]
 		}
 	],
