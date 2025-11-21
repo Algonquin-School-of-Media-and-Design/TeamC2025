@@ -60,6 +60,7 @@ public:
 	// Sets default values for this character's properties
 	AEnemyCharacter();
 
+	//method to make sure we are setting up replication properly
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Override of AActor's TakeDamage function to handle damage to the enemy."))
@@ -80,28 +81,28 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Getter for the current health.", ShortToolTip = "Getter for the current health."))
 	//Getter for the current health
-	const float GetCurrentHealth() { return CurrentHealth; }
+	float GetCurrentHealth() const { return CurrentHealth; }
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Getter for the max health.", ShortToolTip = "Getter for the max health."))
 	//Getter for the max health
-	const float GetMaxHealth() { return MaxHealth; }
+	float GetMaxHealth() const { return MaxHealth; }
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Getter for the remaining stun time.", ShortToolTip = "Getter for the remaining stun time."))
 	//Getter for the remaining stun time
-	const float GetStunTime() { return RemainingStunTime; }
+	float GetStunTime() const { return RemainingStunTime; }
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Getter for the current level.", ShortToolTip = "Getter for the current level."))
 	//Getter for the current level
-	const int GetEnemyLevel() { return Level; }
+	int GetEnemyLevel() const { return Level; }
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Getter for the enemy type.", ShortToolTip = "Getter for the enemy type."))
 	//Getter for the enemy type
-	const EEnemyType GetEnemyType() { return TypeOfEnemy; }
+	EEnemyType GetEnemyType() const { return TypeOfEnemy; }
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Getter for the current resource.", ShortToolTip = "Getter for the current resource."))
 	//Getter for the current resource
-	int GetEnemyResource() { return EnemyResource; }
+	int GetEnemyResource() const { return EnemyResource; }
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Getter for the max resource.", ShortToolTip = "Getter for the max resource."))
 	//Getter for the max resource
-	int GetEnemyMaxResource() { return EnemyMaxResource; }
+	int GetEnemyMaxResource() const { return EnemyMaxResource; }
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "Getter for the enemy name.", ShortToolTip = "Getter for the enemy name."))
 	//Getter for the enemy name
-	FName GetEnemyName() { return EnemyName; }
+	FName GetEnemyName() const { return EnemyName; }
 
 	UFUNCTION(BlueprintCallable, BlueprintSetter, meta = (ToolTip = "Getter for the current health.", ShortToolTip = "Getter for the current health."))
 	//Setter for the current health
