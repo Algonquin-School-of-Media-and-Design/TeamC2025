@@ -10,42 +10,35 @@ UEarthquakeAbility::UEarthquakeAbility()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
-    if (Duration <= 0.f) Duration = 8.0f;
-    if (CooldownDuration <= 0.f) CooldownDuration = 10.0f;
-
+    Duration = 8.0f;
+    CooldownDuration = 5.0f;
     ConeAngle = 90.f;
 
 }
 
 void UEarthquakeAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-    if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+
+    if (bIsOnCooldown)
     {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+        if (GEngine)
+            GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, TEXT("Earthquake ON COOLDOWN"));
         return;
     }
 
-    const FGameplayAbilityActorInfo* CurrentInfo = GetCurrentActorInfo();
-    if (!CurrentInfo || !CurrentInfo->AvatarActor.IsValid())
-    {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
-    }
+    bIsOnCooldown = true; 
 
-    AActor* AvatarActor = CurrentInfo->AvatarActor.Get();
-    if (!AvatarActor)
-    {
-        EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-        return;
-    }
+    AActor* AvatarActor = ActorInfo->AvatarActor.Get();
+    if (!AvatarActor) return;
 
-    CachedActivationInfo = ActivationInfo;
-
-    bIsActive = true;
 
     ApplyDamageAndStun();
 
-    EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+    if (UWorld* World = AvatarActor->GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(CooldownTimerHandle);
+        World->GetTimerManager().SetTimer(CooldownTimerHandle, [this](){bIsOnCooldown = false;if (GEngine)GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Green, TEXT("Earthquake READY"));}, CooldownDuration,false);
+    }
 
 }
 
@@ -109,13 +102,5 @@ void UEarthquakeAbility::ApplyDamageAndStun()
 
 void UEarthquakeAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-    if (ActorInfo && ActorInfo->AvatarActor.IsValid())
-    {
-        AActor* AvatarActor = ActorInfo->AvatarActor.Get();
-    }
-
-    bIsActive = false;
-    bIsOnCooldown = true;
-
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
