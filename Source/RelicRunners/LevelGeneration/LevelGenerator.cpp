@@ -7,9 +7,9 @@
 #include "Net/UnrealNetwork.h"
 #include "PackedLevelActor/PackedLevelActor.h"
 #include "LevelChangeTrigger.h"
+#include "PayloadActor.h"
 #include "NavigationSystem.h"
 #include "RelicRunners/RelicRunnersGameState.h"
-
 /*
 TODO:
 Teleport every player to the starting point when the level starts
@@ -31,14 +31,16 @@ ALevelGenerator::ALevelGenerator() :
 	BasicObstaclePercentage(50.0f),
 	CenterForceFull(0),
 	BorderForceFull(0),
-	MaxCapturableFlagAmount(0),
-	MaxEnemyZoneAmount(0),
 	LevelStartPackedActor(nullptr),
 	LevelEndPackedActor(nullptr),
 	FullPiece(nullptr),
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
-	ConvexCornerPiece(nullptr)
+	ConvexCornerPiece(nullptr),
+	MaxCapturableFlagAmount(0),
+	MaxEnemyZoneAmount(0),
+	PayloadActor(nullptr),
+	PayloadMovementSpeed(1.0f)
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -67,11 +69,6 @@ ALevelGenerator::ALevelGenerator() :
 void ALevelGenerator::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-}
-
-void ALevelGenerator::BeginPlay()
-{
-	Super::BeginPlay();
 
 	if (HasAuthority())
 	{
@@ -139,7 +136,7 @@ void ALevelGenerator::BeginPlay()
 				CreateFloor();
 
 			}
-				MipMap.BulkData.Unlock();
+			MipMap.BulkData.Unlock();
 		}
 		else
 		{
@@ -154,6 +151,7 @@ void ALevelGenerator::BeginPlay()
 			//Initialize the starting and ending tiles.
 			int startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 			int endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
 
 			//If somehow both are at the exact same index, reinitialize starting and ending tiles
 			while (startingIndex == endingIndex)
@@ -176,7 +174,13 @@ void ALevelGenerator::BeginPlay()
 				//Override starting and ending tiles initialized above and create a path from one to the other.
 				SetStartingAndEndingPoints(startingIndex, endingIndex);
 
-				FindStartToEndPath(startingIndex, endingIndex, SpawnWidth);
+				FindStartToEndPath(startingIndex, endingIndex, SpawnWidth, true);
+
+				if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload) && PayloadActor != nullptr)
+				{
+					APayloadActor* payload = GetWorld()->SpawnActor<APayloadActor>(PayloadActor, FVector::ZeroVector, FRotator::ZeroRotator);
+					payload->Initialize(DeliverySpline, PayloadMovementSpeed);
+				}
 			}
 
 			//Override previously initialized tiles with capturable flag tiles
@@ -271,13 +275,18 @@ void ALevelGenerator::BeginPlay()
 		enumName.Add(TEXT("Defeat all anemies"));
 	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DefendTheCrystal))
 		enumName.Add(TEXT("Defend the crystal"));
-	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DeliverPackage))
+	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload))
 		enumName.Add(TEXT("Deliver package"));
 
 	for (FString& value : enumName)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Current Objective:")) + value);
 	}
+}
+
+void ALevelGenerator::BeginPlay()
+{
+	Super::BeginPlay();
 
 	//Navmesh stuff. Thanks Konstantin
 	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
@@ -430,6 +439,66 @@ void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex, int
 		if (!(bReachEndX && bReachEndY))
 		{
 			ForceFloorBool(true, currentX, currentY, width);
+		}
+	}
+}
+
+void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex, int width, bool implementSpline)
+{
+	int currentX = startingIndex % width;
+	int currentY = startingIndex / width;
+
+	int targetX = targetIndex % width;
+	int targetY = targetIndex / width;
+
+	bool bReachEndX = currentX == targetX;
+
+	bool bReachEndY = currentY == targetY;
+
+	bool bValueHasChanged = false;
+	//To avoid repetition, randomly picks between moving horizontally or vertically closer to the target
+	while (!(bReachEndX && bReachEndY))
+	{
+		float random = FMath::FRandRange(0.0f, 100.0f);
+
+		if (random >= 50.0f)
+		{
+			if (currentX > targetX)
+			{
+				currentX--;
+				bValueHasChanged = true;
+			}
+			else if (currentX < targetX)
+			{
+				currentX++;
+				bValueHasChanged = true;
+			}
+		}
+		else
+		{
+			if (currentY > targetY)
+			{
+				currentY--;
+				bValueHasChanged = true;
+			}
+			else if (currentY < targetY)
+			{
+				currentY++;
+				bValueHasChanged = true;
+			}
+		}
+
+		bReachEndX = currentX == targetX;
+		bReachEndY = currentY == targetY;
+		if (!(bReachEndX && bReachEndY))
+		{
+			ForceFloorBool(true, currentX, currentY, width);
+
+			if (implementSpline && bValueHasChanged && EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload))
+			{
+				DeliverySpline->AddSplinePoint(FVector((TileScale * currentX * 4) + TileScale, (TileScale * currentY * 4) + TileScale, TileScale), ESplineCoordinateSpace::World);
+				bValueHasChanged = false;
+			}
 		}
 	}
 }
@@ -848,13 +917,13 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 	switch (FloorValuesArray[index].FloorObstacle)
 	{
 	case EFloorObstacle::Basic:
-		if (PackedActorArray[FloorValuesArray[index].randomFloorToSpawn] != nullptr)
+		if (PackedActorArray.IsValidIndex(FloorValuesArray[index].randomFloorToSpawn))
 		{
 			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedActorArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
 		break;
 	case EFloorObstacle::Hole:
-		if (HoleTilePackedActorArray[FloorValuesArray[index].randomFloorToSpawn] != nullptr)
+		if (HoleTilePackedActorArray.IsValidIndex(FloorValuesArray[index].randomFloorToSpawn))
 		{
 			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(HoleTilePackedActorArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
@@ -866,7 +935,7 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 			{
 				int randIndex = FMath::RandRange(0, CapturableFlagPackedActorArray.Num() - 1);
 
-				if (CapturableFlagPackedActorArray[randIndex] != nullptr)
+				if (CapturableFlagPackedActorArray.IsValidIndex(randIndex))
 				{
 					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(CapturableFlagPackedActorArray[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
 				}
@@ -880,7 +949,7 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 			{
 				int randIndex = FMath::RandRange(0, EnemyZonePackedActorArray.Num() - 1);
 
-				if (EnemyZonePackedActorArray[randIndex] != nullptr)
+				if (EnemyZonePackedActorArray.IsValidIndex(randIndex))
 				{
 					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(EnemyZonePackedActorArray[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
 				}
@@ -892,6 +961,12 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 		{
 			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelStartPackedActor, posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
+
+		if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload))
+		{
+			DeliverySpline->SetLocationAtSplinePoint(0, posOffset, ESplineCoordinateSpace::World);
+		}
+
 		break;
 	case EFloorObstacle::End:
 		if (LevelEndPackedActor != nullptr)

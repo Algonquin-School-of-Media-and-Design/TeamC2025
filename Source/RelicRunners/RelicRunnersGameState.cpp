@@ -20,8 +20,18 @@ bool ARelicRunnersGameState::InitializeTriggerState()
 
 void ARelicRunnersGameState::InformCurrentObjectives()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining flags: %i"), RemainingCapturableFlags));
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining enemy zones: %i"), RemainingEnemyZones));
+    if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::CaptureTheFlag))
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining flags: %i"), RemainingCapturableFlags));
+    }
+    if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DefeatAllEnemies))
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining enemy zones: %i"), RemainingEnemyZones));
+    }
+    if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload))
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Payload has been delivered: %i"), PayloadHadBeenDelivered));
+    }
 }
 
 void ARelicRunnersGameState::Server_SetObjectiveType_Implementation(int newType)
@@ -50,6 +60,9 @@ void ARelicRunnersGameState::Server_IncrementObjective_Implementation(EObjective
             RemainingEnemyZones++;
             GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max enemy zones: %i"), RemainingEnemyZones));
             break;
+        case EObjectiveType::MoveThePayload:
+            PayloadHadBeenDelivered = false;
+            GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Payload Delivery has been set to false")));
         default:
             break;
         }
@@ -80,6 +93,10 @@ void ARelicRunnersGameState::Server_DecrementObjective_Implementation(EObjective
             GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Enemy Objective has been reached!")));
         }
         break;
+    case EObjectiveType::MoveThePayload:
+        PayloadHadBeenDelivered = true;
+        CompletedObjectives |= static_cast<uint8>(EObjectiveType::MoveThePayload);
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Payload Delivery has been set to true")));
     default:
         break;
     }

@@ -18,7 +18,7 @@ enum class EObjectiveType : uint8
 	None = 0 UMETA(Hidden),
 	CaptureTheFlag = 1 << 0,
 	DefeatAllEnemies = 1 << 1,
-	DeliverPackage = 1 << 2,
+	MoveThePayload = 1 << 2,
 	DefendTheCrystal = 1 << 3,
 };
 ENUM_CLASS_FLAGS(EObjectiveType);
@@ -67,6 +67,8 @@ public:
 
 	UFUNCTION()
 	void OnRep_EnemyObjectivesChange();
+
+	bool PayloadHadBeenDelivered = false;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnObjectiveActionCompleted OnObjectiveActionCompleted;

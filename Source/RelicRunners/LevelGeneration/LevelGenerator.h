@@ -91,9 +91,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class USplineComponent* DeliverySpline;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenerationValues | Values", meta = (Bitmask, BitmaskEnum = EObjectiveType))
-	int ObjectiveType;
-
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (ClampMin = "1", UIMin = "1", ClampMax = "1000", UIMax = "1000", ToolTip = "Distance tiles are from each other in unreal units"))
 	float TileScale;
 
@@ -136,12 +133,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "100", UIMax = "100", ToolTip = "Size in which the border of the level is forced to spawn a walkable tile."))
 	int BorderForceFull;
 
-	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000", ToolTip = "Maximum amount of tiles in which a flag objective is spawned on top of. Tile that are set as unwalkable are overriden to be walkable."))
-	int MaxCapturableFlagAmount;
-
-	UPROPERTY(EditAnywhere, Category = "GenerationValues | Values", meta = (EditCondition = "GenerationIsRandom", ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000", ToolTip = "Maximum amount of tiles in which an enemy zone objective is spawned on top of. Tile that are set as unwalkable are overriden to be walkable."))
-	int MaxEnemyZoneAmount;
-
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Obstacle", meta = (ToolTip = "Array of regular packed level actors that the level generator will pick out of randomly to spawn."));
 	TArray <TSubclassOf<class APackedLevelActor>> PackedActorArray;
 
@@ -171,6 +162,21 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "GenerationValues | Modular Floor", meta = (ToolTip = "Mesh used for the quarter of a walkable tile without any neighbours."))
 	class UStaticMeshComponent* ConvexCornerPiece;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenerationValues | Objective Values", meta = (Bitmask, BitmaskEnum = EObjectiveType))
+	int ObjectiveType;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Objective Values| Capture the Flag", meta = (ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000", ToolTip = "Maximum amount of tiles in which a flag objective is spawned on top of. Tile that are set as unwalkable are overriden to be walkable."))
+	int MaxCapturableFlagAmount;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Objective Values| Enemies", meta = (ClampMin = "0", UIMin = "0", ClampMax = "1000", UIMax = "1000", ToolTip = "Maximum amount of tiles in which an enemy zone objective is spawned on top of. Tile that are set as unwalkable are overriden to be walkable."))
+	int MaxEnemyZoneAmount;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Objective Values| Move the Payload")
+	TSubclassOf<class APayloadActor> PayloadActor;
+
+	UPROPERTY(EditAnywhere, Category = "GenerationValues | Objective Values| Move the Payload", meta = (ClampMin = "1", UIMin = "1", ToolTip = "Speed at which the payload moves towards the target."))
+	float PayloadMovementSpeed;
 
 protected:
 
@@ -203,6 +209,7 @@ public:
 
 	//Creates a path from *startingIndex* to *targetIndex* by setting those tile to walkable.
 	void FindStartToEndPath(int startingIndex, int targetIndex, int width);
+	void FindStartToEndPath(int startingIndex, int targetIndex, int width, bool implementSpline);
 
 	//Checks the neighbours of each tile to determine what mesh should be used for each quarter tile.
 	//Calls FloorCheckTopNeighbours, FloorCheckMiddleNeighbours and FloorCheckBottomNeighbours
