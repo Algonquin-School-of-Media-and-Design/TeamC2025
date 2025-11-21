@@ -158,10 +158,12 @@ void AEnemyCharacter::BeginPlay()
 				Director->AddEnemy(enemy);
 				enemy->OnDestroyed.AddDynamic(Director, &ADirector::RemoveEnemy);
 			}
+#if WITH_EDITOR && UE_BUILD_TEST
 			else
 			{
 				UE_LOG(LogTemp, Error, TEXT("missing director"));
 			}
+#endif
 		});
 	}
 }
@@ -243,6 +245,43 @@ void AEnemyCharacter::UpdateEnemyHUDWorldFacing()
 	}
 }
 
+#if WITH_EDITOR
+void AEnemyCharacter::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	//calling the super
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	//crabing the property name
+	FName PropertyName = NAME_None; 
+	
+	//check to make sure this is a actual property
+	if (PropertyChangedEvent.Property)
+	{
+		//update the name
+		PropertyName = PropertyChangedEvent.Property->GetFName();
+	}
+
+	//go throught and check the possible properties that need to update other variables
+	//GET_MEMBER_NAME_CHECKED is a compiler time macro that gets the name of a property for anyone who is readying this and if so thank you for reading my comments
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AEnemyCharacter, MaxHealth))
+	{
+		CurrentHealth = FMath::Min(CurrentHealth, MaxHealth);
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(AEnemyCharacter, CurrentHealth))
+	{
+		CurrentHealth = FMath::Clamp(CurrentHealth, 0.f, MaxHealth);
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(AEnemyCharacter, EnemyMaxResource))
+	{
+		EnemyResource = FMath::Min(EnemyResource, EnemyMaxResource);
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(AEnemyCharacter, EnemyResource))
+	{
+		EnemyResource = FMath::Clamp(EnemyResource, 0, EnemyMaxResource);
+	}
+}
+#endif
+
 // Called every frame
 void AEnemyCharacter::Tick(float DeltaTime)
 {
@@ -256,3 +295,17 @@ void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+
+void AEnemyCharacter::SetCurrentHealth(const float& NewHealth)
+{
+	CurrentHealth = FMath::Clamp(NewHealth, 0.f, MaxHealth);
+}
+
+void AEnemyCharacter::SetMaxHealth(const float& newHealth)
+{
+	MaxHealth = FMath::Max(0.f, newHealth);
+	if (CurrentHealth > MaxHealth)
+	{
+		CurrentHealth = MaxHealth;
+	}
+}
