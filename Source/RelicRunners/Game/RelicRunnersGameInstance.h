@@ -79,7 +79,7 @@ public:
     FString SavedHostAddress;
     UPROPERTY()
     FString PlayerName;
-    UPROPERTY()
+    UPROPERTY(BlueprintReadWrite)
     FName SelectedClass;
     UPROPERTY()
     TWeakObjectPtr<class UJoinUserWidget> TextRenderWidget;
