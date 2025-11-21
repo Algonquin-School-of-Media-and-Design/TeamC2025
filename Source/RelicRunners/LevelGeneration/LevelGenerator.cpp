@@ -3,12 +3,13 @@
 #include "LevelGenerator.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SplineComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "PackedLevelActor/PackedLevelActor.h"
 #include "LevelChangeTrigger.h"
+#include "PayloadActor.h"
 #include "NavigationSystem.h"
 #include "RelicRunners/RelicRunnersGameState.h"
-
 /*
 TODO:
 Teleport every player to the starting point when the level starts
@@ -18,6 +19,7 @@ Setup Lava spawning
 ALevelGenerator::ALevelGenerator() :
 	ObjectiveType(0),
 	TileScale(1.0f),
+	CameraActor(nullptr),
 	LevelChangeTrigger(nullptr),
 	TargetLevel(nullptr),
 	GenerationIsRandom(true),
@@ -25,21 +27,28 @@ ALevelGenerator::ALevelGenerator() :
 	SpawnWidth(2),
 	SpawnDepth(2),
 	FullPercentage(75.0f),
+	HolePercentage(0.0f),
 	BasicObstaclePercentage(50.0f),
 	CenterForceFull(0),
 	BorderForceFull(0),
-	MaxKeyTileAmount(1),
 	LevelStartPackedActor(nullptr),
 	LevelEndPackedActor(nullptr),
 	FullPiece(nullptr),
 	SidePiece(nullptr),
 	ConcaveCornerPiece(nullptr),
-	ConvexCornerPiece(nullptr)
+	ConvexCornerPiece(nullptr),
+	MaxCapturableFlagAmount(0),
+	MaxEnemyZoneAmount(0),
+	PayloadActor(nullptr),
+	PayloadMovementSpeed(1.0f)
 {
 	PrimaryActorTick.bCanEverTick = false;
 
 	Origin = CreateDefaultSubobject<USceneComponent>("Origin");
 	RootComponent = Origin;
+
+	DeliverySpline = CreateDefaultSubobject<USplineComponent>("Delivery Path");
+	DeliverySpline->SetupAttachment(Origin);
 
 	FullPiece = CreateDefaultSubobject<UStaticMeshComponent>("FullPiece");
 	FullPiece->SetupAttachment(Origin);
@@ -81,6 +90,15 @@ void ALevelGenerator::PostInitializeComponents()
 			int32 textureWidth = MipMap.SizeX;
 			int32 textureDepth = MipMap.SizeY;
 
+			//Set Camera Position relative to size of map
+			if (CameraActor)
+			{
+				float cameraX = textureWidth * TileScale * 2 - TileScale;
+				float cameraY = textureDepth * TileScale * 2 - TileScale;
+
+				CameraActor->SetActorLocation(FVector(cameraX, cameraY, 1000.0f));
+			}
+
 			//Initialize the floor based on each pixel in the texture.
 			for (int y = 0; y < textureDepth; y++)
 			{
@@ -99,31 +117,41 @@ void ALevelGenerator::PostInitializeComponents()
 				}
 			}
 
-			//Initialize the shape of the floor tile and the modular obstacles based on each specified colour
-			for (int y = 0; y < textureDepth; y++)
+			if (!FloorValuesArray.IsEmpty())
 			{
-				for (int x = 0; x < textureWidth; x++)
+				//Initialize the shape of the floor tile and the modular obstacles based on each specified colour
+				for (int y = 0; y < textureDepth; y++)
 				{
-					//Initialize the floor's shape based on the variable set above.
-					CheckFloor(x, y, textureWidth, textureDepth);
+					for (int x = 0; x < textureWidth; x++)
+					{
+						//Initialize the floor's shape based on the variable set above.
+						CheckFloor(x, y, textureWidth, textureDepth);
 
-					//Spawn the modular obstacles based on each specified colour
-					FColor PixelColor = FormattedImageData[y * textureWidth + x];
-					Server_SpawnFloorObstaclesByColour(x, y, textureWidth, PixelColor);
+						//Spawn the modular obstacles based on each specified colour
+						FColor PixelColor = FormattedImageData[y * textureWidth + x];
+						Server_SpawnFloorObstaclesByColour(x, y, textureWidth, PixelColor);
+					}
 				}
+				//Spawn the floor with the instanced static mesh component.
+				CreateFloor();
+
 			}
-			//add director
-
-			//Spawn the floor with the instanced static mesh component.
-			CreateFloor();
-
 			MipMap.BulkData.Unlock();
 		}
 		else
 		{
+			//Set Camera Position relative to size of map
+			if (CameraActor)
+			{
+				float cameraX = SpawnWidth * TileScale * 2 - TileScale;
+				float cameraY = SpawnDepth * TileScale * 2 - TileScale;
+				CameraActor->SetActorLocation(FVector(cameraX, cameraY, 0.0f));
+			}
+
 			//Initialize the starting and ending tiles.
 			int startingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 			int endingIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
 
 			//If somehow both are at the exact same index, reinitialize starting and ending tiles
 			while (startingIndex == endingIndex)
@@ -146,11 +174,17 @@ void ALevelGenerator::PostInitializeComponents()
 				//Override starting and ending tiles initialized above and create a path from one to the other.
 				SetStartingAndEndingPoints(startingIndex, endingIndex);
 
-				FindStartToEndPath(startingIndex, endingIndex, SpawnWidth);
+				FindStartToEndPath(startingIndex, endingIndex, SpawnWidth, true);
+
+				if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload) && PayloadActor != nullptr)
+				{
+					APayloadActor* payload = GetWorld()->SpawnActor<APayloadActor>(PayloadActor, FVector::ZeroVector, FRotator::ZeroRotator);
+					payload->Initialize(DeliverySpline, PayloadMovementSpeed);
+				}
 			}
 
-			//Override previously initialized tiles with key tiles
-			for (int i = 0; i < MaxKeyTileAmount; i++)
+			//Override previously initialized tiles with capturable flag tiles
+			for (int i = 0; i < MaxCapturableFlagAmount; i++)
 			{
 				int keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 
@@ -172,35 +206,64 @@ void ALevelGenerator::PostInitializeComponents()
 				//If it can, override the currently selected tile with the key tile and create a path from the starting tile to it.
 				if (whileLoopLimit < 10)
 				{
-					SetKeyTile(keyTileIndex);
+					SetFlagTile(keyTileIndex);
 
 					FindStartToEndPath(startingIndex, keyTileIndex, SpawnWidth);
 				}
 			}
 
-			for (int y = 0; y < SpawnDepth; y++)
+			//Override previously initialized tiles with capturable flag tiles
+			for (int i = 0; i < MaxEnemyZoneAmount; i++)
 			{
-				for (int x = 0; x < SpawnWidth; x++)
-				{
-					//Spawn the floor tiles with the instanced static mesh component.
-					CheckFloor(x, y, SpawnWidth, SpawnDepth);
+				int keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
 
-					//Spawn each modular obstacle based on previously defined variable.
-					Server_SpawnFloorObstacles(x, y, SpawnWidth);
+				int whileLoopLimit = 0;
+
+				//If the currently selected tile can be overriden, do that, if not, find another tile. Repeat 10 time. if failed every time, give up.
+				while (FloorValuesArray[keyTileIndex].FloorObstacle > EFloorObstacle::Basic)
+				{
+					keyTileIndex = FMath::RandRange(0, (SpawnDepth * SpawnWidth) - 1);
+
+					whileLoopLimit++;
+
+					if (whileLoopLimit >= 10)
+					{
+						break;
+					}
+				}
+
+				//If it can, override the currently selected tile with the key tile and create a path from the starting tile to it.
+				if (whileLoopLimit < 10)
+				{
+					SetEnemyZoneTile(keyTileIndex);
+
+					FindStartToEndPath(startingIndex, keyTileIndex, SpawnWidth);
 				}
 			}
 
-			//add director
+			if (!FloorValuesArray.IsEmpty())
+			{
+				for (int y = 0; y < SpawnDepth; y++)
+				{
+					for (int x = 0; x < SpawnWidth; x++)
+					{
+						//Spawn the floor tiles with the instanced static mesh component.
+						CheckFloor(x, y, SpawnWidth, SpawnDepth);
 
-			CreateFloor();
-
+						//Spawn each modular obstacle based on previously defined variable.
+						Server_SpawnFloorObstacles(x, y, SpawnWidth);
+					}
+				}
+				//Spawn the floor with the instanced static mesh component.
+				CreateFloor();
+			}
 		}
 
 		//Set the gamestate's objective type in order to help keep track of remaining objectives if it is set to anything.
 		ARelicRunnersGameState* gameState = Cast<ARelicRunnersGameState>(GetWorld()->GetGameState());
 		if (gameState)
 		{
-			gameState->Multicast_SetObjectiveType(ObjectiveType);
+			gameState->Server_SetObjectiveType(ObjectiveType);
 		}
 	}
 
@@ -212,7 +275,7 @@ void ALevelGenerator::PostInitializeComponents()
 		enumName.Add(TEXT("Defeat all anemies"));
 	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DefendTheCrystal))
 		enumName.Add(TEXT("Defend the crystal"));
-	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DeliverPackage))
+	if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload))
 		enumName.Add(TEXT("Deliver package"));
 
 	for (FString& value : enumName)
@@ -278,7 +341,7 @@ void ALevelGenerator::InitializeFloor()
 	{
 		newFloorValues.IsFullTile = true;
 
-		InitializeModularObstacle(newFloorValues);
+		InitializeModularObstacle(newFloorValues, true);
 	}
 
 	//Add initialized floor to array
@@ -293,9 +356,9 @@ void ALevelGenerator::ForceFloorBool(bool forcedFloor, int x, int y, int width)
 
 	if (forcedFloor)
 	{
-		if (FloorValuesArray[index].FloorObstacle == EFloorObstacle::None)
+		if (FloorValuesArray[index].FloorObstacle == EFloorObstacle::None || EnumHasAnyFlags(FloorValuesArray[index].FloorObstacle, EFloorObstacle::Hole))
 		{
-			InitializeModularObstacle(FloorValuesArray[index]);
+			InitializeModularObstacle(FloorValuesArray[index], false);
 		}
 	}
 }
@@ -314,10 +377,19 @@ void ALevelGenerator::SetStartingAndEndingPoints(int startingIndex, int endingIn
 	FloorValuesArray[endingIndex].obstacleYaw = FMath::RandRange(0, 3) * 90;
 }
 
-void ALevelGenerator::SetKeyTile(int index)
+void ALevelGenerator::SetFlagTile(int index)
 {
 	FloorValuesArray[index].IsFullTile = true;
-	FloorValuesArray[index].FloorObstacle = EFloorObstacle::KeyTile;
+	FloorValuesArray[index].FloorObstacle = EFloorObstacle::CapturableFlag;
+	FloorValuesArray[index].randomFloorToSpawn = 0;
+	FloorValuesArray[index].obstacleYaw = FMath::RandRange(0, 3) * 90;
+
+}
+
+void ALevelGenerator::SetEnemyZoneTile(int index)
+{
+	FloorValuesArray[index].IsFullTile = true;
+	FloorValuesArray[index].FloorObstacle = EFloorObstacle::EnemyZone;
 	FloorValuesArray[index].randomFloorToSpawn = 0;
 	FloorValuesArray[index].obstacleYaw = FMath::RandRange(0, 3) * 90;
 }
@@ -361,23 +433,120 @@ void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex, int
 				currentY++;
 			}
 		}
-		ForceFloorBool(true, currentX, currentY, width);
 
 		bReachEndX = currentX == targetX;
 		bReachEndY = currentY == targetY;
+		if (!(bReachEndX && bReachEndY))
+		{
+			ForceFloorBool(true, currentX, currentY, width);
+		}
 	}
 }
 
-void ALevelGenerator::InitializeModularObstacle(FSFloorValues& floorValue)
+void ALevelGenerator::FindStartToEndPath(int startingIndex, int targetIndex, int width, bool implementSpline)
 {
-	float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
-	if (randomObstaclePerc < BasicObstaclePercentage)
+	int currentX = startingIndex % width;
+	int currentY = startingIndex / width;
+
+	int targetX = targetIndex % width;
+	int targetY = targetIndex / width;
+
+	bool bReachEndX = currentX == targetX;
+
+	bool bReachEndY = currentY == targetY;
+
+	bool bValueHasChanged = false;
+	//To avoid repetition, randomly picks between moving horizontally or vertically closer to the target
+	while (!(bReachEndX && bReachEndY))
 	{
-		floorValue.FloorObstacle = EFloorObstacle::Basic;
+		float random = FMath::FRandRange(0.0f, 100.0f);
 
-		floorValue.randomFloorToSpawn = FMath::RandRange(0, PackedActorArray.Num() - 1);
+		if (random >= 50.0f)
+		{
+			if (currentX > targetX)
+			{
+				currentX--;
+				bValueHasChanged = true;
+			}
+			else if (currentX < targetX)
+			{
+				currentX++;
+				bValueHasChanged = true;
+			}
+		}
+		else
+		{
+			if (currentY > targetY)
+			{
+				currentY--;
+				bValueHasChanged = true;
+			}
+			else if (currentY < targetY)
+			{
+				currentY++;
+				bValueHasChanged = true;
+			}
+		}
 
-		floorValue.obstacleYaw = FMath::RandRange(0, 3) * 90;
+		bReachEndX = currentX == targetX;
+		bReachEndY = currentY == targetY;
+		if (!(bReachEndX && bReachEndY))
+		{
+			ForceFloorBool(true, currentX, currentY, width);
+
+			if (implementSpline && bValueHasChanged && EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload))
+			{
+				DeliverySpline->AddSplinePoint(FVector((TileScale * currentX * 4) + TileScale, (TileScale * currentY * 4) + TileScale, TileScale), ESplineCoordinateSpace::World);
+				bValueHasChanged = false;
+			}
+		}
+	}
+}
+
+void ALevelGenerator::InitializeModularObstacle(FSFloorValues& floorValue, bool canGenerateHoles)
+{
+	float holeTilePercentage = FMath::RandRange(0.1f, 100.0f);
+
+	if (holeTilePercentage < HolePercentage)
+	{
+		if (canGenerateHoles)
+		{
+			floorValue.FloorObstacle = EFloorObstacle::Hole;
+
+			floorValue.randomFloorToSpawn = FMath::RandRange(0, HoleTilePackedActorArray.Num() - 1);
+
+			floorValue.obstacleYaw = FMath::RandRange(0, 3) * 90;
+
+			floorValue.IsFullTile = false;
+		}
+		else
+		{
+			float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
+			if (randomObstaclePerc < BasicObstaclePercentage)
+			{
+				floorValue.FloorObstacle = EFloorObstacle::Basic;
+
+				floorValue.randomFloorToSpawn = FMath::RandRange(0, PackedActorArray.Num() - 1);
+
+				floorValue.obstacleYaw = FMath::RandRange(0, 3) * 90;
+			}
+			else
+			{
+				floorValue.FloorObstacle = EFloorObstacle::None;
+			}
+		}
+	}
+	else
+	{
+		float randomObstaclePerc = FMath::RandRange(0.1f, 100.0f);
+		if (randomObstaclePerc < BasicObstaclePercentage)
+		{
+			floorValue.FloorObstacle = EFloorObstacle::Basic;
+
+			floorValue.randomFloorToSpawn = FMath::RandRange(0, PackedActorArray.Num() - 1);
+
+			floorValue.obstacleYaw = FMath::RandRange(0, 3) * 90;
+		}
 	}
 }
 
@@ -748,21 +917,41 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 	switch (FloorValuesArray[index].FloorObstacle)
 	{
 	case EFloorObstacle::Basic:
-		if (PackedActorArray[FloorValuesArray[index].randomFloorToSpawn] != nullptr)
+		if (PackedActorArray.IsValidIndex(FloorValuesArray[index].randomFloorToSpawn))
 		{
 			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(PackedActorArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
 		break;
-	case EFloorObstacle::KeyTile:
+	case EFloorObstacle::Hole:
+		if (HoleTilePackedActorArray.IsValidIndex(FloorValuesArray[index].randomFloorToSpawn))
+		{
+			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(HoleTilePackedActorArray[FloorValuesArray[index].randomFloorToSpawn], posOffset, FRotator(0.0f, yaw, 0.0f));
+		}
+		break;
+	case EFloorObstacle::CapturableFlag:
 		if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::CaptureTheFlag))
 		{
 			if (!CapturableFlagPackedActorArray.IsEmpty())
 			{
 				int randIndex = FMath::RandRange(0, CapturableFlagPackedActorArray.Num() - 1);
 
-				if (CapturableFlagPackedActorArray[randIndex] != nullptr)
+				if (CapturableFlagPackedActorArray.IsValidIndex(randIndex))
 				{
 					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(CapturableFlagPackedActorArray[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
+				}
+			}
+		}
+		break;
+	case EFloorObstacle::EnemyZone:
+		if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DefeatAllEnemies))
+		{
+			if (!EnemyZonePackedActorArray.IsEmpty())
+			{
+				int randIndex = FMath::RandRange(0, EnemyZonePackedActorArray.Num() - 1);
+
+				if (EnemyZonePackedActorArray.IsValidIndex(randIndex))
+				{
+					APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(EnemyZonePackedActorArray[randIndex], posOffset, FRotator(0.0f, yaw, 0.0f));
 				}
 			}
 		}
@@ -772,6 +961,12 @@ void ALevelGenerator::SpawnFloorObstacles(int x, int y, int width)
 		{
 			APackedLevelActor* packed = GetWorld()->SpawnActor<APackedLevelActor>(LevelStartPackedActor, posOffset, FRotator(0.0f, yaw, 0.0f));
 		}
+
+		if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload))
+		{
+			DeliverySpline->SetLocationAtSplinePoint(0, posOffset, ESplineCoordinateSpace::World);
+		}
+
 		break;
 	case EFloorObstacle::End:
 		if (LevelEndPackedActor != nullptr)

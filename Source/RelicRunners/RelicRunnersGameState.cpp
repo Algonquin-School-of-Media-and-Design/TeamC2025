@@ -18,20 +18,23 @@ bool ARelicRunnersGameState::InitializeTriggerState()
     return false;
 }
 
-void ARelicRunnersGameState::Multicast_SetObjectiveType_Implementation(EObjectiveType newType)
+void ARelicRunnersGameState::InformCurrentObjectives()
 {
-    if (HasAuthority())
+    if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::CaptureTheFlag))
     {
-        ObjectiveType = static_cast<uint8>(newType);
-
-        if (ObjectiveType == 0)
-        {
-            Multicast_DecrementObjective();
-        }
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining flags: %i"), RemainingCapturableFlags));
+    }
+    if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::DefeatAllEnemies))
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining enemy zones: %i"), RemainingEnemyZones));
+    }
+    if (EnumHasAnyFlags(static_cast<EObjectiveType>(ObjectiveType), EObjectiveType::MoveThePayload))
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Payload has been delivered: %i"), PayloadHadBeenDelivered));
     }
 }
 
-void ARelicRunnersGameState::Multicast_SetObjectiveType(int newType)
+void ARelicRunnersGameState::Server_SetObjectiveType_Implementation(int newType)
 {
     if (HasAuthority())
     {
@@ -39,37 +42,88 @@ void ARelicRunnersGameState::Multicast_SetObjectiveType(int newType)
 
         if (ObjectiveType == 0)
         {
-            Multicast_DecrementObjective();
+            Server_DecrementObjective(EObjectiveType::None);
         }
     }
 }
 
-void ARelicRunnersGameState::Multicast_IncrementObjective_Implementation()
+void ARelicRunnersGameState::Server_IncrementObjective_Implementation(EObjectiveType objectiveType)
 {
-    if (HasAuthority())
-    {
-        RemainingObjectives++;
-        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max objectives: %i"), RemainingObjectives));
+    if (HasAuthority()) {
+        switch (objectiveType)
+        {
+        case EObjectiveType::CaptureTheFlag:
+            RemainingCapturableFlags++;
+            GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max flags: %i"), RemainingCapturableFlags));
+            break;
+        case EObjectiveType::DefeatAllEnemies:
+            RemainingEnemyZones++;
+            GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Max enemy zones: %i"), RemainingEnemyZones));
+            break;
+        case EObjectiveType::MoveThePayload:
+            PayloadHadBeenDelivered = false;
+            GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Payload Delivery has been set to false")));
+        default:
+            break;
+        }
     }
 }
 
-void ARelicRunnersGameState::Multicast_DecrementObjective_Implementation()
+void ARelicRunnersGameState::Server_DecrementObjective_Implementation(EObjectiveType objectiveType)
 {
-    RemainingObjectives--;
+    switch (objectiveType)
+    {
+    case EObjectiveType::CaptureTheFlag:
+        RemainingCapturableFlags--;
 
-    if (RemainingObjectives <= 0)
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining flags: %i"), RemainingCapturableFlags));
+        if (RemainingCapturableFlags <= 0)
+        {
+            CompletedObjectives |= static_cast<uint8>(EObjectiveType::CaptureTheFlag);
+            GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Flag Objective has been reached!")));
+        }
+        break;
+    case EObjectiveType::DefeatAllEnemies:
+        RemainingEnemyZones--;
+
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Remaining enemy zones: %i"), RemainingEnemyZones));
+        if (RemainingEnemyZones <= 0)
+        {
+            CompletedObjectives |= static_cast<uint8>(EObjectiveType::DefeatAllEnemies);
+            GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Enemy Objective has been reached!")));
+        }
+        break;
+    case EObjectiveType::MoveThePayload:
+        PayloadHadBeenDelivered = true;
+        CompletedObjectives |= static_cast<uint8>(EObjectiveType::MoveThePayload);
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Payload Delivery has been set to true")));
+    default:
+        break;
+    }
+
+    if (CompletedObjectives == ObjectiveType)
     {
         OnObjectiveActionCompleted.Broadcast();
     }
 }
 
-void ARelicRunnersGameState::OnRep_ObjectivesChange()
+void ARelicRunnersGameState::OnRep_FlagObjectivesChange()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("OnRep - Remaining objectives: %i"), RemainingObjectives));
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("OnRep - Remaining flags: %i"), RemainingEnemyZones));
 
-    if (RemainingObjectives <= 0)
+    if (RemainingCapturableFlags <= 0)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("OnRep - Objective has been reached!")));
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("OnRep - Flag Objective has been reached!")));
+    }
+}
+
+void ARelicRunnersGameState::OnRep_EnemyObjectivesChange()
+{
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("OnRep - Remaining enemy zones: %i"), RemainingCapturableFlags));
+
+    if (RemainingCapturableFlags <= 0)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("OnRep - Enemy Objective has been reached!")));
     }
 }
 
@@ -77,6 +131,7 @@ void ARelicRunnersGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(ARelicRunnersGameState, RemainingObjectives);
+    DOREPLIFETIME(ARelicRunnersGameState, RemainingCapturableFlags);
     DOREPLIFETIME(ARelicRunnersGameState, ObjectiveType);
+    DOREPLIFETIME(ARelicRunnersGameState, CompletedObjectives);
 }

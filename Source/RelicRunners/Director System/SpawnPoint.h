@@ -11,6 +11,9 @@ Date Last Changed:        2025/10/27
 #include "SpawningCard.h"
 #include "SpawnPoint.generated.h"
 
+//Justin added this
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyWavesComplete);
+
 UCLASS()
 class RELICRUNNERS_API ASpawnPoint : public AActor
 {
@@ -61,7 +64,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Director", meta = (AllowPrivateAccess = "true", ToolTip = "The Director"))
 	class ADirector* Director;
 
-	
 public:	
 	// Sets default values for this actor's properties
 	ASpawnPoint();
@@ -85,6 +87,10 @@ public:
 	//A method to check if the spawn point has finished all its waves
 	UFUNCTION(BlueprintCallable, meta = (ToolTip = "A method to check if the spawn point has finished all its waves", ShortToolTip = "Check if it is finished"))
 	bool FinishedAllWaves();
+
+	//Justin added this
+	UPROPERTY(BlueprintAssignable)
+	FOnEnemyWavesComplete OnEnemyWavesComplete;
 
 protected:
 	// Called when the game starts or when spawned

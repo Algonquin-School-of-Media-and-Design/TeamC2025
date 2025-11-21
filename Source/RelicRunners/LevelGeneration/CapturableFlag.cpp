@@ -39,7 +39,7 @@ void ACapturableFlag::BeginPlay()
 	if (gameState)
 	{
 		//Increment the Replicated Objective variable in the Gamestate for every flag that is spawned
-		gameState->Multicast_IncrementObjective();
+		gameState->Server_IncrementObjective(EObjectiveType::CaptureTheFlag);
 	}	
 }
 
@@ -71,7 +71,7 @@ void ACapturableFlag::HandleInteracted(ARelicRunnersCharacter* Char)
 	if (gameState)
 	{
 		//Decrement the Replicated Objective variable in the Gamestate
-		gameState->Multicast_DecrementObjective();
+		gameState->Server_DecrementObjective(EObjectiveType::CaptureTheFlag);
 	}
 
 	//Disable further interactions
