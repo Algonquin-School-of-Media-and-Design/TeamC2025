@@ -174,7 +174,7 @@ void AEnemyCharacter::BeginPlay()
 			//get the director
 			ADirector* Director = static_cast<ADirector*>(UGameplayStatics::GetActorOfClass(World, ADirector::StaticClass()));
 
-			if (!Director)
+			if (Director)
 			{
 				//add the enemy to the director
 				Director->AddEnemy(enemy);

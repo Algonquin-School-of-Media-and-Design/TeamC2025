@@ -1,4 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/***************************************************************************************
+Class Name:  AEnemyCharacter
+Description: This Class is the base class for all enemies with more complicated ai as it inherits from ACharacter and not APawn.
+Date Last Changed:        2025/11/21
+Author:      Thomas Johnson
+Contributors:
+	Description Of Contributions:
+****************************************************************************************/
 
 #pragma once
 
@@ -6,9 +13,15 @@
 #include "GameFramework/Character.h"
 #include "EnemyCharacter.generated.h"
 
+/*
+To Do:
+	- Add a method that run a animation both on client and server that work like play montage in blueprints
+*/
+
 class UWidgetComponent;
 
 UENUM(BlueprintType)
+//enum for the different types of enemies
 enum class EEnemyType : uint8
 {
 	LIGHT = 0		UMETA(DisplayName = "light"),
@@ -47,13 +60,13 @@ protected:
 	//A Stand in for mana, energy, or stamina
 	int EnemyMaxResource = 100;
 
-	UPROPERTY(Category = "Enemy", EditAnywhere, Replicated, BlueprintReadWrite, meta = (ClampMin = 0, ClampMax = 1, UIMin = 0, UIMax = 1, Delta = 0.05, ToolTip = "The Chance the enemy has to drop an item on death from 0.0 to 1.0."))
+	UPROPERTY(Category = "Enemy|Stats", EditAnywhere, Replicated, BlueprintReadWrite, meta = (ClampMin = 0, ClampMax = 1, Delta = 0.05, ToolTip = "The Chance the enemy has to drop an item on death from 0.0 to 1.0."))
 	//The Chance the enemy has to drop an item on death from 0.0 to 1.0
 	float ChanceToDrpopItem = 1.0f;
 
 	UPROPERTY(Category = "Enemy", EditAnywhere, BlueprintReadWrite, Replicated, meta = (ExposeOnSpawn = true, NoResetToDefault, DisplayPriority = 0))
 	EEnemyType TypeOfEnemy;
-	UPROPERTY(VisibleAnywhere, Replicated, NoClear, meta = (DisplayThumbnail = true))
+	UPROPERTY(Category = "Enemy|Component", VisibleAnywhere, Replicated, NoClear, meta = (DisplayThumbnail = true))
 	UWidgetComponent* EnemyHUDWorld;
 
 public:
@@ -120,7 +133,8 @@ public:
 	
 
 	//Need to be netmulticast to play on all clients as client does own the actor their for client rpc won't work
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	//Runs a montage client side
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, meta = (ToolTip = "Runs a montage client side. Need to be netmulticast to play on all clients as client does own the actor their for client rpc won't work.", ShortToolTip = "Runs a montage client side"))
 	void PlayMontageOnClient(UAnimMontage* Montage, float PlayRate = 1.0f);
 
 protected:

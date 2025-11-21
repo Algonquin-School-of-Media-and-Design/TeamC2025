@@ -163,7 +163,7 @@ EPathFollowingRequestResult::Type UBTTask_SurroundTarget::SetUpPawnMoveTo()
 	FNavPathSharedPtr navPath;
 
 	//find the location to move to and the check to make sure NavSys is valid and the location is on the navmesh
-	if (!FindSurroundLocation(worldMoveLocation) && NavSys && !NavSys->ProjectPointToNavigation(worldMoveLocation, moveLocation, NavExtent))
+	if (FindSurroundLocation(worldMoveLocation) && NavSys && !NavSys->ProjectPointToNavigation(worldMoveLocation, moveLocation, NavExtent))
 	{
 		return EPathFollowingRequestResult::Type::Failed;
 	}
@@ -189,6 +189,8 @@ EBTNodeResult::Type UBTTask_SurroundTarget::AbortTask(UBehaviorTreeComponent& Ow
 
 void UBTTask_SurroundTarget::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
+	UE_LOG(LogTemp, Error, TEXT("Should tick"));
+
 	//checking all needed references
 	if (!OwnerController || !BlackBoard || !ControlledPawn || !Target)
 	{

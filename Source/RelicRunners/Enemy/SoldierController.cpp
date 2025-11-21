@@ -54,16 +54,11 @@ FVector ASoldierController::GetRandomPatrolPoint()
 	}
 
 //error log not need if not playtest build
-#if WITH_EDITOR && UE_BUILD_TEST
+#if WITH_EDITOR || UE_BUILD_TEST
 	UE_LOG(LogTemp, Warning, TEXT("could not find random spawn point on navmesh"));
 #endif
 
 	return FVector::ZeroVector;
-}
-
-FVector ASoldierController::GetCurrentPatrolPoint() const
-{
-	return CurrentPatrolCenter;
 }
 
 void ASoldierController::BeginPlay()
@@ -77,5 +72,14 @@ void ASoldierController::BeginPlay()
 		OriginPatrolZone = pawn->GetActorLocation();
 		CurrentPatrolCenter = OriginPatrolZone;
 	}
-			
+}
+
+void ASoldierController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (StartingBehaviorTree)
+	{
+		RunBehaviorTree(StartingBehaviorTree);
+	}
 }

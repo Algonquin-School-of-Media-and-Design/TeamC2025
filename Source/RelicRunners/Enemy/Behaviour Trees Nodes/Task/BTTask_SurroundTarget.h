@@ -1,4 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/***************************************************************************************
+Class Name:  UBTTask_SurroundTarget
+Description: This class is used in a beehavoir tree as node that will handle movement with it goal to be surrounding the target without touching them
+Date Last Changed:        2025/11/21
+Author:      Thomas Johnson
+Contributors:
+	Description Of Contributions:
+****************************************************************************************/
 
 #pragma once
 
