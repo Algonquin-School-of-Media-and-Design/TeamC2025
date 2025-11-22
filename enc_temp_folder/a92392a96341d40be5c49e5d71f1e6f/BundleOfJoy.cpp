@@ -34,7 +34,7 @@ void UBundleOfJoy::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 
 
     StartLocation = AvatarActor->GetActorLocation() + AvatarActor->GetActorForwardVector() * 100.f + FVector(0, 0, 50);
-    Velocity = AvatarActor->GetActorForwardVector() * 700.f + FVector(0, 0, 600.f); 
+    Velocity = AvatarActor->GetActorForwardVector() * 1200.f + FVector(0, 0, 600.f); 
     bIsFlying = true;
 
     AvatarActor->GetWorldTimerManager().SetTimer(AttractTimer, this, &UBundleOfJoy::TickThrown, 0.016f, true);
@@ -49,11 +49,11 @@ void UBundleOfJoy::TickThrown()
     UWorld* World = Avatar->GetWorld();
     float Delta = World->GetDeltaSeconds();
 
-    // projectile physics
+    // Simple projectile physics
     Velocity += FVector(0, 0, -980.f) * Delta;  // gravity
     StartLocation += Velocity * Delta;
 
-    // see throw trajectory
+    // Visualize arc
     DrawDebugSphere(World, StartLocation, 10.f, 12, FColor::Yellow, false, 0.05f);
 
     // Check ground hit
@@ -81,12 +81,17 @@ void UBundleOfJoy::OnThrownLanded(const FVector& LandLocation)
     AActor* Avatar = GetAvatarActorFromActorInfo();
     UWorld* World = Avatar->GetWorld();
 
-    // start attraction loop
+    // NOW start attraction loop
     World->GetTimerManager().SetTimer(AttractTimer, this, &UBundleOfJoy::Attract, 0.016f, true);
 
     // Timer for explosion
-    World->GetTimerManager().SetTimer(ExplosionTimer,FTimerDelegate::CreateUObject(this, &UBundleOfJoy::Explode),Duration,false);
+    World->GetTimerManager().SetTimer(ExplosionTimer,
+        FTimerDelegate::CreateUObject(this, &UBundleOfJoy::Explode),
+        Duration,
+        false
+    );
 
+    // Optional debug
     DrawDebugSphere(World, LandLocation, 25.f, 12, FColor::Purple, false, 5.f);
 }
 

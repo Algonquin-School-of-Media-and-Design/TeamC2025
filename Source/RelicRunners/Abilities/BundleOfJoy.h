@@ -13,6 +13,8 @@ public:
     UBundleOfJoy();
 
     virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+    void TickThrown();
+    void OnThrownLanded(const FVector& LandLocation);
     virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
     virtual FName GetAbilityName() const override { return FName("Bundle Of Joy"); }
 
@@ -29,6 +31,10 @@ protected:
 private:
     FTimerHandle ExplosionTimer;
     FTimerHandle AttractTimer;
+
+    FVector StartLocation;
+    FVector Velocity;
+    bool bIsFlying = false;
 
     UPROPERTY()
     FVector AttractionCenter;
